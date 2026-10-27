@@ -23,6 +23,7 @@
     "src"
   ],
   "scripts": {
+    "policies:verify": "npm run build && node scripts/verify-policy-inventory.mjs examples/policies/product-inventory.json evidencias/inventario-produtos-fontes-20261027.json",
     "test:fiscal-reference": "npm run build && node examples/fiscal-reference.mjs",
     "test:fiscal-path": "npm run build && node examples/fiscal-paths.mjs",
     "collect:siscomex": "node scripts/collect-siscomex.mjs",

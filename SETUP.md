@@ -110,6 +110,16 @@ Não registrar credenciais de produção neste documento.
 
 ## Próximos passos
 
+### Inventário parcial de Mail, CMS, CRM e TMS
+
+O [inventário dos produtos](docs/PRODUCT-POLICY-INVENTORY.md) acrescenta oito
+fichas importáveis, com referências fixadas em commit e 15 hashes de blobs Git.
+O comando `npm run policies:verify -- var/product-repositories.json` compara
+as referências e os bytes sem alterar os checkouts dos produtos. As oito fichas
+registram implementação inspecionada, sem declaração de verificação de runtime.
+O README identifica o responsável técnico do CRM; os demais continuam "A definir".
+A aplicação do lote permanece explícita pelo importador privado.
+
 ### Importação revisada de políticas pelo painel
 
 A continuação implementa prévia validada e importação atômica de fichas novas,

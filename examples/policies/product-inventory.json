@@ -1,0 +1,76 @@
+[
+  {
+    "id": "MAIL-ACCESS-001", "product": "mail", "title": "Leitura de mensagens e anexos fica vinculada à caixa autenticada", "category": "access", "state": "implemented",
+    "rule": "As rotas de leitura repassam a caixa da sessão. A busca de mensagem combina messageId e mailboxId; a de anexo combina attachmentId, messageId e a caixa da mensagem. Uma referência de outra caixa não é suficiente para obter seu conteúdo.",
+    "owner": "A definir", "enforcement": "src/api/me-routes.ts; src/services/messages.ts · getMessage, getAttachment e getRawMessage.", "verificationDate": "",
+    "sources": [
+      { "kind": "code", "location": "https://github.com/avilaops/mail.avilaops.com/blob/163fb906e5aba7ac48172b601ad52a5068133dc0/src/api/me-routes.ts", "note": "Rotas lidas no commit indicado. Encaminham sessao.mailboxId aos serviços de leitura. Sem execução de sessão ou banco nesta inspeção." },
+      { "kind": "code", "location": "https://github.com/avilaops/mail.avilaops.com/blob/163fb906e5aba7ac48172b601ad52a5068133dc0/src/services/messages.ts", "note": "Filtros de caixa nas consultas de mensagem, original e anexo inspecionados. Hash do blob em evidencias/inventario-produtos-fontes-20261027.json. Não atesta todos os caminhos do produto." }
+    ]
+  },
+  {
+    "id": "MAIL-DATA-001", "product": "mail", "title": "HTML de mensagens é sanitizado na leitura e imagens remotas exigem opção explícita", "category": "data", "state": "implemented",
+    "rule": "A leitura passa bodyHtml pelo sanitizador, com lista de elementos, atributos, protocolos e estilos permitidos. Imagens HTTP/HTTPS são bloqueadas por padrão; sua liberação depende da opção de exibir imagens remotas. O serviço não devolve o storageKey da mensagem.",
+    "owner": "A definir", "enforcement": "src/lib/sanitize.ts · sanitizeMessageHtml; src/services/messages.ts · getMessage.", "verificationDate": "",
+    "sources": [
+      { "kind": "code", "location": "https://github.com/avilaops/mail.avilaops.com/blob/163fb906e5aba7ac48172b601ad52a5068133dc0/src/lib/sanitize.ts", "note": "Lista de permissões e comportamento padrão inspecionados. Esta ficha não declara proteção completa contra XSS nem teste do navegador em produção." },
+      { "kind": "code", "location": "https://github.com/avilaops/mail.avilaops.com/blob/163fb906e5aba7ac48172b601ad52a5068133dc0/src/services/messages.ts", "note": "getMessage chama sanitizeMessageHtml com showRemoteImages falso por padrão e remove storageKey da resposta. Inspeção estática." }
+    ]
+  },
+  {
+    "id": "CMS-ACCESS-001", "product": "cms", "title": "Acesso a um site depende de participação ou do papel de equipe", "category": "access", "state": "implemented",
+    "rule": "O painel resolve o site pelo slug e busca a participação pelo subject da conta. Para contas comuns, ausência de participação produz o mesmo 404 de um site inexistente. A equipe identificada pelo papel ADMIN do Auth recebe ator com poder de Dono, mesmo sem participação explícita.",
+    "owner": "A definir", "enforcement": "crates/web/src/acesso.rs · ao_site; crates/dominio/src/conta.rs · Conta::nova e Conta::ator.", "verificationDate": "",
+    "sources": [
+      { "kind": "code", "location": "https://github.com/avilaops/cms.avilaops.com/blob/224c38e987ebf217381cca1da3b186bf449745ea/crates/web/src/acesso.rs", "note": "Resposta e consulta de participação inspecionadas. A exceção de equipe é explícita nesta ficha; não há alegação de teste de token real." },
+      { "kind": "code", "location": "https://github.com/avilaops/cms.avilaops.com/blob/224c38e987ebf217381cca1da3b186bf449745ea/crates/dominio/src/conta.rs", "note": "ADMIN cria conta de equipe e Conta::ator concede poder de Dono. Demais contas precisam de participação. Inspeção do código de domínio." }
+    ]
+  },
+  {
+    "id": "CMS-PUBLICATION-001", "product": "cms", "title": "Consulta pública seleciona a versão publicada do documento no site resolvido", "category": "publication", "state": "implemented",
+    "rule": "A consulta de documento público filtra site_id, caminho e situação publicado e lê a versão indicada por versao_publicada. A listagem também exige situação publicado. O atendimento público usa o identificador do site resolvido para consultar o conteúdo.",
+    "owner": "A definir", "enforcement": "crates/dados/src/documentos.rs · documento_publicado e documentos_publicados; crates/web/src/publico.rs · documento.", "verificationDate": "",
+    "sources": [
+      { "kind": "code", "location": "https://github.com/avilaops/cms.avilaops.com/blob/224c38e987ebf217381cca1da3b186bf449745ea/crates/dados/src/documentos.rs", "note": "SQL de consulta e listagem inspecionado. Não foi executado Postgres nem comprovada invalidação de cache nesta rodada." },
+      { "kind": "code", "location": "https://github.com/avilaops/cms.avilaops.com/blob/224c38e987ebf217381cca1da3b186bf449745ea/crates/web/src/publico.rs", "note": "documento utiliza pedido.gravado.id na consulta. Não equivale a auditoria completa de publicação, cache ou resolução de hosts." }
+    ]
+  },
+  {
+    "id": "CRM-ACCESS-001", "product": "crm", "title": "Sessão ativa determina a empresa e os vínculos das operações principais", "category": "access", "state": "implemented",
+    "rule": "A sessão é buscada pelo hash do cookie, com validade e usuário ativo na mesma empresa. Em POST, PATCH e PUT das rotas principais de contatos, leads, tarefas e conversas, referências reconhecidas são conferidas na empresa do usuário autenticado. Etapas do funil são conferidas pela empresa do pipeline.",
+    "owner": "Nícolas Ávila (responsável técnico no README)", "enforcement": "backend/server.ts · getSessionUser e requireAuth; backend/tenant-access.ts · validateTenantReferences.", "verificationDate": "",
+    "sources": [
+      { "kind": "code", "location": "https://github.com/avilaops/crm.avilaops.com/blob/f22fdae839dc380edd095fd3f01617ba6b72b1de/backend/server.ts", "note": "Sessão e chamada da conferência de vínculos inspecionadas no commit do checkout esparso. Integração com banco não executada." },
+      { "kind": "code", "location": "https://github.com/avilaops/crm.avilaops.com/blob/f22fdae839dc380edd095fd3f01617ba6b72b1de/backend/tenant-access.ts", "note": "Tabelas de referência pertencem ao código e os valores são parametrizados. O escopo é a lista explícita de vínculos e rotas; não todas as operações do CRM." },
+      { "kind": "document", "location": "https://github.com/avilaops/crm.avilaops.com/blob/f22fdae839dc380edd095fd3f01617ba6b72b1de/README.md", "note": "O README identifica Nícolas Ávila como responsável técnico. Isso não atribui aprovação desta ficha nem identifica o editor do caderno." }
+    ]
+  },
+  {
+    "id": "CRM-INTEGRATION-001", "product": "crm", "title": "State de OAuth do Google é vinculado à sessão, propósito e validade", "category": "integration", "state": "implemented",
+    "rule": "O state assinado contém nonce aleatório, expiração e HMAC sobre propósito, hash da sessão e demais campos. A verificação recusa formato inválido, expiração e assinatura divergente. O fluxo do Google também cria e consome um registro de uso único vinculado a usuário, empresa e provedor.",
+    "owner": "Nícolas Ávila (responsável técnico no README)", "enforcement": "backend/oauth-state.ts · signOAuthState e verifyOAuthState; backend/server.ts · createOauthState, consumeOauthState e callback do Google.", "verificationDate": "",
+    "sources": [
+      { "kind": "code", "location": "https://github.com/avilaops/crm.avilaops.com/blob/f22fdae839dc380edd095fd3f01617ba6b72b1de/backend/oauth-state.ts", "note": "Assinatura, comparação e prazo de dez minutos inspecionados. Sem autenticação no Google ou concessão real de acesso nesta rodada." },
+      { "kind": "code", "location": "https://github.com/avilaops/crm.avilaops.com/blob/f22fdae839dc380edd095fd3f01617ba6b72b1de/backend/server.ts", "note": "Chamadas do fluxo e consumo vinculado à identidade inspecionados. Não foi executado o callback nem a persistência de integração." },
+      { "kind": "document", "location": "https://github.com/avilaops/crm.avilaops.com/blob/f22fdae839dc380edd095fd3f01617ba6b72b1de/README.md", "note": "Fonte da identificação do responsável técnico; não comprova aprovação da ficha." }
+    ]
+  },
+  {
+    "id": "TMS-ACCESS-001", "product": "tms", "title": "Rotas internas conferem o perfil atual e a capacidade exigida", "category": "access", "state": "implemented",
+    "rule": "requireStaff exige sessão e relê o usuário pelo cliente de banco da empresa. Ausência de sessão ou de usuário resulta em 401; perfil sem a capacidade exigida resulta em 403. A decisão usa o perfil atual do banco e a matriz de capacidades, em vez de depender apenas do perfil salvo no token.",
+    "owner": "A definir", "enforcement": "src/lib/staff.ts · requireStaff; src/lib/permissoes.ts · pode e CAPACIDADES.", "verificationDate": "",
+    "sources": [
+      { "kind": "code", "location": "https://github.com/avilaops/TMS/blob/0bf82ffa8bcaa2b6ffc844aa9c76e07d020183c4/src/lib/staff.ts", "note": "Guard inspecionado. Sua forma antiga ainda aceita lista de perfis; esta ficha não afirma que todas as rotas foram auditadas nem que testes com banco foram executados." },
+      { "kind": "code", "location": "https://github.com/avilaops/TMS/blob/0bf82ffa8bcaa2b6ffc844aa9c76e07d020183c4/src/lib/permissoes.ts", "note": "Matriz central e recusa de perfil desconhecido inspecionadas. Responsável humano ainda não identificado nas fontes consultadas." }
+    ]
+  },
+  {
+    "id": "TMS-DATA-001", "product": "tms", "title": "Consultas por empresa usam transação com papel restrito e contexto local", "category": "data", "state": "implemented",
+    "rule": "O cliente comum resolve a empresa pela sessão e executa cada consulta em transação com papel tms_app e app.tenant_id locais à transação. Sem empresa válida, a consulta é recusada; a exceção de empresa de teste é restrita a NODE_ENV=test. O SQL de instalação define políticas por empresa e gatilhos contra referências entre empresas. O cliente sistema é uma exceção privilegiada explícita.",
+    "owner": "A definir", "enforcement": "src/lib/prisma.ts · empresaAtual, entrarNaEmpresa, clienteDe e sistema; prisma/sql/010-rls.sql.", "verificationDate": "",
+    "sources": [
+      { "kind": "code", "location": "https://github.com/avilaops/TMS/blob/0bf82ffa8bcaa2b6ffc844aa9c76e07d020183c4/src/lib/prisma.ts", "note": "Transações e caminhos de acesso inspecionados. sistema usa o cliente base sem isolamento por empresa; cada uso precisa de revisão própria." },
+      { "kind": "code", "location": "https://github.com/avilaops/TMS/blob/0bf82ffa8bcaa2b6ffc844aa9c76e07d020183c4/prisma/sql/010-rls.sql", "note": "Definições de políticas e gatilhos inspecionadas. A existência deste arquivo não comprova sua aplicação no banco de produção; testes de isolamento não executados nesta rodada." }
+    ]
+  }
+]

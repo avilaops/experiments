@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "inspectedOn": "2026-10-27",
+  "scope": "Committed source inspection only; no product runtime or production test.",
+  "sources": [
+    { "repository": "mail", "remote": "https://github.com/avilaops/mail.avilaops.com", "revision": "163fb906e5aba7ac48172b601ad52a5068133dc0", "path": "src/api/me-routes.ts", "sha256": "0ac60e4b5eee59a28118caf7b4c67a79d8fad0f180718705112edff5ab053f24" },
+    { "repository": "mail", "remote": "https://github.com/avilaops/mail.avilaops.com", "revision": "163fb906e5aba7ac48172b601ad52a5068133dc0", "path": "src/services/messages.ts", "sha256": "fc7cf3782cd338f0890a87ff02a7bfaec3071d5b485f7e280eeb3eb277ef3f73" },
+    { "repository": "mail", "remote": "https://github.com/avilaops/mail.avilaops.com", "revision": "163fb906e5aba7ac48172b601ad52a5068133dc0", "path": "src/lib/sanitize.ts", "sha256": "69f3e32e025acd43abcc9d7edca3ed9f29a52d5f203160d5be0c4aefb6363066" },
+    { "repository": "cms", "remote": "https://github.com/avilaops/cms.avilaops.com", "revision": "224c38e987ebf217381cca1da3b186bf449745ea", "path": "crates/web/src/acesso.rs", "sha256": "1f34d1f79afc4833a5d0503e9cc66ecb52a99d943c0115714dc9bc9389d84b40" },
+    { "repository": "cms", "remote": "https://github.com/avilaops/cms.avilaops.com", "revision": "224c38e987ebf217381cca1da3b186bf449745ea", "path": "crates/dominio/src/conta.rs", "sha256": "e869c66fc6bc4ca2b5ff956a6e674621e197f8c9e8e716ac496209dce3719f7f" },
+    { "repository": "cms", "remote": "https://github.com/avilaops/cms.avilaops.com", "revision": "224c38e987ebf217381cca1da3b186bf449745ea", "path": "crates/dados/src/documentos.rs", "sha256": "6dc5f9798ee028e3f8fa0e40319e834ebebce0fd5d39324c7441e5681a235c3e" },
+    { "repository": "cms", "remote": "https://github.com/avilaops/cms.avilaops.com", "revision": "224c38e987ebf217381cca1da3b186bf449745ea", "path": "crates/web/src/publico.rs", "sha256": "27f59b693eaaf6f3ceebcbd70d909cf0ca8f2d0d8d878e3beae62a91b31ded3a" },
+    { "repository": "crm", "remote": "https://github.com/avilaops/crm.avilaops.com", "revision": "f22fdae839dc380edd095fd3f01617ba6b72b1de", "path": "README.md", "sha256": "5476ea3deb085d6c250cddafd83a09bd094d4391d385e28ee4d63d889b2afe6c" },
+    { "repository": "crm", "remote": "https://github.com/avilaops/crm.avilaops.com", "revision": "f22fdae839dc380edd095fd3f01617ba6b72b1de", "path": "backend/server.ts", "sha256": "d3d44f19fc60bf44ba8e83cb2adcbace2a3d48e0d4044a884973f53b5ccdcca7" },
+    { "repository": "crm", "remote": "https://github.com/avilaops/crm.avilaops.com", "revision": "f22fdae839dc380edd095fd3f01617ba6b72b1de", "path": "backend/tenant-access.ts", "sha256": "b4348ee663ff5ca7a27f75fcf02ff17e0b732f331349878bbcc089cf007d59f8" },
+    { "repository": "crm", "remote": "https://github.com/avilaops/crm.avilaops.com", "revision": "f22fdae839dc380edd095fd3f01617ba6b72b1de", "path": "backend/oauth-state.ts", "sha256": "975be833d8dcd136edd60c7568155ba0b82829ad026118dc1bf0b166d2092b7a" },
+    { "repository": "tms", "remote": "https://github.com/avilaops/TMS", "revision": "0bf82ffa8bcaa2b6ffc844aa9c76e07d020183c4", "path": "src/lib/prisma.ts", "sha256": "78542ea0d656275580e798d6bce45b1a53d343932add900317d9091531113c56" },
+    { "repository": "tms", "remote": "https://github.com/avilaops/TMS", "revision": "0bf82ffa8bcaa2b6ffc844aa9c76e07d020183c4", "path": "prisma/sql/010-rls.sql", "sha256": "c8ed5db8c93b4c7b4509e1aed7ff0fc3cd10345943c67a8f04fc94ba5c57f6f0" },
+    { "repository": "tms", "remote": "https://github.com/avilaops/TMS", "revision": "0bf82ffa8bcaa2b6ffc844aa9c76e07d020183c4", "path": "src/lib/staff.ts", "sha256": "6ce22ac1087991a26d4ba86ef63892b64b44ab351cf36d048183447b1f9a9d33" },
+    { "repository": "tms", "remote": "https://github.com/avilaops/TMS", "revision": "0bf82ffa8bcaa2b6ffc844aa9c76e07d020183c4", "path": "src/lib/permissoes.ts", "sha256": "03325db2f64ac92062bbd05d792c5a9b45119e7351016347b83fa3113eb0ceec" }
+  ]
+}

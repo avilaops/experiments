@@ -69,7 +69,10 @@ arquivos arbitrários nem busca URLs fornecidos pelo editor.
 O primeiro cadastro contém oito fichas: dois princípios compartilhados, duas
 fichas do ERP, duas do laboratório e duas propostas industriais para o Lojas
 (condições comerciais por cliente e separação do cache de preço negociado).
-Mail, CMS, CRM e TMS continuam pendentes de inventário específico.
+O inventário inicial deixa Mail, CMS, CRM e TMS sem fichas específicas.
+O [inventário parcial posterior](docs/PRODUCT-POLICY-INVENTORY.md) acrescenta
+oito fichas por importação explícita, com commits e hashes das fontes. Ele não
+altera a semente de uma instalação nova nem preenche responsáveis sem fonte.
 
 As fontes iniciais do ERP foram lidas em `docs/.old/architecture.md` e
 `apps/api/src/platform/access.rs` do checkout local. As regras do laboratório
@@ -196,6 +199,7 @@ Esse desenho não implementa cálculo, aprovação ou integração tributária.
 2. Publicação concluída em 27/10/2026, com backup e imagens anteriores preservados.
    Atualizações seguintes devem manter a validação da CI, o backup do volume e
    a separação da seleção pública.
-3. Inventariar cada produto por fontes verificadas e atribuir responsáveis.
+3. Ampliar o inventário parcial de Mail, CMS, CRM e TMS e atribuir os responsáveis
+   ainda não identificados. A conferência dos hashes não verifica o runtime.
 4. Vincular execuções reais de testes às fichas; a marcação manual atual não é
    uma integração automática com o CI.
