@@ -1,5 +1,19 @@
 # Setup e ponto de continuidade — 27/10/2026
 
+## Continuação: conflitos e impressão implantados
+
+Revisão implantada: `5d86e85271f2eabffbcf982dbd170de40795e844`, em
+`apps-noclient`, com CI aprovada, backup e hashes dos dados preservados.
+O caderno reúne alterações independentes, exige escolha para campos em conflito
+e continua verificando a revisão em cada gravação. A impressão da ficha salva
+usa papel A4 branco, margens de 16 mm e a indicação de cadastro privado e manual.
+
+Validação: 120 testes do núcleo/API, 11 do painel e sete no Chrome aprovados
+na CI. Os cenários de duas telas usam API e BFF reais em dados temporários.
+A conferência no domínio implantado usou respostas controladas para exercitar
+o conflito sem gravar em produção e gerou um PDF a partir da ficha salva real.
+Detalhes em [conferencia-caderno-20261027.md](evidencias/conferencia-caderno-20261027.md).
+
 ## Atualização implantada em 27/10/2026
 
 As quatro correções da revisão foram implantadas em `apps-noclient`, revisão
@@ -142,7 +156,7 @@ de impacto e aprovação; não declara essas novas capacidades implementadas.
 1. Conferência de conflitos e impressão implementada nesta continuação. Duas
    telas preservam alterações independentes e exigem escolha para campos
    conflitantes. Sete testes no Chrome incluem geração de PDF A4 da ficha salva;
-   os 11 testes do painel também passaram. A publicação depende da CI desta revisão.
+   os 11 testes do painel também passaram. Publicação concluída em `5d86e85`.
 2. O caderno foi implantado em `57b2418`, com backup e rollback, conforme a
    atualização no início deste documento. Atualizações devem preservar os registros.
 3. Atribuir responsáveis e inventariar os demais produtos por fontes verificadas.
