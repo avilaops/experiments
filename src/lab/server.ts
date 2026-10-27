@@ -17,7 +17,7 @@ export interface ApiOptions {
 const MAX_BODY = 1024 * 1024;
 
 function respond(response: ServerResponse, status: number, value: unknown, headers: Record<string, string> = {}) {
-  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers });
+  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store, no-transform", "X-Content-Type-Options": "nosniff", ...headers });
   response.end(status === 204 ? undefined : JSON.stringify(value));
 }
 

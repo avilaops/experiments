@@ -22,7 +22,7 @@ export function createDashboard(options: DashboardOptions) {
   const credentialHash = hash(options.username + ":" + options.password);
   const server = createServer((req, res) => {
     const send = (status: number, value: unknown) => {
-      res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store, no-transform" });
       res.end(JSON.stringify(value));
     };
     void (async () => {
@@ -40,6 +40,9 @@ export function createDashboard(options: DashboardOptions) {
       res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
       const pathname = url.pathname.replace(/^\/experiments(?=\/|$)/, "") || "/";
       if (allowed.test(pathname) || pathname === "/openapi.json") {
+        // Compression proxies can rewrite strong ETags (for example "1-zstd").
+        // Preserve the revision validator that the API expects in If-Match.
+        res.setHeader("Cache-Control", "no-store, no-transform");
         if (!["GET", "POST", "PUT"].includes(req.method ?? "")) { send(405, { error: { message: "Método não permitido." } }); return; }
         if (req.headers.origin && req.headers.origin !== options.origin) { send(403, { error: { message: "Origem não autorizada." } }); return; }
         let body: string | undefined;

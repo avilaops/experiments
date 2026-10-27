@@ -3,6 +3,10 @@
 Extensão em desenvolvimento sobre o núcleo 0.3.0. Os arquivos `.tgz` e ZIP já
 existentes não foram substituídos e não contêm necessariamente esta extensão.
 
+As respostas JSON usam `Cache-Control: no-store, no-transform`. A diretiva evita
+que a compressão de um proxy altere o ETag de revisão e invalide o If-Match enviado
+pelo navegador. O BFF preserva essa diretiva nas respostas da API.
+
 ## Executar
 
 Requer Node.js 24 ou superior. Dentro de `experiments`:

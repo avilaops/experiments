@@ -98,10 +98,12 @@ com preservação de códigos existentes, motivo, If-Match e conferência explí
 Aceita listas de fichas e a exportação do próprio caderno, sem restaurar revisões,
 versões ou histórico antigos. O CLI anterior permanece sequencial.
 
-Validação local: 127 testes núcleo/API, 12 do painel e 11 no Chrome aprovados.
+Validação local: 127 testes núcleo/API, 13 do painel e 11 no Chrome aprovados.
 Os cenários cobrem recusa integral de lote inválido, concorrência, capacidade,
 reimportação sem mudanças e confirmação renovada após conflito. A publicação
-depende da CI desta revisão. Os inventários de outros produtos continuam
+depende da CI desta revisão. Respostas JSON da API e do BFF usam no-transform
+para preservar o ETag da revisão durante a passagem pelo proxy de compressão.
+Os inventários de outros produtos continuam
 dependendo de fontes conferidas e responsáveis reais.
 
 ### Executor local de referências
