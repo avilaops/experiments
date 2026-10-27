@@ -10,6 +10,8 @@ O [planejamento de execução fiscal](docs/FISCAL-EXECUTION-CONTRACT.md) acresce
 rotas condicionais e cenários sintéticos para o pathFidelity.
 O [executor local de referências](docs/FISCAL-REFERENCE-EXECUTOR.md) confere
 arquivos, hashes, intervalos e vínculo ao contexto antes de produzir uma resolução.
+O [executor instrumentado de ferramentas](docs/TOOL-EXECUTION.md) registra chamadas
+reais locais, autorização e efeitos, com payloads redigidos e repetição controlada.
 
 Pacote local para experimentos versionados, avaliadores explícitos e relatórios
 comparáveis. Requer Node.js 24 ou superior. Não executa deploys.

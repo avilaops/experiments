@@ -57,6 +57,16 @@ Não registrar credenciais de produção neste documento.
 
 ## Próximos passos
 
+### Executor instrumentado — AVL-342
+
+Primeira entrega local de `tool-execution/1`, autorização por chamada, journal
+privado, redação integral de payloads e tratamento de interrupção/repetição.
+Ver [contrato e limites](docs/TOOL-EXECUTION.md) e
+[evidência com inspeção SSH](evidencias/tool-execution-20261027.md).
+O aceite de staging permanece pendente. A API implantada em `apps-noclient`
+foi inspecionada por hashes e ainda corresponde ao código anterior ao caderno;
+não é o HEAD local nem esta entrega. Nenhuma implantação foi executada.
+
 ### Executor local de referências
 
 O [carregador de referências](docs/FISCAL-REFERENCE-EXECUTOR.md) lê arquivos JSON,
