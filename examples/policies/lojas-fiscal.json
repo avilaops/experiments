@@ -1,0 +1,51 @@
+[
+  {
+    "id": "LOJAS-FISCAL-001", "product": "lojas", "title": "ERP configurado impede a consulta local de NF-e", "category": "integration", "state": "implemented",
+    "rule": "Quando há configuração fiscal do ERP para o CNPJ, a sincronização manual local é recusada e o agendador ignora esse CNPJ. Sem essa configuração, o caminho local de consulta continua existindo. A condição é configuração, não disponibilidade momentânea do ERP.",
+    "owner": "A definir", "enforcement": "src/lib/fiscal-loja.ts · sincronizarNotas e receberNotasPeriodicamente; src/lib/erp-fiscal.ts · fiscalErpConfigurado.", "verificationDate": "",
+    "sources": [
+      { "kind": "code", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\fiscal-loja.ts", "note": "Trechos lidos em 27/10/2026. Não foi executada a integração com banco nem comprovado o bloqueio contra serviços reais nesta rodada." },
+      { "kind": "code", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\erp-fiscal.ts", "note": "A detecção usa URL e chave por CNPJ; não é um healthcheck do ERP." }
+    ]
+  },
+  {
+    "id": "LOJAS-FISCAL-002", "product": "lojas", "title": "Adaptadores fiscais usam configuração por empresa e chave no servidor", "category": "integration", "state": "verified",
+    "rule": "As consultas fiscais do ERP e do TMS usam a configuração correspondente ao CNPJ e enviam a credencial no cabeçalho Authorization. Os testes locais verificam consultas com respostas simuladas, ausência de configuração e rejeição de identificadores de download inválidos.",
+    "owner": "A definir", "enforcement": "src/lib/erp-fiscal.ts e src/lib/tms-fiscal.ts; validadores e clientes HTTP dos adaptadores.", "verificationDate": "2026-10-27",
+    "sources": [
+      { "kind": "code", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\erp-fiscal.ts e tms-fiscal.ts", "note": "Foram lidos os adaptadores. Isso não comprova a autorização do servidor remoto nem configuração em produção." },
+      { "kind": "test", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\erp-fiscal.test.ts e tms-fiscal.test.ts", "note": "Cinco testes aprovados, com fetchers simulados. Não houve chamadas às APIs reais." },
+      { "kind": "evidence", "location": "evidencias/fiscal-lojas-20261027.md", "note": "Comando, contagens, hashes e limites da execução local." }
+    ]
+  },
+  {
+    "id": "LOJAS-FISCAL-003", "product": "lojas", "title": "Fluxos recebem apenas os campos fiscais selecionados", "category": "data", "state": "verified",
+    "rule": "A projeção de um documento para um fluxo inclui somente grupos de dados selecionados. O contrato recusa campos fora da lista e exige XML completo para a finalidade de revisão de produtos. Os testes não autorizam criar produtos, estoque ou lançamentos automaticamente.",
+    "owner": "A definir", "enforcement": "src/lib/fiscal-fluxos-contrato.ts · ConfigurarFluxoFiscal e dadosParaFluxoFiscal.", "verificationDate": "2026-10-27",
+    "sources": [
+      { "kind": "code", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\fiscal-fluxos-contrato.ts", "note": "Contrato fechado e projeção dos dados; não envia o XML bruto nessa projeção." },
+      { "kind": "test", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\fiscal-fluxos.test.ts", "note": "Seis testes aprovados: seleção, precisão textual, dados ausentes, eventos, XML inseguro, configuração e filtros. Não verifica entrega real de webhook." },
+      { "kind": "evidence", "location": "evidencias/fiscal-lojas-20261027.md", "note": "Evidência de testes locais com XMLs de fixture." }
+    ]
+  },
+  {
+    "id": "LOJAS-FISCAL-004", "product": "lojas", "title": "Notas, CT-e e eventos têm classificação e contagem distintas", "category": "data", "state": "verified",
+    "rule": "O monitor separa NF-e, CT-e e eventos por schema. Resumo e XML completo têm representações distintas. Os totais do histórico não devem ser confundidos com os documentos da página exibida.",
+    "owner": "A definir", "enforcement": "src/lib/fiscal-monitor.ts e src/lib/fiscal-documento.ts.", "verificationDate": "2026-10-27",
+    "sources": [
+      { "kind": "code", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\fiscal-monitor.ts e fiscal-documento.ts", "note": "Classificação, resumo e totalização de dados recebidos; não calcula tributos." },
+      { "kind": "test", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\fiscal-monitor.test.ts e fiscal-documento.test.ts", "note": "Oito testes aprovados com documentos e contagens controlados." },
+      { "kind": "evidence", "location": "evidencias/fiscal-lojas-20261027.md", "note": "Verificação local, sem consulta ao histórico de um cliente real." }
+    ]
+  },
+  {
+    "id": "LOJAS-FISCAL-005", "product": "lojas", "title": "Ações fiscais verificam a origem do painel", "category": "access", "state": "verified",
+    "rule": "A verificação de origem aceita o domínio HTTPS configurado do painel em produção e rejeita origem ausente, opaca, domínio semelhante, porta distinta ou cabeçalhos encaminhados forjados. Essa verificação não substitui autenticação nem autorização por empresa.",
+    "owner": "A definir", "enforcement": "src/lib/fiscal-origem.ts · origemFiscalPermitida; rotas fiscais chamam a função após exigir acesso.", "verificationDate": "2026-10-27",
+    "sources": [
+      { "kind": "code", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\fiscal-origem.ts", "note": "Verificação de Origin do navegador; não constitui a fronteira completa de acesso." },
+      { "kind": "test", "location": "D:\\Projetos\\SaaS\\lojas.avilaops.com\\src\\lib\\fiscal-origem.test.ts", "note": "Quatro testes aprovados em objetos Request locais. Não comprova configuração do proxy em produção." },
+      { "kind": "evidence", "location": "evidencias/fiscal-lojas-20261027.md", "note": "Escopo da evidência explicitamente local." }
+    ]
+  }
+]

@@ -57,6 +57,22 @@ Não registrar credenciais de produção neste documento.
 
 ## Próximos passos
 
+### Continuação fiscal em 27/10/2026
+
+Foram executados 23 testes locais do fiscal existente no Lojas, sem alteração
+de linguagem ou chamada a produção. Cinco fichas foram importadas explicitamente
+na prévia: uma implementada e quatro com verificação local delimitada. O caderno
+passou a ter 13 fichas na revisão 7; repetir a importação preservou as fichas e
+a revisão. O cadastro inicial de uma instalação nova permanece com oito fichas.
+
+O núcleo/API e os testes do importador passaram em 75 testes. O relatório fiscal,
+os hashes e o comando estão em `evidencias/fiscal-lojas-20261027.md` e `.json`.
+A proposta de contrato fiscal do ERP está em `docs/FISCAL-DECISION-PROPOSAL.md`.
+Essa proposta distingue monitoramento de documentos, apuração, vigência, simulação
+de impacto e aprovação; não declara essas novas capacidades implementadas.
+
+### Entregas seguintes
+
 1. Conferir a impressão e o conflito entre duas telas no navegador antes de publicar.
 2. Implantar o caderno com backup do volume e rollback, preservando os registros
    existentes. A funcionalidade deste checkpoint ainda não foi implantada.

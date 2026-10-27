@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1",
+  "recordedAt": "2026-10-27 03:28:38 UTC",
+  "scope": "Local unit tests with controlled fixtures and simulated HTTP responses; no production, database or SEFAZ execution.",
+  "repository": "D:\\Projetos\\SaaS\\lojas.avilaops.com",
+  "sourceCommit": "0d38de822696d8314bc86ed3e773ff9b0f317fbe",
+  "command": "node --import tsx --test src/lib/erp-fiscal.test.ts src/lib/tms-fiscal.test.ts src/lib/fiscal-monitor.test.ts src/lib/fiscal-origem.test.ts src/lib/fiscal-fluxos.test.ts src/lib/fiscal-documento.test.ts",
+  "result": {
+    "tests": 23,
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0
+  },
+  "files": [
+    {
+      "file": "src/lib/erp-fiscal.ts",
+      "sha256": "98fefdcd51048ac413c5368444981a4292a2bdb347a952f7360bb86fe6b8088a"
+    },
+    {
+      "file": "src/lib/tms-fiscal.ts",
+      "sha256": "ab156bb9ecc75fe8e0742ef7470c4b91b39fd6fba880398c3380d6a14da1bb3f"
+    },
+    {
+      "file": "src/lib/fiscal-loja.ts",
+      "sha256": "dc43c0ea3273a56b0c379d56975a8751a2c2ff355c95efb37153930c67551bc5"
+    },
+    {
+      "file": "src/lib/fiscal-documento.ts",
+      "sha256": "ed5bf55aa7891b851d48754ee9f05d50bafbc872aa40d82a4f62ca0d8cee6714"
+    },
+    {
+      "file": "src/lib/fiscal-monitor.ts",
+      "sha256": "992a8036097173d3081a8d4f5ebc3d359586feaf82dde40eb9529751080d8184"
+    },
+    {
+      "file": "src/lib/fiscal-origem.ts",
+      "sha256": "1b5d06b95ea86b52c3bbd2d932119403c76c2d8bc7b505c523945e371a4c1d42"
+    },
+    {
+      "file": "src/lib/fiscal-fluxos-contrato.ts",
+      "sha256": "65d6d671011cabf7718498f2a154a935098aade2e088cf92062891ca87300fa6"
+    },
+    {
+      "file": "src/lib/fiscal-filtros.ts",
+      "sha256": "f366a7d793c4f9bf0331313615ba759b7084fa31b6319c6cf061388b2e3cbd27"
+    },
+    {
+      "file": "src/lib/erp-fiscal.test.ts",
+      "sha256": "f6e5a52e2e5ce45ab9f2e8d6a1fdc40c2dffca895936f9cd457367a527bedc42"
+    },
+    {
+      "file": "src/lib/tms-fiscal.test.ts",
+      "sha256": "5f068b8453777b4c74d3e324a0b5f7dc581b8960c1f2848996f6e3f1cdc2392e"
+    },
+    {
+      "file": "src/lib/fiscal-documento.test.ts",
+      "sha256": "f02717fcfe5794021ed11911bc01905a346dd94854e9f0fab6deee9517a245df"
+    },
+    {
+      "file": "src/lib/fiscal-monitor.test.ts",
+      "sha256": "e2792a2d66d47bc7aff34ab073f255c41d74f66d17f2297cffee79069653c212"
+    },
+    {
+      "file": "src/lib/fiscal-origem.test.ts",
+      "sha256": "0171fa810b05bc615fd22446b69b09fe9c758495072b3c388f3b806a17b7f43a"
+    },
+    {
+      "file": "src/lib/fiscal-fluxos.test.ts",
+      "sha256": "bd174d8ca04d7b9b11e88a372acd4b01d8c5e4b5ccd46990d903f0bdc80ee49c"
+    }
+  ]
+}

@@ -115,6 +115,32 @@ separados em `var/policies-preview-v1/`; encerre com Ctrl+C.
 
 ## Continuidade
 
+### Importar fichas adicionais sem substituir edições
+
+O inventário fiscal do Lojas tem cinco fichas adicionais em
+`examples/policies/lojas-fiscal.json`. As fontes, os 23 testes locais e as
+limitações estão em [evidencias/fiscal-lojas-20261027.md](evidencias/fiscal-lojas-20261027.md).
+Ele é importado explicitamente, sem mudar o cadastro inicial de oito fichas.
+
+Com a prévia local ativa:
+
+```powershell
+node scripts/import-policies.mjs examples/policies/lojas-fiscal.json --preview
+```
+
+O modo `--preview` usa exclusivamente a API local de desenvolvimento. Para outra
+API, informe `LAB_API_URL` e `LAB_API_TOKEN` no ambiente privado e omita a opção.
+O importador valida as fichas antes de solicitar gravações, exige ETag, não segue
+redirecionamentos e preserva IDs já existentes. Uma disputa de revisão interrompe
+a importação; confira o histórico antes de repetir. Gravações anteriores ao
+conflito podem ter sido concluídas. Repetir não sobrescreve fichas já cadastradas.
+
+A proposta de evolução do motor fiscal do ERP está em
+[docs/FISCAL-DECISION-PROPOSAL.md](docs/FISCAL-DECISION-PROPOSAL.md).
+Esse desenho não implementa cálculo, aprovação ou integração tributária.
+
+### Entregas seguintes
+
 1. Validar a ficha, a edição e a impressão no navegador desktop e móvel.
 2. Publicar esta versão do serviço e do painel com backup e rollback, preservando
    o volume e a seleção pública. Somente então declarar a URL de produção disponível.
