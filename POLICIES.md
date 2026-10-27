@@ -73,6 +73,9 @@ O inventário inicial deixa Mail, CMS, CRM e TMS sem fichas específicas.
 O [inventário parcial posterior](docs/PRODUCT-POLICY-INVENTORY.md) acrescenta
 oito fichas por importação explícita, com commits e hashes das fontes. Ele não
 altera a semente de uma instalação nova nem preenche responsáveis sem fonte.
+Em 27/10/2026, a importação explícita foi conferida no domínio real: o catálogo
+passou a 16 fichas na revisão 2. A [evidência](evidencias/inventario-produtos-20261027.md)
+registra backup, preservação das fichas e reimportação sem mudanças.
 
 As fontes iniciais do ERP foram lidas em `docs/.old/architecture.md` e
 `apps/api/src/platform/access.rs` do checkout local. As regras do laboratório

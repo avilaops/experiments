@@ -1,5 +1,24 @@
 # Setup e ponto de continuidade — 27/10/2026
 
+## Continuação: inventário parcial registrado em produção
+
+Oito fichas de Mail, CMS, CRM e TMS foram importadas explicitamente no painel
+privado, após a CI aprovada da revisão `cf54d80419d776a6c88f0f661ad442fbc8a6d962`.
+O caderno passou de oito para 16 fichas, na revisão 2. As fichas e o histórico
+anteriores foram preservados; a reimportação não alterou revisão nem arquivo.
+
+As referências das fichas foram fixadas nos commits inspecionados. O verificador
+conferiu os 15 hashes de blobs nos quatro repositórios sem alterar os checkouts.
+Isso comprova integridade das fontes conferidas, sem atestar runtime dos produtos.
+O responsável técnico do CRM está identificado no README; os demais continuam
+"A definir". As novas fichas registram implementação inspecionada, sem data de
+verificação ou situação `verified`.
+
+Foram aprovados 132 testes do núcleo/API e a CI completa de painel e navegador.
+A aplicação usou o importador já implantado em `bf2b9a9`, com backup do catálogo.
+Não houve troca de imagens nem build no servidor. Evidência em
+[inventario-produtos-20261027.md](evidencias/inventario-produtos-20261027.md).
+
 ## Continuação: importação revisada implantada
 
 Revisão implantada: `bf2b9a974bdc5939e52f8cd2c6e488a2257b71fa`, em
@@ -118,7 +137,8 @@ O comando `npm run policies:verify -- var/product-repositories.json` compara
 as referências e os bytes sem alterar os checkouts dos produtos. As oito fichas
 registram implementação inspecionada, sem declaração de verificação de runtime.
 O README identifica o responsável técnico do CRM; os demais continuam "A definir".
-A aplicação do lote permanece explícita pelo importador privado.
+A aplicação explícita foi concluída em produção: 16 fichas na revisão 2,
+com reimportação sem mudanças e os registros anteriores preservados.
 
 ### Importação revisada de políticas pelo painel
 
