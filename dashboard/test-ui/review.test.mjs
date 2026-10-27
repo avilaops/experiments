@@ -195,6 +195,8 @@ test("print media and A4 PDF include the saved policy and sources without editor
   await page.getByLabel("Título da política").fill("Rascunho não salvo");
   await page.setViewportSize({ width: 794, height: 1123 });
   await page.emulateMedia({ media: "print" });
+  assert.equal(await page.locator("html").evaluate(element => getComputedStyle(element).backgroundColor), "rgb(255, 255, 255)");
+  assert.equal(await page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor), "rgb(255, 255, 255)");
   for (const selector of ["header", ".policy-controls", ".policy-editor", ".policy-list", ".policy-history", "footer"]) {
     assert.equal(await page.locator(selector).isVisible(), false);
   }
