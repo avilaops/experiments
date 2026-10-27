@@ -35,6 +35,20 @@ export const OPENAPI = {
         responses: { "200": { ...success("PolicyImportResult"), headers: { ETag: { schema: { type: "string" } } } }, "412": success("Error", "Caderno mudou; conferir nova prévia"), "428": success("Error", "If-Match obrigatório"), "413": success("Error", "Corpo excede 1 MiB"), "415": success("Error", "JSON obrigatório"), ...errors },
       },
     },
+    "/api/v1/route-inventories": {
+      get: { operationId: "listRouteProducts", responses: { "200": { description: "Produtos disponíveis; ausência de inventário significa pendente.", content: json({ type: "object", properties: { products: { type: "array", items: { type: "object", required: ["id", "name"], properties: { id: { type: "string" }, name: { type: "string" } } } } } }) }, ...errors } },
+    },
+    "/api/v1/route-inventories/{product}": {
+      parameters: [{ name: "product", in: "path", required: true, schema: { type: "string", enum: ["mail", "cms", "crm", "erp", "lojas", "tms", "experiments"] } }],
+      get: { operationId: "getRouteInventory", responses: { "200": { ...success("ProductRouteInventory"), headers: { ETag: { schema: { type: "string" } } } }, "404": success("Error", "Produto desconhecido"), ...errors } },
+      put: { operationId: "importRouteInventory", description: "Importa uma projeção de route-inventory/2 para o produto selecionado. Substitui a captura anterior, sem importar verdicts funcionais nem dados brutos arbitrários. Uma única instância do serviço deve escrever o volume.",
+        parameters: [{ name: "If-Match", in: "header", required: true, schema: { type: "string", pattern: '^"(?:0|[1-9][0-9]*)"$' } }],
+        requestBody: { required: true, content: json({ type: "object", required: ["schemaVersion", "runId", "recordedAt", "source", "web", "api"], properties: {
+          schemaVersion: { const: "route-inventory/2" }, runId: { type: "string", format: "uuid" }, recordedAt: { type: "string", format: "date-time" }, source: { type: "object" }, web: { type: "object" }, api: { type: ["object", "null"] },
+        } }) },
+        responses: { "200": { ...success("ProductRouteInventory"), headers: { ETag: { schema: { type: "string" } } } }, "404": success("Error", "Produto desconhecido"), "412": success("Error", "Revisão desatualizada"), "428": success("Error", "If-Match obrigatório"), "413": success("Error", "Corpo excede 1 MiB"), "415": success("Error", "JSON obrigatório"), ...errors },
+      },
+    },
     "/api/v1/policies": {
       get: { operationId: "getPolicyCatalog", description: "Cadastro privado e parcial das políticas por produto. Produtos sem fichas ainda não foram inventariados. Não executa regras nem testes.", responses: { "200": { ...success("PolicyCatalog"), headers: { ETag: { schema: { type: "string" } } } }, ...errors } },
       put: { operationId: "savePolicy", requestBody: body("PolicyUpdate"),
@@ -81,6 +95,14 @@ export const OPENAPI = {
     securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } },
     schemas: {
       ...POLICY_SCHEMAS,
+      ProductRouteInventory: { type: "object", required: ["product", "revision", "inventory"], properties: { product: { type: "string" }, revision: { type: "integer", minimum: 0 }, inventory: { type: ["object", "null"], properties: {
+        product: { type: "string" }, revision: { type: "integer", minimum: 1 }, importedAt: { type: "string", format: "date-time" }, runId: { type: "string" }, recordedAt: { type: "string", format: "date-time" },
+        sourceHead: { type: "string" }, sourceDirty: { type: "boolean" }, sourceFingerprint: { type: "string", pattern: "^[a-f0-9]{64}$" }, apiCaptured: { type: "boolean" }, reviewItems: { type: "integer", minimum: 0 },
+        entries: { type: "array", maxItems: 10000, items: { type: "object", required: ["layer", "path", "method", "operationId", "source", "handlerStatus", "verification"], properties: {
+          layer: { enum: ["page", "bff", "api"] }, path: { type: "string" }, method: { type: ["string", "null"] }, operationId: { type: ["string", "null"] }, source: { type: ["string", "null"] },
+          handlerStatus: { enum: ["callable", "not_callable", "needs_review", null] }, verification: { const: "not_run" },
+        } } },
+      } } } },
       Health: { type: "object", required: ["status", "service"], properties: { status: { const: "ok" }, service: { const: "avila-experiments" }, authRequired: { type: "boolean" } } },
       Error: { type: "object", properties: { error: { type: "object", required: ["code", "message"], properties: { code: { type: "string" }, message: { type: "string" } } } } },
       Settings: {

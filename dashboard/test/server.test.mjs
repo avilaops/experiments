@@ -22,6 +22,13 @@ test("BFF authenticates, withholds the API token, preserves ETag and protects mu
     assert.equal((await fetch(url + "/experiments/api/v1/suite")).status, 401);
     assert.equal((await fetch(url + "/experiments/policies")).status, 401);
     assert.equal((await fetch(url + "/experiments/api/v1/policies")).status, 401);
+    assert.equal((await fetch(url + "/experiments/routes")).status, 401);
+    assert.equal((await fetch(url + "/experiments/api/v1/route-inventories/erp")).status, 401);
+    assert.equal((await fetch(url + "/experiments/routes", { headers: auth })).status, 200);
+    const routeResponse = await fetch(url + "/experiments/api/v1/route-inventories/erp", { headers: auth });
+    assert.equal(routeResponse.status, 200);
+    assert.equal(routeResponse.headers.get("etag"), '"0"');
+    assert.equal((await routeResponse.json()).inventory, null);
     assert.equal((await fetch(url + "/experiments/policies", { headers: auth })).status, 200);
     const policyResponse = await fetch(url + "/experiments/api/v1/policies", { headers: auth });
     assert.equal(policyResponse.status, 200);
@@ -149,4 +156,22 @@ test("a compression proxy preserves revision ETags and If-Match round trips for 
     assert.ok(path.basename(directory).startsWith("avila-compression-test-"));
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("loopback origin follows the listening port and never trusts the Host header", async t => {
+  const directory = await mkdtemp(path.join(tmpdir(), "avila-origin-"));
+  let api, bff;
+  t.after(async () => {
+    if (bff?.listening) { bff.closeAllConnections(); await close(bff); }
+    if (api?.listening) { api.closeAllConnections(); await close(api); }
+    assert.equal(path.dirname(directory), tmpdir()); assert.ok(path.basename(directory).startsWith("avila-origin-"));
+    await rm(directory, { recursive: true, force: true });
+  });
+  api = await createApiServer({ dataDirectory: directory, token: "origin-test-token" });
+  const apiUrl = await listen(api);
+  bff = createDashboard({ apiUrl, apiToken: "origin-test-token", username: "tester", password: "long-test-password-123", assetDirectory: new URL("../dist/", import.meta.url).pathname });
+  const base = await listen(bff);
+  const auth = { Authorization: "Basic " + Buffer.from("tester:long-test-password-123").toString("base64") };
+  assert.equal((await fetch(base + "/experiments/api/v1/suite", { headers: { ...auth, Origin: base } })).status, 200);
+  assert.equal((await fetch(base + "/experiments/api/v1/suite", { headers: { ...auth, Origin: "http://hostile.example", Host: "hostile.example" } })).status, 403);
 });
