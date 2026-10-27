@@ -12,6 +12,8 @@ O [executor local de referências](docs/FISCAL-REFERENCE-EXECUTOR.md) confere
 arquivos, hashes, intervalos e vínculo ao contexto antes de produzir uma resolução.
 O [executor instrumentado de ferramentas](docs/TOOL-EXECUTION.md) registra chamadas
 reais locais, autorização e efeitos, com payloads redigidos e repetição controlada.
+As [reservas persistentes](docs/TOOL-OPERATION-STORE.md) conservam resultados
+desconhecidos após reinício e permitem reconciliação por recibos do domínio.
 
 Pacote local para experimentos versionados, avaliadores explícitos e relatórios
 comparáveis. Requer Node.js 24 ou superior. Não executa deploys.

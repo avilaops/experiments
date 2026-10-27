@@ -69,11 +69,19 @@ autorização é reavaliada inclusive antes de devolver um resultado do cache.
 Efeitos desconhecidos também ficam reservados para impedir redispatch automático.
 Negação e cancelamento antes do dispatch não reservam uma operação não executada.
 
-Essa proteção vale apenas para a instância em memória e sua empresa/identidade
-fixadas. Não coordena processos, reinícios, execuções diferentes ou uma segunda
-chave para o mesmo comando. O domínio precisa manter idempotência persistente,
-autorizar recursos, confirmar transações e oferecer reconciliação. Esta versão
-não expõe um comando para converter um resultado desconhecido em sucesso.
+Sem `operationStore`, essa proteção vale apenas para a instância em memória e
+sua empresa/identidade fixadas. Com `createFileToolOperationStore`, a reserva
+persiste entre execuções, processos e reinícios que compartilhem a mesma pasta
+local e chave. Não coordena uma segunda chave para o mesmo comando. O domínio
+continua responsável pela sua transação, autorização e idempotência própria.
+O [contrato de reservas persistentes](TOOL-OPERATION-STORE.md) descreve a
+recuperação e a consulta de recibos pela ação separada `reconcile`.
+
+O contrato recebe os campos aditivos `action` no registro e na autorização,
+`outputAvailable` no retorno privado e o método `reconcile` no executor.
+Um replay persistente devolve `output: null`, `outputAvailable: false`: os dados
+originais não são armazenados nem reconstruídos. Uma saída JSON `null` realmente
+observada continua distinguível por `outputAvailable: true`.
 
 ## Uso e evidência
 
@@ -111,7 +119,7 @@ de todas as ações possíveis do processo, que continua fora de uma sandbox.
 ## Aceite restante da AVL-342
 
 Selecionar um serviço de staging e integrar sua identidade verificável,
-autorização de empresa, idempotência persistente e consulta de reconciliação.
+autorização de empresa, idempotência do domínio e consulta de reconciliação.
 Repetir os cenários contra esse serviço e revisar a retenção dos registros.
 Esta entrega não conclui o aceite remoto da tarefa, não instala observabilidade
 e não publica traces na seleção de evidências públicas.

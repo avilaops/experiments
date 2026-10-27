@@ -77,6 +77,26 @@ Não registrar credenciais de produção neste documento.
 
 ## Próximos passos
 
+### Reservas persistentes e reconciliação — AVL-342
+
+O executor agora aceita armazenamento privado opcional de operações. A criação
+exclusiva da reserva impede redispatch após reinício ou disputa entre processos
+no mesmo sistema de arquivos local. A consulta `reconcile` tem autorização
+separada e só resolve a incerteza mediante recibo confirmado do domínio.
+O replay persistente informa quando a saída bruta não está disponível, sem
+gravar dados empresariais para reconstruí-la.
+
+Foram aprovados 147 testes núcleo/API; os 12 novos cobrem reservas, queda de
+processo, concorrência, integridade, conflitos e recibo HTTP. O exemplo
+`npm run test:tools:durable` usa três processos locais e dados sintéticos.
+Ver [contrato](docs/TOOL-OPERATION-STORE.md) e
+[evidência](evidencias/durable-tools-20261027.md).
+
+A inspeção SSH desta continuação confirmou API e painel saudáveis com tags
+`sha-57b2418622321f46f6ef34d3a14b3af4b25ea91b`; o checkpoint anterior de imagem
+sem revisão é histórico. Esta etapa não alterou o servidor. Os componentes de
+persistência são opt-in e ainda não estão integrados a um serviço de staging.
+
 ### Executor instrumentado — AVL-342
 
 Primeira entrega local de `tool-execution/1`, autorização por chamada, journal
