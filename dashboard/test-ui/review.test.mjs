@@ -30,7 +30,7 @@ async function fixture(t) {
     assert.ok(path.basename(directory).startsWith("avila-review-ui-"));
     await rm(directory, { recursive: true, force: true });
   });
-  browser = await chromium.launch({ headless: true, ...(process.platform === "win32" ? { channel: "chrome" } : {}) });
+  browser = await chromium.launch({ headless: true, channel: "chrome" });
   const context = await browser.newContext({
     httpCredentials: { username: options.username, password: options.password },
     viewport: { width: 390, height: 844 },
