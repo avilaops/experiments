@@ -2,6 +2,12 @@
 
 O [setup e ponto de continuidade](SETUP.md) registra as decisões e o estado atual.
 O [caderno de políticas](POLICIES.md) organiza regras, fontes e evidências por produto.
+A [coleta automática do Siscomex](docs/SISCOMEX-COLLECTION.md) arquiva a documentação
+pública, inventaria contratos e gera propostas de integração com fontes e hashes.
+O [contrato fiscal experimental](docs/FISCAL-INPUT-CONTRACT.md) define o primeiro
+JSON de contexto com validador e exemplos, sem cálculo ou autorização fiscal.
+O [planejamento de execução fiscal](docs/FISCAL-EXECUTION-CONTRACT.md) acrescenta
+rotas condicionais e cenários sintéticos para o pathFidelity.
 
 Pacote local para experimentos versionados, avaliadores explícitos e relatórios
 comparáveis. Requer Node.js 24 ou superior. Não executa deploys.

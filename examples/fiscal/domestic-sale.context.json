@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "0.1",
+  "mode": "simulation",
+  "requestId": "synthetic-sale-001",
+  "tenantId": "synthetic-tenant",
+  "operation": {
+    "kind": "domestic_goods_sale",
+    "documentModel": "55",
+    "date": "2026-10-27",
+    "currency": "BRL",
+    "shipFromUf": "SP",
+    "shipToUf": "MG",
+    "finalConsumer": false
+  },
+  "seller": {
+    "partyRef": "synthetic-seller",
+    "establishmentUf": "SP",
+    "taxProfileSnapshotRef": "synthetic-seller-profile-v1",
+    "icmsContributor": "contributor",
+    "taxRegime": "normal"
+  },
+  "buyer": {
+    "partyRef": "synthetic-buyer",
+    "establishmentUf": "MG",
+    "taxProfileSnapshotRef": "synthetic-buyer-profile-v1",
+    "icmsContributor": "contributor",
+    "taxRegime": "normal"
+  },
+  "items": [{
+    "lineId": "line-001",
+    "sku": "synthetic-item",
+    "description": "Mercadoria fictícia para validar o transporte do contexto, sem enquadramento fiscal aprovado",
+    "classificationSnapshotRef": "synthetic-classification-v1",
+    "ncm": "00000000",
+    "cest": null,
+    "originCode": "0",
+    "cfop": null,
+    "unit": "UN",
+    "quantity": "3.000000",
+    "unitPrice": "0.333333",
+    "freight": "0.00",
+    "insurance": "0.00",
+    "discount": "0.00",
+    "otherCharges": "0.00"
+  }],
+  "ruleSnapshot": {
+    "id": "synthetic-no-tax-rules",
+    "version": "fixture-1",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}

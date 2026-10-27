@@ -57,6 +57,41 @@ Não registrar credenciais de produção neste documento.
 
 ## Próximos passos
 
+### Planejamento de caminhos fiscais 0.1
+
+O [contrato de execução](docs/FISCAL-EXECUTION-CONTRACT.md) acrescenta schema de
+resolução declarada e planejamento por linha vinculado ao fingerprint da entrada
+e ao snapshot. Dados pendentes bloqueiam todo o documento. As rotas aplicável e
+não aplicável são explícitas; a aplicabilidade real ainda não é resolvida aqui.
+
+`npm test`: 107 testes aprovados. `npm run test:fiscal-path`: cinco resultados
+esperados reconhecidos, com um aprovado, três reprovados e um inconclusivo.
+Relatórios por runId e [evidência](evidencias/fiscal-execution-20261027.md)
+preservados. Não há cálculo tributário, emissão ou integração Rust adicionados.
+
+### Contrato fiscal experimental 0.1
+
+Foi implementado o [contrato de entrada](docs/FISCAL-INPUT-CONTRACT.md) com JSON
+Schema, validador de contexto e fixture deliberadamente fictícia para simulação
+de venda doméstica. São 19 testes novos, incluindo 3 mil linhas e rejeição de
+campos/valores inválidos. `npm test`: 99 aprovados. O CLI retornou
+`context_recorded` para o exemplo; isso não é aprovação fiscal. Sem cálculo,
+integração Rust, consulta operacional ou deploy adicionados por esta etapa.
+Ver [evidência](evidencias/fiscal-input-20261027.md).
+
+### Coleta automatizada do Siscomex
+
+O comando `npm run collect:siscomex -- D:\Projetos\Docs\Siscomex` foi implementado
+e executado duas vezes com sucesso. Foram processados 181 endereços, arquivados
+178 documentos e inventariados 27 contratos com 320 operações. Hashes e tamanhos
+conferidos; nenhuma mudança entre as duas capturas completas.
+
+As 27 fichas geradas foram importadas como propostas na prévia local, que passou
+a ter 40 fichas na revisão 34. Reimportação preservou todas. O cadastro não foi
+implantado em produção. `npm test`: 80 testes aprovados. Detalhes em
+[coleta do Siscomex](docs/SISCOMEX-COLLECTION.md) e
+[evidência da coleta](evidencias/siscomex-20261027.md).
+
 ### Continuação fiscal em 27/10/2026
 
 Foram executados 23 testes locais do fiscal existente no Lojas, sem alteração

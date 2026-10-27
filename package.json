@@ -5,13 +5,26 @@
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
-  "engines": { "node": ">=24" },
-  "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./api": { "types": "./dist/lab/server.d.ts", "import": "./dist/lab/server.js" }
+  "engines": {
+    "node": ">=24"
   },
-  "files": ["dist", "src"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./api": {
+      "types": "./dist/lab/server.d.ts",
+      "import": "./dist/lab/server.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
+    "test:fiscal-path": "npm run build && node examples/fiscal-paths.mjs",
+    "collect:siscomex": "node scripts/collect-siscomex.mjs",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "api": "npm run build && node dist/lab/serve.js",
@@ -23,6 +36,7 @@
   },
   "devDependencies": {
     "@types/node": "24.13.6",
+    "ajv": "8.20.0",
     "typescript": "6.0.3"
   }
 }

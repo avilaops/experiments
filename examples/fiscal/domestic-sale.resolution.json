@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "0.1",
+  "inputFingerprint": "a8171c50689c66192bba295e2d3a115c64ae96f39efa189cf9d820e57290be0c",
+  "ruleSnapshot": {
+    "id": "synthetic-no-tax-rules",
+    "version": "fixture-1",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "lines": [{
+    "lineId": "line-001",
+    "classification": {
+      "status": "matched",
+      "evidenceRef": "synthetic-not-a-fiscal-validation"
+    },
+    "taxes": {
+      "icmsOwn": {
+        "applicability": "applicable",
+        "ruleRef": "synthetic-own-rule",
+        "reason": "Declaração fictícia apenas para exercitar a rota; não há enquadramento nem cálculo aprovado."
+      },
+      "icmsSt": {
+        "applicability": "applicable",
+        "ruleRef": "synthetic-st-rule",
+        "reason": "Declaração fictícia; não é uma conclusão obtida do NCM ou da ausência de CEST."
+      },
+      "difal": {
+        "applicability": "not_applicable",
+        "ruleRef": "synthetic-difal-rule",
+        "reason": "Declaração fictícia para exercitar o ramo não aplicável; não representa isenção ou interpretação legal."
+      }
+    }
+  }]
+}

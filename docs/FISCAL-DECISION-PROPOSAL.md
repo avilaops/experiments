@@ -4,6 +4,10 @@ Estado: proposta de engenharia, sem motor tributário ou importação automátic
 implementados por este documento. Preserva o monitor fiscal atual do Lojas e
 as responsabilidades das integrações ERP/TMS.
 
+Primeiro artefato executável: [contrato de entrada 0.1](FISCAL-INPUT-CONTRACT.md),
+com JSON Schema, inspeção de contexto e fixture sintética. Ele valida transporte
+e condições locais; não implementa cálculo ou atesta contexto fiscal completo.
+
 ## Primeiro recorte
 
 Definir uma operação empresarial concreta, um tipo de documento, os perfis
