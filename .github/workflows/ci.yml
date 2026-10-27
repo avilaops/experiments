@@ -1,0 +1,57 @@
+name: Validate and package
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            dashboard/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm ci --no-audit --no-fund
+        working-directory: dashboard
+      - run: npm run build
+        working-directory: dashboard
+      - run: npm test
+        working-directory: dashboard
+      - run: npx playwright install --with-deps chromium
+        working-directory: dashboard
+      - run: npm run test:ui
+        working-directory: dashboard
+      - name: Build release images on GitHub
+        if: github.event_name != 'pull_request'
+        run: |
+          docker build --target api --tag "avila-experiments-api:sha-${GITHUB_SHA}" .
+          docker build --target dashboard --tag "avila-experiments-dashboard:sha-${GITHUB_SHA}" .
+          mkdir release
+          docker save "avila-experiments-api:sha-${GITHUB_SHA}" "avila-experiments-dashboard:sha-${GITHUB_SHA}" | gzip > release/images.tar.gz
+          cp compose.yaml release/compose.yaml
+          printf '%s\n' "$GITHUB_SHA" > release/REVISION
+          cd release
+          sha256sum images.tar.gz compose.yaml REVISION > SHA256SUMS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: github.event_name != 'pull_request'
+        with:
+          name: release-${{ github.sha }}
+          path: release/
+          retention-days: 14
+          if-no-files-found: error

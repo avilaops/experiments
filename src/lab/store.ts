@@ -12,10 +12,21 @@ function notFound(error: unknown): boolean {
   return error !== null && typeof error === "object" && "code" in error && error.code === "ENOENT";
 }
 
+function runSummary(run: StoredRun) {
+  return {
+    id: run.id, createdAt: run.createdAt, mode: run.mode, suiteRevision: run.suite.revision,
+    baseline: run.baseline.summary, candidate: run.candidate.summary, comparison: run.comparison,
+  };
+}
+
+type RunSummary = ReturnType<typeof runSummary>;
+const newestFirst = (left: RunSummary, right: RunSummary) => right.createdAt.localeCompare(left.createdAt) || right.id.localeCompare(left.id);
+
 export class LabStore {
   readonly #directory: string;
   #updates: Promise<unknown> = Promise.resolve();
   #running = false;
+  #runIndex: RunSummary[] = [];
 
   constructor(directory: string) {
     this.#directory = path.resolve(directory);
@@ -44,6 +55,31 @@ export class LabStore {
         dataset: { id: "lab-calculation", version: "1", split: "development", cases: draft.cases },
       });
     }
+    await this.#initializeRunIndex();
+  }
+
+  async #initializeRunIndex() {
+    let cached: RunSummary[] = [];
+    try {
+      const index = JSON.parse(await readFile(path.join(this.#directory, "runs-index.json"), "utf8"));
+      if (index?.schemaVersion === "1" && Array.isArray(index.items) && index.items.every((item: RunSummary) =>
+        item && typeof item.id === "string" && typeof item.createdAt === "string" && item.baseline && item.candidate)) {
+        cached = index.items;
+      }
+    } catch (error) {
+      if (!notFound(error) && !(error instanceof SyntaxError)) throw error;
+    }
+    const summaries = new Map(cached.map(item => [item.id, item]));
+    const files = (await readdir(path.join(this.#directory, "runs"))).filter(name => /^[0-9a-f-]{36}\.json$/i.test(name));
+    const restored: RunSummary[] = [];
+    // Migrate older volumes and recover runs committed before an interrupted index
+    // write, loading one complete report at a time rather than the entire history.
+    for (const file of files) {
+      const id = file.slice(0, -5);
+      restored.push(summaries.get(id) ?? runSummary(await this.run(id)));
+    }
+    this.#runIndex = restored.sort(newestFirst);
+    await this.#write("runs-index.json", { schemaVersion: "1", items: this.#runIndex });
   }
 
   async #readSuite(): Promise<Suite> {
@@ -97,6 +133,9 @@ export class LabStore {
         suite, baseline, candidate, comparison: compareExperiments(baseline, candidate),
       };
       await this.#write(path.join("runs", `${result.id}.json`), result);
+      this.#runIndex.push(snapshot(runSummary(result)));
+      this.#runIndex.sort(newestFirst);
+      await this.#write("runs-index.json", { schemaVersion: "1", items: this.#runIndex });
       return result;
     } finally {
       this.#running = false;
@@ -114,15 +153,9 @@ export class LabStore {
   }
 
   async runs(limit: number, offset: number) {
-    const files = (await readdir(path.join(this.#directory, "runs"))).filter((name) => /^[0-9a-f-]{36}\.json$/i.test(name));
-    const runs = await Promise.all(files.map((name) => this.run(name.slice(0, -5))));
-    runs.sort((left, right) => right.createdAt.localeCompare(left.createdAt) || right.id.localeCompare(left.id));
     return {
-      total: runs.length,
-      items: runs.slice(offset, offset + limit).map((run) => ({
-        id: run.id, createdAt: run.createdAt, mode: run.mode, suiteRevision: run.suite.revision,
-        baseline: run.baseline.summary, candidate: run.candidate.summary, comparison: run.comparison,
-      })),
+      total: this.#runIndex.length,
+      items: snapshot(this.#runIndex.slice(offset, offset + limit)),
     };
   }
 }

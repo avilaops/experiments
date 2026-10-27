@@ -1,6 +1,6 @@
 services:
   api:
-    image: avila-experiments-api:lab-20261027-v1
+    image: ${API_IMAGE:-avila-experiments-api:lab-20261027-v1}
     build: { context: ., target: api }
     env_file: .env
     environment:
@@ -18,7 +18,7 @@ services:
       driver: json-file
       options: { max-size: 10m, max-file: "2" }
   dashboard:
-    image: avila-experiments-dashboard:lab-20261027-v1
+    image: ${DASHBOARD_IMAGE:-avila-experiments-dashboard:lab-20261027-v1}
     build: { context: ., target: dashboard }
     env_file: .env
     environment:

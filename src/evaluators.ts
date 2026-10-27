@@ -3,7 +3,7 @@ import type { Evaluator, JsonValue } from "./types.js";
 import { requireText } from "./validation.js";
 
 export function exactMatch<Input extends JsonValue = JsonValue, Output extends JsonValue = JsonValue>(): Evaluator<Input, Output> {
-  return {
+  return Object.freeze<Evaluator<Input, Output>>({
     id: "exact-match",
     version: "1",
     kind: "gate",
@@ -13,7 +13,7 @@ export function exactMatch<Input extends JsonValue = JsonValue, Output extends J
       const matches = canonicalJson(expected) === canonicalJson(output);
       return { score: matches ? 1 : 0, reason: matches ? "Output matches the reference" : "Output differs from the reference" };
     },
-  };
+  });
 }
 
 export interface NumericToleranceOptions {
@@ -36,10 +36,10 @@ export function numericTolerance<Input extends JsonValue = JsonValue, Output ext
     throw new TypeError("Numeric tolerances must be nonnegative");
   }
 
-  return {
+  return Object.freeze<Evaluator<Input, Output>>({
     id: "numeric-tolerance",
     version: "1",
-    parameters: { absoluteTolerance, relativeTolerance },
+    parameters: Object.freeze({ absoluteTolerance, relativeTolerance }),
     kind: "gate",
     threshold: 1,
     evaluate({ expected, output }) {
@@ -65,7 +65,7 @@ export function numericTolerance<Input extends JsonValue = JsonValue, Output ext
           : "Output exceeds both absolute and relative tolerances",
       };
     },
-  };
+  });
 }
 
 export interface NumberRangeOptions {
@@ -91,10 +91,10 @@ export function numberRange<Input extends JsonValue = JsonValue, Output extends 
     throw new TypeError("An exclusive range with identical bounds is empty");
   }
 
-  return {
+  return Object.freeze<Evaluator<Input, Output>>({
     id: "number-range",
     version: "2",
-    parameters: { minimum, maximum, includeMinimum, includeMaximum },
+    parameters: Object.freeze({ minimum, maximum, includeMinimum, includeMaximum }),
     kind: "gate",
     threshold: 1,
     evaluate({ output }) {
@@ -106,7 +106,7 @@ export function numberRange<Input extends JsonValue = JsonValue, Output extends 
         reason: passes ? "Output is inside the declared numeric range" : "Output must be a finite number inside the declared numeric range",
       };
     },
-  };
+  });
 }
 
 export type AgentTraceStep = { node: string; status: "succeeded" | "failed" };
@@ -165,7 +165,7 @@ export function pathFidelity<Input extends JsonValue = JsonValue, Output extends
   if (parameters.allowedTransitions) Object.freeze(parameters.allowedTransitions);
   Object.freeze(parameters);
 
-  return {
+  return Object.freeze<Evaluator<Input, Output>>({
     id: "path-fidelity", version: "1", parameters, kind: "gate", threshold: 1,
     evaluate({ output }) {
       if (!isRecord(output) || output.trace === undefined) {
@@ -203,5 +203,5 @@ export function pathFidelity<Input extends JsonValue = JsonValue, Output extends
       }
       return { score: 1, reason: "Successful execution follows the declared path policy" };
     },
-  };
+  });
 }

@@ -63,6 +63,11 @@ do navegador. Saúde, contrato e página inicial não retornam dados de experime
 
 - Um processo de API e uma execução por vez. Não use réplicas compartilhando estes
   arquivos: a coordenação de edições ocorre apenas dentro do processo.
+- O histórico usa `runs-index.json`, um índice derivado de resumos. Na inicialização,
+  volumes antigos e gravações interrompidas são reconciliados com `runs/`, lendo
+  sequencialmente apenas os relatórios ausentes do índice. Consultar uma página
+  não abre os relatórios completos. O backup deve preservar o volume inteiro;
+  o índice pode ser reconstruído a partir das evidências originais.
 - Até 200 casos, 10 repetições e corpo de requisição de até 1 MiB.
 - Revisão desatualizada ao salvar retorna 412; ao executar, 409. Recarregue os dados.
 - O laboratório executa apenas operações numéricas predefinidas. Não aceita código

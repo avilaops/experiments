@@ -113,6 +113,9 @@ execute `npm run api` e abra <http://127.0.0.1:3300/>. A implantação do painel
 React/BFF e da exportação MDX está descrita em [DEPLOYMENT.md](DEPLOYMENT.md).
 
 O isolamento atual é por cópia de valores JSON em memória; não é uma sandbox.
+Os avaliadores nativos e seus parâmetros são imutáveis. Para criar um avaliador
+adaptado, declare outro objeto com identidade e versão próprias; alterar os
+metadados de um avaliador nativo não modifica seus critérios de execução.
 A aprovação dos testes não basta para autorizar um deploy. Os exemplos são de
 desenvolvimento, sem conexão real com ERP, Annif, Ultralytics ou Langfuse.
 
