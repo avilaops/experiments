@@ -1,5 +1,24 @@
 # Setup e ponto de continuidade — 27/10/2026
 
+## Continuação: importação revisada implantada
+
+Revisão implantada: `bf2b9a974bdc5939e52f8cd2c6e488a2257b71fa`, em
+`apps-noclient`, com imagens construídas no GitHub, CI aprovada e backup.
+O painel aceita listas de fichas JSON e a exportação do próprio caderno, apresenta
+uma prévia e exige motivo e conferência explícita. O lote cria somente códigos
+novos em uma gravação atômica e preserva integralmente os códigos existentes.
+
+Foram aprovados 127 testes do núcleo/API, 13 do painel e 11 no Chrome na CI.
+A conferência autenticada no domínio real concluiu uma reimportação sem mudanças:
+oito fichas preservadas, revisão 1 e histórico iguais, sem alterações nos hashes
+dos quatro arquivos persistidos. A criação de registros e os conflitos foram
+testados com API e BFF reais em diretórios temporários.
+
+Respostas JSON preservam o ETag por meio de `Cache-Control: no-store, no-transform`.
+Isso corrige o erro observado quando a compressão do proxy acrescentava `-zstd`
+ao ETag usado em If-Match. Detalhes em
+[importacao-painel-20261027.md](evidencias/importacao-painel-20261027.md).
+
 ## Continuação: conflitos e impressão implantados
 
 Revisão implantada: `5d86e85271f2eabffbcf982dbd170de40795e844`, em
@@ -30,8 +49,8 @@ para rollback. Detalhes e evidências em
 [correcoes-review-20261027.md](evidencias/correcoes-review-20261027.md).
 
 As contagens e afirmações de ausência de implantação nas seções de checkpoints
-abaixo descrevem as respectivas etapas anteriores. Esta seção registra a
-implantação atual; não afirma que os inventários, integrações ou pilotos
+abaixo descrevem as respectivas etapas anteriores. A seção mais recente registra
+a implantação atual; não afirma que os inventários, integrações ou pilotos
 pendentes tenham sido concluídos.
 
 ## Repositório de trabalho
@@ -98,10 +117,10 @@ com preservação de códigos existentes, motivo, If-Match e conferência explí
 Aceita listas de fichas e a exportação do próprio caderno, sem restaurar revisões,
 versões ou histórico antigos. O CLI anterior permanece sequencial.
 
-Validação local: 127 testes núcleo/API, 13 do painel e 11 no Chrome aprovados.
+Validação na CI: 127 testes núcleo/API, 13 do painel e 11 no Chrome aprovados.
 Os cenários cobrem recusa integral de lote inválido, concorrência, capacidade,
 reimportação sem mudanças e confirmação renovada após conflito. A publicação
-depende da CI desta revisão. Respostas JSON da API e do BFF usam no-transform
+foi concluída em `bf2b9a9`. Respostas JSON da API e do BFF usam no-transform
 para preservar o ETag da revisão durante a passagem pelo proxy de compressão.
 Os inventários de outros produtos continuam
 dependendo de fontes conferidas e responsáveis reais.
