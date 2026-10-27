@@ -16,6 +16,7 @@ export function PolicyCatalog() {
   const [state, setState] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [draft, setDraft] = useState<PolicyDraft>();
+  const [editing, setEditing] = useState(false);
   const [changeNote, setChangeNote] = useState("");
   const [message, setMessage] = useState("");
   const [conflict, setConflict] = useState(false);
@@ -30,14 +31,17 @@ export function PolicyCatalog() {
   }
   useEffect(() => { void load().catch(error => setMessage(error.message)); }, []);
   const selected = catalog?.policies.find(policy => policy.id === selectedId);
+  const duplicateId = !editing && !!draft && !!catalog?.policies.some(policy => policy.id === draft.id.trim());
   const visible = catalog?.policies.filter(policy => (!product || policy.product === product || policy.product === "shared") && (!state || policy.state === state) &&
     fold([policy.id, policy.title, policy.rule, policy.owner, policy.enforcement, ...policy.sources.map(source => source.location)].join(" ")).includes(fold(query))) ?? [];
   function edit(policy?: Policy) {
+    setEditing(!!policy);
     setDraft(policy ? structuredClone(toDraft(policy)) : { ...emptyPolicy(), product: (product || "erp") as PolicyDraft["product"] });
     setChangeNote(""); setMessage(""); setConflict(false);
   }
   async function save() {
     if (!draft || busy || conflict) return;
+    if (duplicateId) { setMessage("Este código já existe. Informe outro código ou abra a ficha existente para editar."); return; }
     setBusy(true); setMessage("");
     try {
       const response = await fetch(endpoint, { method: "PUT", headers: { "Content-Type": "application/json", "If-Match": etag }, body: JSON.stringify({ policy: draft, changeNote }) });
@@ -72,10 +76,11 @@ export function PolicyCatalog() {
         <p className="muted">Princípios compartilhados também aparecem nos filtros por produto. Sua aplicação em cada sistema precisa ser verificada.</p>
         <div className="actions"><button className="primary" disabled={!catalog || !!draft} onClick={() => edit()}>Nova política</button><button disabled={!catalog} onClick={exportCatalog}>Exportar caderno JSON</button></div>
       </section>
-      {draft && <section className="policy-editor"><h2>{catalog?.policies.some(item => item.id === draft.id) ? "Revisar política" : "Cadastrar política"}</h2>
-        <form onSubmit={event => { event.preventDefault(); void save(); }}>
-          <div className="fields"><label>Código da política<input required maxLength={80} pattern="[A-Z][A-Z0-9]*(-[A-Z0-9]+)+" placeholder="ERP-ACCESS-003" disabled={catalog?.policies.some(item => item.id === draft.id)} value={draft.id} onChange={event => setDraft({ ...draft, id: event.target.value })}/></label>
-            <label>Produto da política<select disabled={catalog?.policies.some(item => item.id === draft.id)} value={draft.product} onChange={event => setDraft({ ...draft, product: event.target.value as PolicyDraft["product"] })}>{PRODUCTS.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
+      {draft && <section className="policy-editor"><h2>{editing ? "Revisar política" : "Cadastrar política"}</h2>
+        <form onSubmit={event => { event.preventDefault(); void save(); }}><fieldset disabled={busy} className="editor-fields" aria-label="Editar política">
+          <div className="fields"><label>Código da política<input required maxLength={80} pattern="[A-Z][A-Z0-9]*(-[A-Z0-9]+)+" placeholder="ERP-ACCESS-003" disabled={editing} value={draft.id} onChange={event => setDraft({ ...draft, id: event.target.value })}/></label>
+            <label>Produto da política<select disabled={editing} value={draft.product} onChange={event => setDraft({ ...draft, product: event.target.value as PolicyDraft["product"] })}>{PRODUCTS.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
+          {duplicateId && <p role="alert">Este código já existe. Informe outro código ou abra a ficha existente para editar.</p>}
           <label>Título da política<input required maxLength={180} value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })}/></label>
           <div className="fields"><label>Categoria<select value={draft.category} onChange={event => setDraft({ ...draft, category: event.target.value as PolicyDraft["category"] })}>{Object.entries(POLICY_CATEGORIES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
             <label>Situação declarada<select value={draft.state} onChange={event => setDraft({ ...draft, state: event.target.value as PolicyDraft["state"] })}>{Object.entries(POLICY_STATES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
@@ -90,8 +95,8 @@ export function PolicyCatalog() {
           <button type="button" disabled={draft.sources.length >= 20} onClick={() => setDraft({ ...draft, sources: [...draft.sources, { kind: "document", location: "", note: "" }] })}>Adicionar referência</button>
           <label>Motivo da alteração<textarea required maxLength={2000} value={changeNote} onChange={event => setChangeNote(event.target.value)}/></label>
           {conflict && <div className="conflict" role="alert"><strong>Outra revisão foi salva.</strong><p>Seu formulário foi preservado. Recarregar atualiza a revisão do caderno sem apagar sua edição; confira as mudanças da outra pessoa antes de salvar novamente.</p><button type="button" onClick={() => void load().catch(error => setMessage(error.message))}>Recarregar caderno</button></div>}
-          <div className="actions"><button className="primary" disabled={busy || conflict} type="submit">{busy ? "Salvando…" : "Salvar política"}</button><button type="button" disabled={busy} onClick={() => setDraft(undefined)}>Cancelar edição</button></div>
-        </form>
+          <div className="actions"><button className="primary" disabled={busy || conflict || duplicateId} type="submit">{busy ? "Salvando…" : "Salvar política"}</button><button type="button" disabled={busy} onClick={() => setDraft(undefined)}>Cancelar edição</button></div>
+        </fieldset></form>
       </section>}
       <div className="policy-layout"><section className="policy-list"><h2>{visible.length} fichas encontradas</h2>{!visible.length && <p className="empty">Nenhuma ficha para este filtro. O inventário deste produto pode estar pendente.</p>}
         {visible.map(policy => <button className={selectedId === policy.id ? "policy-card selected" : "policy-card"} key={policy.id} onClick={() => setSelectedId(policy.id)}><span className="hash">{policy.id} · v{policy.version} · {productName(policy.product)}</span><strong>{policy.title}</strong><span>{POLICY_STATES[policy.state]}</span><span className="muted">{policy.owner}</span></button>)}

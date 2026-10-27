@@ -59,12 +59,31 @@ de evidência, arquivos inesperados e disputa entre exportadores.
 
 ## Docker
 
+O workflow `.github/workflows/ci.yml` executa os testes do núcleo, o build e os
+testes do painel e três regressões no Chromium. Em eventos de push, somente após
+essas verificações, constrói as duas imagens no GitHub e disponibiliza o artefato
+`release-<commit>`, com imagens, Compose, revisão e SHA-256. Pull requests executam
+as verificações sem produzir imagens para implantação.
+
+Para atualizar um servidor existente, confira o resultado da CI e os hashes do
+artefato antes de carregar as imagens com `docker load`. Use uma nova pasta de
+release e um link `.env` para a configuração privada já existente. Defina
+`API_IMAGE=avila-experiments-api:sha-<commit>` e
+`DASHBOARD_IMAGE=avila-experiments-dashboard:sha-<commit>` e execute Compose com
+`up -d --no-build --wait`. Não execute builds no servidor de aplicações.
+Faça backup verificável do volume antes da atualização e preserve as imagens e
+o Compose anteriores para rollback. O índice do histórico é derivado e migra o
+volume existente sem substituir os arquivos de evidência em `runs/`.
+
 O Compose deve rodar como um único projeto avila-experiments, com uma réplica
 da API. Configure o arquivo .env privado, modo 600, com LAB_API_TOKEN,
 DASHBOARD_USER e DASHBOARD_PASSWORD (senha aleatória de ao menos 16 caracteres).
 
-    docker compose -p avila-experiments build
-    docker compose -p avila-experiments up -d
+    sha256sum -c SHA256SUMS
+    docker load --input images.tar.gz
+    export API_IMAGE="avila-experiments-api:sha-$(cat REVISION)"
+    export DASHBOARD_IMAGE="avila-experiments-dashboard:sha-$(cat REVISION)"
+    docker compose -p avila-experiments up -d --no-build --wait
     docker compose -p avila-experiments ps
 
 O Dockerfile inclui os 14 casos iniciais. O volume evidence armazena revisões

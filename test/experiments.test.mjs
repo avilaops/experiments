@@ -9,7 +9,8 @@ function experiment(cases = [{ id: "first", input: 2, expected: 4, group: "ordin
     hypothesis: "The executor doubles every input.",
     dataset: { id: "numbers", version: "1", split: "evaluation", cases },
     variant: { id: "double", version: "1", codeVersion: "test-commit" },
-    evaluators: [exactMatch()],
+    // Custom mutable definition for runner validation and isolation tests.
+    evaluators: [{ ...exactMatch() }],
   };
 }
 
