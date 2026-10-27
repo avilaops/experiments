@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { createApiServer } from "../../dist/lab/server.js";
 import { createDashboard } from "../dist/server.mjs";
+import { validatePublicExport } from "../public-export.mjs";
 const listen = async server => { await new Promise(resolve => server.listen(0, "127.0.0.1", resolve)); return "http://127.0.0.1:" + server.address().port; };
 const close = server => new Promise(resolve => server.close(resolve));
 test("BFF authenticates, withholds the API token, preserves ETag and protects mutations", async () => {
@@ -35,6 +36,7 @@ test("BFF authenticates, withholds the API token, preserves ETag and protects mu
 test("public export contains only allowlisted synthetic evidence", async () => {
   const root = new URL("../", import.meta.url);
   const allowed = JSON.parse(await readFile(new URL("evidence.allowlist.json", root)));
+  await validatePublicExport(new URL("public/", root), allowed);
   assert.deepEqual((await readdir(new URL("public/data/", root))).sort(), [...allowed].sort());
   const manifest = JSON.parse(await readFile(new URL("public/manifest.json", root)));
   assert.equal(manifest.artifacts.length, allowed.length);

@@ -28,6 +28,35 @@ O script select-evidence preserva a seleção existente; uma nova seleção requ
 revisão explícita dos artefatos. A exportação MDX acontece no build, a partir
 de fonte confiável versionada. O servidor não compila conteúdo enviado.
 
+## Exportação limpa e falhas de build
+
+O build público usa `dashboard/public-export.mjs`. Cada exportação nasce em um
+diretório temporário novo dentro de `dashboard`, sem copiar a saída anterior.
+Antes da promoção, a validação exige exatamente `index.html`, `style.css`,
+`manifest.json` e `data/`; em `data/`, somente os nomes permitidos. Links
+simbólicos são rejeitados. Tamanhos e SHA-256 são conferidos contra o manifesto.
+
+Após a validação, a saída anterior é reservada e a nova assume `public/`.
+Se a promoção falhar, a rotina tenta restaurar a anterior; se a restauração
+também falhar, preserva o backup e informa seu caminho no erro. Falhas de
+renderização ou validação não substituem a exportação anterior.
+
+Uma trava exclusiva recusa exportações concorrentes. Se o processo for encerrado
+abruptamente, a trava pode permanecer. Antes de remover `.public-build.lock`,
+confirme que nenhum build está ativo e confira os diretórios `.public-build-*`;
+eles podem conter uma saída anterior necessária para recuperação.
+
+A substituição local usa duas renomeações com restauração; não é uma operação
+atômica de troca de árvores e não garante continuidade para um servidor que
+sirva diretamente essa pasta durante o build. Em produção, construa em uma nova
+pasta de release, valide a árvore inteira e só então altere a referência servida
+para a release validada. Preserve a referência anterior para rollback. Não rode
+o build diretamente na árvore que o Caddy está servindo.
+
+Os testes de exportação cobrem sentinelas na raiz e em subpastas, remoção de um
+artefato da lista, reconstrução equivalente, renderização com falha, corrupção
+de evidência, arquivos inesperados e disputa entre exportadores.
+
 ## Docker
 
 O Compose deve rodar como um único projeto avila-experiments, com uma réplica

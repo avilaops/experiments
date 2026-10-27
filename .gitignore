@@ -4,6 +4,9 @@ reports/
 *.tgz
 var/
 dashboard/public/
+dashboard/.public-build-*/
+dashboard/.public-build.lock
+dashboard/.export-test-*/
 dashboard/.env*
 .env*
 evidencias/screenshots/
