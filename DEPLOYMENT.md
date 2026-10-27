@@ -60,7 +60,7 @@ de evidência, arquivos inesperados e disputa entre exportadores.
 ## Docker
 
 O workflow `.github/workflows/ci.yml` executa os testes do núcleo, o build e os
-testes do painel e três regressões no Chrome já instalado no runner Ubuntu 24.04.
+testes do painel e regressões de interface no Chrome já instalado no runner Ubuntu 24.04.
 Em eventos de push, somente após
 essas verificações, constrói as duas imagens no GitHub e disponibiliza o artefato
 `release-<commit>`, com imagens, Compose, revisão e SHA-256. Pull requests executam

@@ -96,6 +96,26 @@ do volume. Hashes, arquivos e snapshots não constituem armazenamento invioláve
 O painel atual usa credencial compartilhada: o responsável da ficha não identifica
 quem efetivamente editou e não implementa autorização individual por produto.
 
+## Revisar conflitos entre telas
+
+Se outra gravação alterar a revisão do caderno, o salvamento retorna 412 e mantém
+o formulário e o motivo da alteração. Use "Conferir versão atual" para comparar
+a ficha original, sua edição e a versão salva.
+
+- Alterações em campos diferentes são reunidas no formulário para conferência.
+- Quando as duas telas modificaram o mesmo campo com conteúdos diferentes, o
+  salvamento fica bloqueado até escolher "Manter minha edição" ou "Usar versão atual".
+- Fontes e evidências são comparadas como uma lista inteira. Não há união por
+  posição que possa associar a nota de uma pessoa à referência de outra.
+- Uma nova alteração durante a conferência exige outra revisão; a API continua
+  verificando If-Match em cada tentativa de gravação.
+- A validação dos campos e da situação declarada continua sendo feita pela API
+  depois da conferência. Reunir campos não atesta a validade de suas fontes.
+
+A impressão contém a ficha salva, com versão, responsável, situação e fontes.
+Rascunhos, navegação e histórico não integram essa impressão. A indicação de
+cadastro privado e manual acompanha a ficha no papel ou PDF.
+
 Não exportar esse cadastro, suas referências internas ou seu histórico para a
 página pública de evidências. O exportador público continua limitado aos JSONs
 sintéticos selecionados separadamente.
@@ -142,7 +162,8 @@ Esse desenho não implementa cálculo, aprovação ou integração tributária.
 
 ### Entregas seguintes
 
-1. Validar a ficha, a edição e a impressão no navegador desktop e móvel.
+1. Ficha, edição concorrente e impressão A4 validadas por testes de navegador.
+   Manter essas regressões nas próximas alterações do caderno.
 2. Publicação concluída em 27/10/2026, com backup e imagens anteriores preservados.
    Atualizações seguintes devem manter a validação da CI, o backup do volume e
    a separação da seleção pública.

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { PRODUCTS, POLICY_CATEGORIES, POLICY_STATES, SOURCE_KINDS, type Policy, type PolicyCatalog as Catalog, type PolicyDraft } from "../../src/lab/policy-contracts.js";
+import { mergePolicyDraft, POLICY_FIELD_LABELS, type PolicyField } from "./policy-merge.js";
 
 const endpoint = "/experiments/api/v1/policies";
 const emptyPolicy = (): PolicyDraft => ({ id: "", product: "erp", title: "", category: "access", state: "proposed", rule: "", owner: "A definir", enforcement: "", verificationDate: "", sources: [] });
@@ -7,6 +8,12 @@ const productName = (id: string) => PRODUCTS.find(product => product.id === id)?
 const date = (value: string) => new Date(value).toLocaleString("pt-BR");
 const fold = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const toDraft = ({ version: _version, updatedAt: _updatedAt, ...policy }: Policy): PolicyDraft => policy;
+function fieldText(policy: PolicyDraft, field: PolicyField): string {
+  if (field === "sources") return policy.sources.map(source => `${SOURCE_KINDS[source.kind]}: ${source.location}\n${source.note}`).join("\n\n") || "Nenhuma referência";
+  if (field === "state") return POLICY_STATES[policy.state];
+  if (field === "category") return POLICY_CATEGORIES[policy.category];
+  return policy[field] || "Não informado";
+}
 
 export function PolicyCatalog() {
   const [catalog, setCatalog] = useState<Catalog>();
@@ -17,17 +24,46 @@ export function PolicyCatalog() {
   const [selectedId, setSelectedId] = useState("");
   const [draft, setDraft] = useState<PolicyDraft>();
   const [editing, setEditing] = useState(false);
+  const [basePolicy, setBasePolicy] = useState<PolicyDraft>();
+  const [fieldConflicts, setFieldConflicts] = useState<PolicyField[]>([]);
   const [changeNote, setChangeNote] = useState("");
   const [message, setMessage] = useState("");
   const [conflict, setConflict] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  async function load() {
+  async function readCatalog() {
     const response = await fetch(endpoint);
     const value = await response.json();
     if (!response.ok) throw new Error(value.error?.message ?? "Não foi possível carregar o caderno.");
-    setCatalog(value); setEtag(response.headers.get("etag") ?? `"${value.revision}"`); setConflict(false);
-    return value as Catalog;
+    return { value: value as Catalog, etag: response.headers.get("etag") ?? `"${value.revision}"` };
+  }
+  async function load() {
+    const latest = await readCatalog();
+    setCatalog(latest.value); setEtag(latest.etag);
+  }
+  async function reviewConflict() {
+    if (!draft || busy) return;
+    setBusy(true); setMessage("");
+    try {
+      const latest = await readCatalog();
+      if (editing && basePolicy) {
+        const current = latest.value.policies.find(policy => policy.id === basePolicy.id);
+        if (!current) throw new Error("A ficha não está mais disponível. Preserve sua edição antes de cancelar.");
+        const merged = mergePolicyDraft(basePolicy, draft, toDraft(current));
+        setDraft(merged.draft); setFieldConflicts(merged.conflicts);
+        setBasePolicy(structuredClone(toDraft(current)));
+        setMessage(merged.conflicts.length ? "Escolha o conteúdo dos campos em conflito antes de salvar." : "Alterações em campos diferentes foram reunidas. Confira a ficha antes de salvar.");
+      } else {
+        setMessage("Caderno atualizado. Confira o código e os dados antes de salvar.");
+      }
+      setCatalog(latest.value); setEtag(latest.etag); setConflict(false);
+    } catch (error) { setMessage((error as Error).message); }
+    finally { setBusy(false); }
+  }
+  function resolveField(field: PolicyField, useCurrent: boolean) {
+    if (!draft || !basePolicy) return;
+    if (useCurrent) setDraft({ ...draft, [field]: structuredClone(basePolicy[field]) });
+    setFieldConflicts(fields => fields.filter(item => item !== field));
   }
   useEffect(() => { void load().catch(error => setMessage(error.message)); }, []);
   const selected = catalog?.policies.find(policy => policy.id === selectedId);
@@ -36,11 +72,12 @@ export function PolicyCatalog() {
     fold([policy.id, policy.title, policy.rule, policy.owner, policy.enforcement, ...policy.sources.map(source => source.location)].join(" ")).includes(fold(query))) ?? [];
   function edit(policy?: Policy) {
     setEditing(!!policy);
+    setBasePolicy(policy ? structuredClone(toDraft(policy)) : undefined); setFieldConflicts([]);
     setDraft(policy ? structuredClone(toDraft(policy)) : { ...emptyPolicy(), product: (product || "erp") as PolicyDraft["product"] });
     setChangeNote(""); setMessage(""); setConflict(false);
   }
   async function save() {
-    if (!draft || busy || conflict) return;
+    if (!draft || busy || conflict || fieldConflicts.length) return;
     if (duplicateId) { setMessage("Este código já existe. Informe outro código ou abra a ficha existente para editar."); return; }
     setBusy(true); setMessage("");
     try {
@@ -94,8 +131,14 @@ export function PolicyCatalog() {
             <label>Limitações ou observações<textarea maxLength={2000} value={source.note} onChange={event => setDraft({ ...draft, sources: draft.sources.map((item, position) => position === index ? { ...item, note: event.target.value } : item) })}/></label><button type="button" onClick={() => setDraft({ ...draft, sources: draft.sources.filter((_, position) => position !== index) })}>Remover referência {index + 1}</button></fieldset>)}
           <button type="button" disabled={draft.sources.length >= 20} onClick={() => setDraft({ ...draft, sources: [...draft.sources, { kind: "document", location: "", note: "" }] })}>Adicionar referência</button>
           <label>Motivo da alteração<textarea required maxLength={2000} value={changeNote} onChange={event => setChangeNote(event.target.value)}/></label>
-          {conflict && <div className="conflict" role="alert"><strong>Outra revisão foi salva.</strong><p>Seu formulário foi preservado. Recarregar atualiza a revisão do caderno sem apagar sua edição; confira as mudanças da outra pessoa antes de salvar novamente.</p><button type="button" onClick={() => void load().catch(error => setMessage(error.message))}>Recarregar caderno</button></div>}
-          <div className="actions"><button className="primary" disabled={busy || conflict || duplicateId} type="submit">{busy ? "Salvando…" : "Salvar política"}</button><button type="button" disabled={busy} onClick={() => setDraft(undefined)}>Cancelar edição</button></div>
+          {conflict && <div className="conflict" role="alert"><strong>Outra revisão foi salva.</strong><p>Sua edição e o motivo foram preservados. Confira a versão atual para reunir alterações independentes e resolver campos modificados nas duas telas.</p><button type="button" onClick={() => void reviewConflict()}>Conferir versão atual</button></div>}
+          {!!fieldConflicts.length && basePolicy && <div className="conflict" role="alert"><strong>Há campos com duas alterações.</strong><p>Escolha o conteúdo de cada campo. Você também pode ajustar o formulário antes de manter sua edição.</p>
+            {fieldConflicts.map(field => <div className="policy-conflict-field" role="group" aria-label={`Conflito: ${POLICY_FIELD_LABELS[field]}`} key={field}>
+              <h3>{POLICY_FIELD_LABELS[field]}</h3><div className="policy-conflict-values"><div><strong>Sua edição</strong><pre>{fieldText(draft, field)}</pre></div><div><strong>Versão salva por outra pessoa</strong><pre>{fieldText(basePolicy, field)}</pre></div></div>
+              <div className="actions"><button type="button" onClick={() => resolveField(field, false)}>Manter minha edição</button><button type="button" onClick={() => resolveField(field, true)}>Usar versão atual</button></div>
+            </div>)}
+          </div>}
+          <div className="actions"><button className="primary" disabled={busy || conflict || duplicateId || !!fieldConflicts.length} type="submit">{busy ? "Salvando…" : "Salvar política"}</button><button type="button" disabled={busy} onClick={() => setDraft(undefined)}>Cancelar edição</button></div>
         </fieldset></form>
       </section>}
       <div className="policy-layout"><section className="policy-list"><h2>{visible.length} fichas encontradas</h2>{!visible.length && <p className="empty">Nenhuma ficha para este filtro. O inventário deste produto pode estar pendente.</p>}
@@ -107,7 +150,8 @@ export function PolicyCatalog() {
         <h3>O que a regra exige</h3><p className="policy-text">{selected.rule}</p><h3>Onde é aplicada</h3><p className="policy-text">{selected.enforcement || "Local de aplicação ainda não mapeado."}</p>
         <h3>Fontes e evidências</h3>{selected.sources.length ? selected.sources.map((source, index) => <div className="policy-source" key={index}><strong>{SOURCE_KINDS[source.kind]}</strong><p className="hash">{source.location}</p><p>{source.note}</p></div>) : <p>Nenhuma fonte cadastrada.</p>}
         <p className="muted">Última alteração: {date(selected.updatedAt)}. Verificação declarada: {selected.verificationDate || "Não registrada"}.</p>
-        <h3>Histórico desta política</h3>{catalog?.history.filter(change => change.policy.id === selected.id).slice().reverse().map(change => <details key={change.revision + ":" + change.policy.id}><summary>v{change.policy.version} · {date(change.at)}</summary><p>{change.changeNote}</p><p>Situação: {POLICY_STATES[change.policy.state]}</p><p className="policy-text">{change.policy.rule}</p><pre>{JSON.stringify(change.policy, null, 2)}</pre></details>)}
+        <p className="policy-print-note">Cadastro privado e manual. Esta ficha registra uma situação declarada; não aplica a regra nem executa os testes citados.</p>
+        <div className="policy-history"><h3>Histórico desta política</h3>{catalog?.history.filter(change => change.policy.id === selected.id).slice().reverse().map(change => <details key={change.revision + ":" + change.policy.id}><summary>v{change.policy.version} · {date(change.at)}</summary><p>{change.changeNote}</p><p>Situação: {POLICY_STATES[change.policy.state]}</p><p className="policy-text">{change.policy.rule}</p><pre>{JSON.stringify(change.policy, null, 2)}</pre></details>)}</div>
       </> : <div className="empty"><h2>Abra uma ficha.</h2><p>Selecione uma política para consultar a regra e os locais em que ela está definida e aplicada.</p></div>}</section></div>
       <footer>Cadastro privado e manual. Histórico preserva versões, mas não é um log inviolável nem identifica individualmente quem editou sob a credencial compartilhada.</footer>
     </main>

@@ -149,9 +149,12 @@ de impacto e aprovação; não declara essas novas capacidades implementadas.
 
 ### Entregas seguintes
 
-1. Conferir a impressão e o conflito entre duas telas no navegador antes de publicar.
-2. Implantar o caderno com backup do volume e rollback, preservando os registros
-   existentes. A funcionalidade deste checkpoint ainda não foi implantada.
+1. Conferência de conflitos e impressão implementada nesta continuação. Duas
+   telas preservam alterações independentes e exigem escolha para campos
+   conflitantes. Sete testes no Chrome incluem geração de PDF A4 da ficha salva;
+   os 11 testes do painel também passaram. A publicação depende da CI desta revisão.
+2. O caderno foi implantado em `57b2418`, com backup e rollback, conforme a
+   atualização no início deste documento. Atualizações devem preservar os registros.
 3. Atribuir responsáveis e inventariar os demais produtos por fontes verificadas.
 4. Retomar o piloto de contrato, autorização e CI de uma capacidade do ERP.
 5. No Lojas, avaliar primeiro cotação por cliente e confirmação do pedido na stack
