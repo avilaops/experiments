@@ -8,6 +8,19 @@ Primeiro artefato executável: [contrato de entrada 0.1](FISCAL-INPUT-CONTRACT.m
 com JSON Schema, inspeção de contexto e fixture sintética. Ele valida transporte
 e condições locais; não implementa cálculo ou atesta contexto fiscal completo.
 
+## Geração de PDF fiscal pendente
+
+Conforme esclarecimento do proprietário em 27/10/2026, ainda não existe uma
+rotina de geração de PDF conectada ao fiscal do ERP-Next. Essa integração fica
+registrada como capacidade pendente; o código do ERP não foi alterado ou auditado
+para implementar essa rotina nesta etapa.
+
+A impressão de fichas do caderno de políticas pertence ao laboratório e não
+representa geração de PDF de documentos fiscais do ERP. Os contratos e exemplos
+fiscais deste repositório também não fornecem essa integração. Seu recorte,
+documento de entrada, leiaute e vínculo ao fluxo fiscal precisam ser definidos
+quando a implementação for iniciada.
+
 ## Primeiro recorte
 
 Definir uma operação empresarial concreta, um tipo de documento, os perfis

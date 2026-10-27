@@ -41,6 +41,13 @@ O teste de queda termina o processo com código 23 depois da gravação do efeit
 O processo seguinte encontra a reserva desconhecida e não grava outro efeito.
 Isso testa queda de processo; não simula perda de energia ou rollback de volume.
 
+Os 11 testes locais do painel/BFF/exportação também passaram. Para o commit de
+código `5e205eedda3f6962178539561a5bd617fa913948`, a
+[CI de push](https://github.com/avilaops/experiments/actions/runs/40564524943) e a
+[CI do PR](https://github.com/avilaops/experiments/actions/runs/40564603608) passaram,
+incluindo build e testes de navegador. A CI de push construiu e publicou o
+artefato de imagens; isso não representa implantação no servidor.
+
 ## Exemplo em três processos
 
 `node examples/durable-tool-execution.mjs` aprovado. Relatório privado:
@@ -57,9 +64,26 @@ exclusiva, em pasta ignorada pelo Git e fora da seleção pública.
 
 ## Servidor
 
-Inspeção somente leitura em `apps-noclient`: API e painel saudáveis nas tags
-`sha-57b2418622321f46f6ef34d3a14b3af4b25ea91b`. Essa revisão foi implantada
-pela etapa de [correções de revisão](correcoes-review-20261027.md).
+Na primeira inspeção somente leitura em `apps-noclient`, API e painel estavam
+saudáveis nas tags `sha-57b2418622321f46f6ef34d3a14b3af4b25ea91b`, da etapa
+de [correções de revisão](correcoes-review-20261027.md). Uma implantação
+independente avançou o servidor durante esta continuação. A verificação final
+encontrou ambos saudáveis na revisão `0dba98de0ce1ad04f700a87017d3285d4bb214f2`,
+também registrada em `REVISION` na release correspondente.
+
+| Componente | Image ID SHA-256 observado |
+| --- | --- |
+| API | `20e6191dad9598281bdd9481ff6cf38c2b9168a2d1de4065335ad15183c6603c` |
+| Painel | `0db4ae858e7296e0aeedb21944e5c3cf2e78ca3e98416689ceb85eae1e9b32f4` |
+
+Release: `/opt/avila-experiments/releases/sha-0dba98de0ce1ad04f700a87017d3285d4bb214f2`.
+O manifesto dessa release declara os hashes
+`7203acca82a3637731fa863316bdd6bf8aacc31150ec8d8d634abaf9edd13b19`
+para `images.tar.gz` e
+`b43a8c8f0a0a5b775894f732137b353653c733174a06488df5f4f36d0b1b2b15`
+para `REVISION`. A leitura do manifesto não substitui conferir os bytes do tar.
+API `/health`: 200; caderno anônimo no domínio real: 401; evidências públicas: 200.
+
 O código de ferramentas desta branch não foi implantado por esta continuação.
 Annif e Ultralytics não estavam em execução; foram encontrados somente arquivos
 de remoção e backup. Nenhum desses serviços foi reinstalado.

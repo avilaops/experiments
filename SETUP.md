@@ -92,10 +92,23 @@ processo, concorrência, integridade, conflitos e recibo HTTP. O exemplo
 Ver [contrato](docs/TOOL-OPERATION-STORE.md) e
 [evidência](evidencias/durable-tools-20261027.md).
 
-A inspeção SSH desta continuação confirmou API e painel saudáveis com tags
-`sha-57b2418622321f46f6ef34d3a14b3af4b25ea91b`; o checkpoint anterior de imagem
-sem revisão é histórico. Esta etapa não alterou o servidor. Os componentes de
-persistência são opt-in e ainda não estão integrados a um serviço de staging.
+A primeira inspeção SSH desta continuação encontrou a revisão `57b2418`.
+Uma implantação independente avançou o servidor durante o trabalho; a verificação
+final confirmou API e painel saudáveis com tags
+`sha-0dba98de0ce1ad04f700a87017d3285d4bb214f2`, correspondentes ao `REVISION`
+da release. Os checkpoints anteriores de imagem são históricos. Esta etapa não
+alterou o servidor. Os componentes de persistência são opt-in e ainda não estão
+integrados a um serviço de staging.
+
+O [PR #1](https://github.com/avilaops/experiments/pull/1) reúne o executor e as
+reservas persistentes. Na revisão de código `5e205ee`, passaram as CIs de
+[push](https://github.com/avilaops/experiments/actions/runs/40564524943) e
+[pull request](https://github.com/avilaops/experiments/actions/runs/40564603608),
+incluindo testes de navegador; as imagens foram construídas no GitHub.
+
+O proprietário esclareceu que a geração de PDF conectada ao fiscal do ERP-Next
+ainda não existe. A lacuna consta na [proposta fiscal](docs/FISCAL-DECISION-PROPOSAL.md)
+e permanece separada da impressão das fichas do laboratório.
 
 ### Executor instrumentado — AVL-342
 
