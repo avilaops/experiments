@@ -96,14 +96,26 @@ não uma prova criptográfica de completude.
 ## Limites de evidência e distribuição
 
 A extensão HTTP do laboratório está descrita em [API.md](API.md). Para iniciar,
-execute `npm run api` e abra <http://127.0.0.1:3300/>. O plano executável para painel,
-evidências públicas e implantação está no [prompt do Copilot](COPILOT-PAINEL-ML.md).
+execute `npm run api` e abra <http://127.0.0.1:3300/>. A implantação do painel
+React/BFF e da exportação MDX está descrita em [DEPLOYMENT.md](DEPLOYMENT.md).
 
 O isolamento atual é por cópia de valores JSON em memória; não é uma sandbox.
 A aprovação dos testes não basta para autorizar um deploy. Os exemplos são de
 desenvolvimento, sem conexão real com ERP, Annif, Ultralytics ou Langfuse.
 
-O pacote permanece privado e sem licença de distribuição pública definida.
-Relatórios podem conter entradas e saídas: publicar resultados exige escolher
-conteúdo e destino adequados. Os artefatos 0.1.0 e 0.2.0 são preservados; a nova
-versão produz `avilaops-experiments-0.3.0.tgz`.
+O manifesto do pacote permanece privado e sem licença de distribuição pública
+definida; consulte [LICENSE-PENDING.md](LICENSE-PENDING.md). Não houve npm publish.
+O código deste pacote está em um repositório independente do ERP.
+Os artefatos 0.1.0, 0.2.0 e 0.3.0 existentes não foram substituídos.
+
+## Acessos implantados
+
+- [Evidências públicas selecionadas](https://ml.avilaops.com/evidencias/):
+  exportação estática, sem edição ou execução.
+- [Laboratório privado](https://ml.avilaops.com/experiments/): autenticação
+  obrigatória, editor com revisão, histórico e comparação.
+- [Código e documentação](https://github.com/avilaops/experiments).
+
+O núcleo continua independente do frontend. O dashboard React e TypeScript está
+em dashboard; o BFF mantém o token da API fora do navegador. A página MDX usa
+apenas os JSONs sintéticos enumerados em dashboard/evidence.allowlist.json.

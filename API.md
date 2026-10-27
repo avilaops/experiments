@@ -74,4 +74,4 @@ do navegador. Saúde, contrato e página inicial não retornam dados de experime
 - Custos e tokens ausentes permanecem `null`. Estes casos são de desenvolvimento,
   sem evidência de generalização ou benchmark estatístico de latência.
 
-Para o painel e a publicação, use [o prompt do Copilot](COPILOT-PAINEL-ML.md).
+Para o painel e a publicação, consulte [DEPLOYMENT.md](DEPLOYMENT.md).
