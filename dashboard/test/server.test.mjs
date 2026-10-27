@@ -1,0 +1,46 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { mkdtemp, rm, readFile, readdir } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { createApiServer } from "../../dist/lab/server.js";
+import { createDashboard } from "../dist/server.mjs";
+const listen = async server => { await new Promise(resolve => server.listen(0, "127.0.0.1", resolve)); return "http://127.0.0.1:" + server.address().port; };
+const close = server => new Promise(resolve => server.close(resolve));
+test("BFF authenticates, withholds the API token, preserves ETag and protects mutations", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "avila-bff-"));
+  const api = await createApiServer({ dataDirectory: directory, token: "private-upstream-token-for-test" });
+  const apiUrl = await listen(api);
+  const bff = createDashboard({ apiUrl, apiToken: "private-upstream-token-for-test", username: "tester", password: "long-test-password-123", origin: "https://lab.example", assetDirectory: new URL("../dist/", import.meta.url).pathname });
+  const url = await listen(bff);
+  const auth = { Authorization: "Basic " + Buffer.from("tester:long-test-password-123").toString("base64") };
+  try {
+    assert.equal((await fetch(url + "/experiments/")).status, 401);
+    assert.equal((await fetch(url + "/experiments/api/v1/suite")).status, 401);
+    assert.equal((await fetch(url + "/experiments/api/v1/suite", { headers: { Authorization: "Basic wrong" } })).status, 401);
+    const html = await (await fetch(url + "/experiments/", { headers: auth })).text();
+    assert.ok(html.includes("O resultado importa"));
+    assert.ok(!html.includes("private-upstream-token"));
+    const response = await fetch(url + "/experiments/api/v1/suite", { headers: auth });
+    assert.equal(response.status, 200); assert.equal(response.headers.get("etag"), '"1"');
+    const suite = await response.json();
+    const draft = { hypothesis: suite.hypothesis, cases: suite.dataset.cases, settings: suite.settings };
+    const put = headers => fetch(url + "/experiments/api/v1/suite", { method: "PUT", headers: { ...auth, "Content-Type": "application/json", "If-Match": '"1"', ...headers }, body: JSON.stringify(draft) });
+    assert.equal((await put({ Origin: "https://evil.example" })).status, 403);
+    assert.equal((await put({ Origin: "https://lab.example" })).status, 200);
+    assert.equal((await put({})).status, 412);
+    assert.equal((await fetch(url + "/experiments/../../.env", { headers: auth })).status, 404);
+  } finally { await close(bff); await close(api); await rm(directory, { recursive: true, force: true }); }
+});
+test("public export contains only allowlisted synthetic evidence", async () => {
+  const root = new URL("../", import.meta.url);
+  const allowed = JSON.parse(await readFile(new URL("evidence.allowlist.json", root)));
+  assert.deepEqual((await readdir(new URL("public/data/", root))).sort(), [...allowed].sort());
+  const manifest = JSON.parse(await readFile(new URL("public/manifest.json", root)));
+  assert.equal(manifest.artifacts.length, allowed.length);
+  const html = await readFile(new URL("public/index.html", root), "utf8");
+  assert.ok(html.includes("Não medido"));
+  assert.ok(html.includes("Inconclusivos"));
+  assert.ok(!html.includes("Executar suíte"));
+  assert.ok(!html.includes("LAB_API_TOKEN"));
+});

@@ -1,0 +1,372 @@
+{
+  "schemaVersion": "1",
+  "runId": "75c07a0c-6ebd-4495-b8e0-c8d3eda41a64",
+  "startedAt": "2026-10-27T02:04:08.151Z",
+  "completedAt": "2026-10-27T02:04:08.153Z",
+  "experiment": {
+    "id": "discount-path-policy",
+    "version": "1",
+    "hypothesis": "A correct discount must also follow the declared successful execution path."
+  },
+  "dataset": {
+    "id": "simulated-discount-paths",
+    "version": "1",
+    "split": "development",
+    "hash": "e90c89ab7e497aa735cdaf02942f2d74d7566bcb8d29c619265bb072bc1a24e0",
+    "caseCount": 6
+  },
+  "variant": {
+    "codeVersion": "sha256:0a07c6dd1417984b20b1064c29a1e01fc477cd7a9e5038ea7c6ef2bbe71fb6b0",
+    "id": "instrumented-local-simulation",
+    "version": "1"
+  },
+  "evaluators": [
+    {
+      "id": "numeric-tolerance",
+      "version": "1",
+      "parameters": {
+        "absoluteTolerance": 1e-9,
+        "relativeTolerance": 0
+      },
+      "kind": "gate",
+      "threshold": 1
+    },
+    {
+      "id": "path-fidelity",
+      "version": "1",
+      "parameters": {
+        "allowedTransitions": [
+          [
+            "fiscal",
+            "margin"
+          ],
+          [
+            "margin",
+            "discount"
+          ]
+        ],
+        "forbiddenNodes": [
+          "bypass"
+        ],
+        "requiredNodes": [
+          "fiscal",
+          "margin",
+          "discount"
+        ]
+      },
+      "kind": "gate",
+      "threshold": 1
+    }
+  ],
+  "repetitions": 1,
+  "cases": [
+    {
+      "caseId": "valid",
+      "group": null,
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "79748ab61f2bf1cdb8504854787f38bf3aa2df8bf5c3b0fea83c6011d27ce888",
+      "expectedHash": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "outputHash": "65181f641a07cf5bad07553512a70306540ac9ffa42120859dec06df5393d18f",
+      "output": {
+        "trace": {
+          "complete": true,
+          "steps": [
+            {
+              "node": "fiscal",
+              "status": "succeeded"
+            },
+            {
+              "node": "margin",
+              "status": "succeeded"
+            },
+            {
+              "node": "discount",
+              "status": "succeeded"
+            }
+          ]
+        },
+        "value": 12
+      },
+      "durationMs": 1.1219999999999999,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "path-fidelity",
+          "score": 1,
+          "reason": "Successful execution follows the declared path policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "missing-fiscal",
+      "group": null,
+      "repetition": 1,
+      "verdict": "failed",
+      "inputHash": "59893ae2d66e98dce212665c91257762efaa967c78c38ce330ac9417d62b186f",
+      "expectedHash": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "outputHash": "744b9646a4fb193b27bdbbc9fb303be437f67ba48ab9e7173542a10a3e479c8b",
+      "output": {
+        "trace": {
+          "complete": true,
+          "steps": [
+            {
+              "node": "margin",
+              "status": "succeeded"
+            },
+            {
+              "node": "discount",
+              "status": "succeeded"
+            }
+          ]
+        },
+        "value": 12
+      },
+      "durationMs": 0.0858999999999952,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "path-fidelity",
+          "score": 0,
+          "reason": "Missing or out-of-order required node: fiscal",
+          "verdict": "failed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "reversed",
+      "group": null,
+      "repetition": 1,
+      "verdict": "failed",
+      "inputHash": "ffc4fcd8d5583b2d869afa43404c22e04357ca29db85209fb80a026c2880916c",
+      "expectedHash": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "outputHash": "63957afea0198b4850427975cf6e7b14b81cccaad410ab29170d1c58ff08ffad",
+      "output": {
+        "trace": {
+          "complete": true,
+          "steps": [
+            {
+              "node": "margin",
+              "status": "succeeded"
+            },
+            {
+              "node": "fiscal",
+              "status": "succeeded"
+            },
+            {
+              "node": "discount",
+              "status": "succeeded"
+            }
+          ]
+        },
+        "value": 12
+      },
+      "durationMs": 0.0910999999999973,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "path-fidelity",
+          "score": 0,
+          "reason": "Forbidden transition: margin -> fiscal",
+          "verdict": "failed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "forbidden",
+      "group": null,
+      "repetition": 1,
+      "verdict": "failed",
+      "inputHash": "9136cbf4460703ffd88f00852e03733e622fdee65c6123b2a0eddf983c85d59c",
+      "expectedHash": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "outputHash": "f225594940ccf2f4da8360b8d50b59163ccaa79cca08cb37b6bf55d0ba564caf",
+      "output": {
+        "trace": {
+          "complete": true,
+          "steps": [
+            {
+              "node": "fiscal",
+              "status": "succeeded"
+            },
+            {
+              "node": "margin",
+              "status": "succeeded"
+            },
+            {
+              "node": "bypass",
+              "status": "succeeded"
+            },
+            {
+              "node": "discount",
+              "status": "succeeded"
+            }
+          ]
+        },
+        "value": 12
+      },
+      "durationMs": 0.11540000000000816,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "path-fidelity",
+          "score": 0,
+          "reason": "Forbidden node attempted: bypass",
+          "verdict": "failed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "failed-margin",
+      "group": null,
+      "repetition": 1,
+      "verdict": "failed",
+      "inputHash": "d3bd8e135263b2d0d1a49f68de48d0c222f6348522dd813e7060a19badebc2d0",
+      "expectedHash": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "outputHash": "5a4dcc0441f225b8a6cf62036412301baf7ff954b6bfa2e1d9d568b466f8325e",
+      "output": {
+        "trace": {
+          "complete": true,
+          "steps": [
+            {
+              "node": "fiscal",
+              "status": "succeeded"
+            },
+            {
+              "node": "margin",
+              "status": "failed"
+            },
+            {
+              "node": "discount",
+              "status": "succeeded"
+            }
+          ]
+        },
+        "value": 12
+      },
+      "durationMs": 0.6666000000000025,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "path-fidelity",
+          "score": 0,
+          "reason": "Execution step failed: margin",
+          "verdict": "failed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "incomplete",
+      "group": null,
+      "repetition": 1,
+      "verdict": "inconclusive",
+      "inputHash": "acd7f828423452356a8d5e1079f4c3490034d3f86e5429d38f72b7976d5bd153",
+      "expectedHash": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "outputHash": "dc63b97ab55589453464fe9101da2a00beffc373f39de23336116cb306e81313",
+      "output": {
+        "trace": {
+          "complete": false,
+          "steps": [
+            {
+              "node": "fiscal",
+              "status": "succeeded"
+            }
+          ]
+        },
+        "value": 12
+      },
+      "durationMs": 0.09729999999998995,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "path-fidelity",
+          "score": null,
+          "reason": "Execution trace is incomplete",
+          "verdict": "inconclusive"
+        }
+      ],
+      "error": null
+    }
+  ],
+  "summary": {
+    "verdict": "failed",
+    "total": 6,
+    "passed": 1,
+    "failed": 4,
+    "inconclusive": 1,
+    "errors": 0,
+    "passRate": 0.16666666666666666,
+    "durationMs": {
+      "mean": 0.3630499999999988,
+      "p95": 1.1219999999999999
+    },
+    "usage": {
+      "inputTokens": {
+        "total": null,
+        "measuredRuns": 0
+      },
+      "outputTokens": {
+        "total": null,
+        "measuredRuns": 0
+      },
+      "costUsd": {
+        "total": null,
+        "measuredRuns": 0
+      }
+    },
+    "evaluations": {
+      "numeric-tolerance": {
+        "mean": 1,
+        "scoredRuns": 6,
+        "totalRuns": 6
+      },
+      "path-fidelity": {
+        "mean": 0.2,
+        "scoredRuns": 5,
+        "totalRuns": 6
+      }
+    }
+  },
+  "groups": []
+}

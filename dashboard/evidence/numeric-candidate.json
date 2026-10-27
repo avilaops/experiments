@@ -1,0 +1,807 @@
+{
+  "schemaVersion": "1",
+  "runId": "a0d0a421-cbbe-439b-8413-1fcab00d7b14",
+  "startedAt": "2026-10-27T02:04:08.129Z",
+  "completedAt": "2026-10-27T02:04:08.130Z",
+  "experiment": {
+    "id": "our-calculation-tests",
+    "version": "1",
+    "hypothesis": "Preserving fractional results satisfies the declared tolerances and output bounds."
+  },
+  "dataset": {
+    "id": "custom-calculation-cases",
+    "version": "2",
+    "split": "development",
+    "hash": "28d54bb3b1b248bb84f80b3ce06ccaaf737908b5e5088766fc8262c580e05985",
+    "caseCount": 14
+  },
+  "variant": {
+    "codeVersion": "sha256:5bb3800c979b86f9b06a5a045ccb8efb8afa0cc3580b147cd03665606c6327da",
+    "id": "calculator",
+    "version": "fractional"
+  },
+  "evaluators": [
+    {
+      "id": "numeric-tolerance",
+      "version": "1",
+      "parameters": {
+        "absoluteTolerance": 1e-9,
+        "relativeTolerance": 0
+      },
+      "kind": "gate",
+      "threshold": 1
+    },
+    {
+      "id": "number-range",
+      "version": "2",
+      "parameters": {
+        "includeMaximum": true,
+        "includeMinimum": true,
+        "maximum": 100,
+        "minimum": 0
+      },
+      "kind": "gate",
+      "threshold": 1
+    },
+    {
+      "id": "custom-operation-policy",
+      "version": "1",
+      "parameters": {
+        "allowedOperations": [
+          "add",
+          "subtract",
+          "multiply",
+          "divide"
+        ]
+      },
+      "kind": "gate",
+      "threshold": 1
+    }
+  ],
+  "repetitions": 1,
+  "cases": [
+    {
+      "caseId": "decimal-addition",
+      "group": "decimals",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "9e860dfa0e65c12c0e92a0bed74401dfed2853951cdf341a6de2495362653062",
+      "expectedHash": "221764976efe04132774d96b0253cc31434c5261737469324f222621baf34b20",
+      "outputHash": "06bad31060c1212ae832de4c031f7b31e3b48aed57858294478cb19450cf34ca",
+      "output": 0.30000000000000004,
+      "durationMs": 0.06199999999999761,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "decimal-subtraction",
+      "group": "decimals",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "582efc548d8751cf67a02e1cd3170bb5337aececf753fa0cc95be9ea91db9a1f",
+      "expectedHash": "14be4b45f18e0d8c67b4f719b5144eee88497e413709d11d85b096d8e2346310",
+      "outputHash": "b11821d2d94c6a6ead803a36566e12d58242d51a43ba6a4feb6ee977b524769c",
+      "output": 0.09999999999999998,
+      "durationMs": 0.024299999999996658,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "fraction",
+      "group": "decimals",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "339df8aaaae17f2673452e1ba8503c03c2b13807e98df414e26bc9a0951fff29",
+      "expectedHash": "d2cbad71ff333de67d07ec676e352ab7f38248eb69c942950157220607c55e84",
+      "outputHash": "d2cbad71ff333de67d07ec676e352ab7f38248eb69c942950157220607c55e84",
+      "output": 0.5,
+      "durationMs": 0.02020000000000266,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "multiplication",
+      "group": "ordinary",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "6d73020bad48693d9c66858fd10750e15e8572fad116a8639a3819e73bc677d2",
+      "expectedHash": "4a44dc15364204a80fe80e9039455cc1608281820fe2b24f1e5233ade6af1dd5",
+      "outputHash": "4a44dc15364204a80fe80e9039455cc1608281820fe2b24f1e5233ade6af1dd5",
+      "output": 10,
+      "durationMs": 0.03480000000000416,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "lower-bound",
+      "group": "boundaries",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "95edca09653b19ff8c0ac01c571781764ac0b8c9cb2fab73f3bf16a79f01795b",
+      "expectedHash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "outputHash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "output": 0,
+      "durationMs": 0.018900000000002137,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "upper-bound",
+      "group": "boundaries",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "9e9069364c1f2c09a504f42127852389917a411b6e78cafa25a4c82be9982c95",
+      "expectedHash": "ad57366865126e55649ecb23ae1d48887544976efea46a48eb5d85a6eeb4d306",
+      "outputHash": "ad57366865126e55649ecb23ae1d48887544976efea46a48eb5d85a6eeb4d306",
+      "output": 100,
+      "durationMs": 0.019399999999990314,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "one-third",
+      "group": "repeating-decimals",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "19d6c7094ae04ee3dfda7a343433b235f5bee69a225c1a8a44188294847059db",
+      "expectedHash": "e965f1b975608cb0d1dad8c30d17e0fe1bdea42df938c0bdc29d75c97b45c44b",
+      "outputHash": "e965f1b975608cb0d1dad8c30d17e0fe1bdea42df938c0bdc29d75c97b45c44b",
+      "output": 0.3333333333333333,
+      "durationMs": 0.02049999999999841,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "two-thirds",
+      "group": "repeating-decimals",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "cd0bab02cc4a95f95801166b0b5f00aeb8c7bf905bab3c11db2d1718ff6894cf",
+      "expectedHash": "7b4391e97f7baf4edf9f0815ce8cfae721e245946239e1db53479ee70d5b6cd5",
+      "outputHash": "7b4391e97f7baf4edf9f0815ce8cfae721e245946239e1db53479ee70d5b6cd5",
+      "output": 0.6666666666666666,
+      "durationMs": 0.019599999999996953,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "one-seventh",
+      "group": "repeating-decimals",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "3336d4a40b723d924ef827ec3422e1a83d3df750ff75fe58a21e49e723f8bade",
+      "expectedHash": "8e0d3f224e61be74b96b1bc08f42c34d7b45858579741a7ed8ccf09d19ed678f",
+      "outputHash": "8e0d3f224e61be74b96b1bc08f42c34d7b45858579741a7ed8ccf09d19ed678f",
+      "output": 0.14285714285714285,
+      "durationMs": 0.03979999999999961,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "negative-operands",
+      "group": "signed",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "c2bf7379d3b23a17406c0f987ffa510c9bdd945b78b6466793d0c74186bd4fcc",
+      "expectedHash": "e965f1b975608cb0d1dad8c30d17e0fe1bdea42df938c0bdc29d75c97b45c44b",
+      "outputHash": "e965f1b975608cb0d1dad8c30d17e0fe1bdea42df938c0bdc29d75c97b45c44b",
+      "output": 0.3333333333333333,
+      "durationMs": 0.03529999999999234,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "subtract-negative",
+      "group": "signed",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "8f77208a112733c4301d736b5137c410ac71ed7c50d73712d57580a3dddda584",
+      "expectedHash": "44896b09365746b5f7167ee4d64988a38f7f4628803cbf86224e74eeb7c69e9d",
+      "outputHash": "43814c47ef2084c6b227608920b9a0ed9162a099743fc261436427d03ffad3c9",
+      "output": 0.19999999999999998,
+      "durationMs": 0.022199999999998,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "near-zero",
+      "group": "boundaries",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "33118008f5019981d7b3c68a0dfcb47e0686d86420d0c455dcf4a68f5a0387de",
+      "expectedHash": "dfa601f6ddf08ada8c0cedaa42135288da214d622438d0a1f0844b817070d0b6",
+      "outputHash": "dfa601f6ddf08ada8c0cedaa42135288da214d622438d0a1f0844b817070d0b6",
+      "output": 1e-10,
+      "durationMs": 0.02579999999998961,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "near-upper-bound",
+      "group": "boundaries",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "1aabc68749fc5b9b642ad1a265a585fa88532e5dee82b8edc3f7a49b17a2e9c0",
+      "expectedHash": "0649e2ba0ff5bd1fb91197f61a2e089a7eb34ac0b1dbeeb52f3485453db1f2e4",
+      "outputHash": "0649e2ba0ff5bd1fb91197f61a2e089a7eb34ac0b1dbeeb52f3485453db1f2e4",
+      "output": 99.9999999999,
+      "durationMs": 0.03149999999999409,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "negative-zero",
+      "group": "boundaries",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "0962c049d2e4a08181a25bf47b0fdb6c9b227ce244f4651d0329e4d551d9bc38",
+      "expectedHash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "outputHash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "output": 0,
+      "durationMs": 0.019600000000011164,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "numeric-tolerance",
+          "score": 1,
+          "reason": "Output is within the absolute or relative tolerance",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "number-range",
+          "score": 1,
+          "reason": "Output is inside the declared numeric range",
+          "verdict": "passed"
+        },
+        {
+          "evaluatorId": "custom-operation-policy",
+          "score": 1,
+          "reason": "Operation belongs to our declared policy",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    }
+  ],
+  "summary": {
+    "verdict": "passed",
+    "total": 14,
+    "passed": 14,
+    "failed": 0,
+    "inconclusive": 0,
+    "errors": 0,
+    "passRate": 1,
+    "durationMs": {
+      "mean": 0.028135714285712408,
+      "p95": 0.06199999999999761
+    },
+    "usage": {
+      "inputTokens": {
+        "total": null,
+        "measuredRuns": 0
+      },
+      "outputTokens": {
+        "total": null,
+        "measuredRuns": 0
+      },
+      "costUsd": {
+        "total": null,
+        "measuredRuns": 0
+      }
+    },
+    "evaluations": {
+      "numeric-tolerance": {
+        "mean": 1,
+        "scoredRuns": 14,
+        "totalRuns": 14
+      },
+      "number-range": {
+        "mean": 1,
+        "scoredRuns": 14,
+        "totalRuns": 14
+      },
+      "custom-operation-policy": {
+        "mean": 1,
+        "scoredRuns": 14,
+        "totalRuns": 14
+      }
+    }
+  },
+  "groups": [
+    {
+      "name": "boundaries",
+      "summary": {
+        "verdict": "passed",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "inconclusive": 0,
+        "errors": 0,
+        "passRate": 1,
+        "durationMs": {
+          "mean": 0.023039999999997462,
+          "p95": 0.03149999999999409
+        },
+        "usage": {
+          "inputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "outputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "costUsd": {
+            "total": null,
+            "measuredRuns": 0
+          }
+        },
+        "evaluations": {
+          "numeric-tolerance": {
+            "mean": 1,
+            "scoredRuns": 5,
+            "totalRuns": 5
+          },
+          "number-range": {
+            "mean": 1,
+            "scoredRuns": 5,
+            "totalRuns": 5
+          },
+          "custom-operation-policy": {
+            "mean": 1,
+            "scoredRuns": 5,
+            "totalRuns": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "decimals",
+      "summary": {
+        "verdict": "passed",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "inconclusive": 0,
+        "errors": 0,
+        "passRate": 1,
+        "durationMs": {
+          "mean": 0.03549999999999898,
+          "p95": 0.06199999999999761
+        },
+        "usage": {
+          "inputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "outputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "costUsd": {
+            "total": null,
+            "measuredRuns": 0
+          }
+        },
+        "evaluations": {
+          "numeric-tolerance": {
+            "mean": 1,
+            "scoredRuns": 3,
+            "totalRuns": 3
+          },
+          "number-range": {
+            "mean": 1,
+            "scoredRuns": 3,
+            "totalRuns": 3
+          },
+          "custom-operation-policy": {
+            "mean": 1,
+            "scoredRuns": 3,
+            "totalRuns": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "ordinary",
+      "summary": {
+        "verdict": "passed",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "inconclusive": 0,
+        "errors": 0,
+        "passRate": 1,
+        "durationMs": {
+          "mean": 0.03480000000000416,
+          "p95": 0.03480000000000416
+        },
+        "usage": {
+          "inputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "outputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "costUsd": {
+            "total": null,
+            "measuredRuns": 0
+          }
+        },
+        "evaluations": {
+          "numeric-tolerance": {
+            "mean": 1,
+            "scoredRuns": 1,
+            "totalRuns": 1
+          },
+          "number-range": {
+            "mean": 1,
+            "scoredRuns": 1,
+            "totalRuns": 1
+          },
+          "custom-operation-policy": {
+            "mean": 1,
+            "scoredRuns": 1,
+            "totalRuns": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "repeating-decimals",
+      "summary": {
+        "verdict": "passed",
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "inconclusive": 0,
+        "errors": 0,
+        "passRate": 1,
+        "durationMs": {
+          "mean": 0.02663333333333166,
+          "p95": 0.03979999999999961
+        },
+        "usage": {
+          "inputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "outputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "costUsd": {
+            "total": null,
+            "measuredRuns": 0
+          }
+        },
+        "evaluations": {
+          "numeric-tolerance": {
+            "mean": 1,
+            "scoredRuns": 3,
+            "totalRuns": 3
+          },
+          "number-range": {
+            "mean": 1,
+            "scoredRuns": 3,
+            "totalRuns": 3
+          },
+          "custom-operation-policy": {
+            "mean": 1,
+            "scoredRuns": 3,
+            "totalRuns": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "signed",
+      "summary": {
+        "verdict": "passed",
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "inconclusive": 0,
+        "errors": 0,
+        "passRate": 1,
+        "durationMs": {
+          "mean": 0.02874999999999517,
+          "p95": 0.03529999999999234
+        },
+        "usage": {
+          "inputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "outputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "costUsd": {
+            "total": null,
+            "measuredRuns": 0
+          }
+        },
+        "evaluations": {
+          "numeric-tolerance": {
+            "mean": 1,
+            "scoredRuns": 2,
+            "totalRuns": 2
+          },
+          "number-range": {
+            "mean": 1,
+            "scoredRuns": 2,
+            "totalRuns": 2
+          },
+          "custom-operation-policy": {
+            "mean": 1,
+            "scoredRuns": 2,
+            "totalRuns": 2
+          }
+        }
+      }
+    }
+  ]
+}

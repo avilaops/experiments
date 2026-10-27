@@ -1,0 +1,41 @@
+services:
+  api:
+    image: avila-experiments-api:lab-20261027-v1
+    build: { context: ., target: api }
+    env_file: .env
+    environment:
+      LAB_HOST: 0.0.0.0
+      LAB_PORT: 3300
+      LAB_DATA_DIR: /data
+    ports: ["127.0.0.1:3300:3300"]
+    volumes: ["evidence:/data"]
+    restart: unless-stopped
+    mem_limit: 192m
+    cpus: 0.5
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "2" }
+  dashboard:
+    image: avila-experiments-dashboard:lab-20261027-v1
+    build: { context: ., target: dashboard }
+    env_file: .env
+    environment:
+      LAB_API_URL: http://api:3300
+      DASHBOARD_HOST: 0.0.0.0
+      DASHBOARD_PORT: 3301
+      PUBLIC_ORIGIN: https://ml.avilaops.com
+    ports: ["127.0.0.1:3301:3301"]
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+    mem_limit: 192m
+    cpus: 0.5
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "2" }
+volumes:
+  evidence:

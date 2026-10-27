@@ -1,0 +1,397 @@
+{
+  "schemaVersion": "1",
+  "runId": "99f617ae-f14b-4302-a66d-a620bcb9f89b",
+  "startedAt": "2026-10-27T02:04:08.160Z",
+  "completedAt": "2026-10-27T02:04:08.161Z",
+  "experiment": {
+    "id": "classify-document",
+    "version": "1",
+    "hypothesis": "Trimming whitespace reduces false complete classifications in edge cases."
+  },
+  "dataset": {
+    "id": "document-completeness",
+    "version": "1",
+    "split": "development",
+    "hash": "45f913a6dd20f608a2de651f0d7c68d6f4ca45054953fe83547c886f8dea19bb",
+    "caseCount": 6
+  },
+  "variant": {
+    "codeVersion": "sha256:21d28935c78bf130565c9268d1b27a0cf8d81866c218cc0e8affc17e415077a6",
+    "id": "deterministic-classifier",
+    "policyVersion": "required-title-and-body-v1",
+    "version": "2"
+  },
+  "evaluators": [
+    {
+      "id": "exact-match",
+      "version": "1",
+      "kind": "gate",
+      "threshold": 1
+    }
+  ],
+  "repetitions": 2,
+  "cases": [
+    {
+      "caseId": "complete",
+      "group": "ordinary",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "7eb87c64a423fc17a73acadabe7d768f9f53da7eaf71309a474a2ecc76523a0f",
+      "expectedHash": "575951db5c63b1e721c1f8f9aefb547ca834245433e7561dc8204a3a18427aae",
+      "outputHash": "575951db5c63b1e721c1f8f9aefb547ca834245433e7561dc8204a3a18427aae",
+      "output": "complete",
+      "durationMs": 0.11789999999999168,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "complete",
+      "group": "ordinary",
+      "repetition": 2,
+      "verdict": "passed",
+      "inputHash": "7eb87c64a423fc17a73acadabe7d768f9f53da7eaf71309a474a2ecc76523a0f",
+      "expectedHash": "575951db5c63b1e721c1f8f9aefb547ca834245433e7561dc8204a3a18427aae",
+      "outputHash": "575951db5c63b1e721c1f8f9aefb547ca834245433e7561dc8204a3a18427aae",
+      "output": "complete",
+      "durationMs": 0.03820000000000334,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "missing-body",
+      "group": "ordinary",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "58c28565f711d6f1b64cb8ac74eb85ef421aaedff833e7a2097069855d9b3fa3",
+      "expectedHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "outputHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "output": "incomplete",
+      "durationMs": 0.037700000000000955,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "missing-body",
+      "group": "ordinary",
+      "repetition": 2,
+      "verdict": "passed",
+      "inputHash": "58c28565f711d6f1b64cb8ac74eb85ef421aaedff833e7a2097069855d9b3fa3",
+      "expectedHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "outputHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "output": "incomplete",
+      "durationMs": 0.038000000000010914,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "missing-title",
+      "group": "ordinary",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "3534c16cbd5b9dc74a714dcdd6ebbb533336bb25b09c8d9e1fd78122389b877e",
+      "expectedHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "outputHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "output": "incomplete",
+      "durationMs": 0.037599999999997635,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "missing-title",
+      "group": "ordinary",
+      "repetition": 2,
+      "verdict": "passed",
+      "inputHash": "3534c16cbd5b9dc74a714dcdd6ebbb533336bb25b09c8d9e1fd78122389b877e",
+      "expectedHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "outputHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "output": "incomplete",
+      "durationMs": 0.08209999999999695,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "whitespace-title",
+      "group": "edge",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "0fc15f693ca29df30cf0c71093406d7af7c44779a2bad2e18ef4eb45654f9264",
+      "expectedHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "outputHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "output": "incomplete",
+      "durationMs": 0.037499999999994316,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "whitespace-title",
+      "group": "edge",
+      "repetition": 2,
+      "verdict": "passed",
+      "inputHash": "0fc15f693ca29df30cf0c71093406d7af7c44779a2bad2e18ef4eb45654f9264",
+      "expectedHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "outputHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "output": "incomplete",
+      "durationMs": 0.03810000000000002,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "whitespace-body",
+      "group": "edge",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "08f86dba47fc691b2182644f4dbf5b5426a3b9df5369cd586fb91fb244ff7282",
+      "expectedHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "outputHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "output": "incomplete",
+      "durationMs": 0.05849999999999511,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "whitespace-body",
+      "group": "edge",
+      "repetition": 2,
+      "verdict": "passed",
+      "inputHash": "08f86dba47fc691b2182644f4dbf5b5426a3b9df5369cd586fb91fb244ff7282",
+      "expectedHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "outputHash": "b93e167bbe964a29c927882c2bc868922a912d6e74592730258b222da98b8c6c",
+      "output": "incomplete",
+      "durationMs": 0.07699999999999818,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "padded-content",
+      "group": "edge",
+      "repetition": 1,
+      "verdict": "passed",
+      "inputHash": "8d5b94705a156fa306f1174f5f3a0145d2015bc1af4fed5ce2ed0da2f5635567",
+      "expectedHash": "575951db5c63b1e721c1f8f9aefb547ca834245433e7561dc8204a3a18427aae",
+      "outputHash": "575951db5c63b1e721c1f8f9aefb547ca834245433e7561dc8204a3a18427aae",
+      "output": "complete",
+      "durationMs": 0.037499999999994316,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    },
+    {
+      "caseId": "padded-content",
+      "group": "edge",
+      "repetition": 2,
+      "verdict": "passed",
+      "inputHash": "8d5b94705a156fa306f1174f5f3a0145d2015bc1af4fed5ce2ed0da2f5635567",
+      "expectedHash": "575951db5c63b1e721c1f8f9aefb547ca834245433e7561dc8204a3a18427aae",
+      "outputHash": "575951db5c63b1e721c1f8f9aefb547ca834245433e7561dc8204a3a18427aae",
+      "output": "complete",
+      "durationMs": 0.03549999999999898,
+      "usage": {},
+      "evaluations": [
+        {
+          "evaluatorId": "exact-match",
+          "score": 1,
+          "reason": "Output matches the reference",
+          "verdict": "passed"
+        }
+      ],
+      "error": null
+    }
+  ],
+  "summary": {
+    "verdict": "passed",
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "inconclusive": 0,
+    "errors": 0,
+    "passRate": 1,
+    "durationMs": {
+      "mean": 0.0529666666666652,
+      "p95": 0.11789999999999168
+    },
+    "usage": {
+      "inputTokens": {
+        "total": null,
+        "measuredRuns": 0
+      },
+      "outputTokens": {
+        "total": null,
+        "measuredRuns": 0
+      },
+      "costUsd": {
+        "total": null,
+        "measuredRuns": 0
+      }
+    },
+    "evaluations": {
+      "exact-match": {
+        "mean": 1,
+        "scoredRuns": 12,
+        "totalRuns": 12
+      }
+    }
+  },
+  "groups": [
+    {
+      "name": "edge",
+      "summary": {
+        "verdict": "passed",
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "inconclusive": 0,
+        "errors": 0,
+        "passRate": 1,
+        "durationMs": {
+          "mean": 0.04734999999999682,
+          "p95": 0.07699999999999818
+        },
+        "usage": {
+          "inputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "outputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "costUsd": {
+            "total": null,
+            "measuredRuns": 0
+          }
+        },
+        "evaluations": {
+          "exact-match": {
+            "mean": 1,
+            "scoredRuns": 6,
+            "totalRuns": 6
+          }
+        }
+      }
+    },
+    {
+      "name": "ordinary",
+      "summary": {
+        "verdict": "passed",
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "inconclusive": 0,
+        "errors": 0,
+        "passRate": 1,
+        "durationMs": {
+          "mean": 0.05858333333333358,
+          "p95": 0.11789999999999168
+        },
+        "usage": {
+          "inputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "outputTokens": {
+            "total": null,
+            "measuredRuns": 0
+          },
+          "costUsd": {
+            "total": null,
+            "measuredRuns": 0
+          }
+        },
+        "evaluations": {
+          "exact-match": {
+            "mean": 1,
+            "scoredRuns": 6,
+            "totalRuns": 6
+          }
+        }
+      }
+    }
+  ]
+}

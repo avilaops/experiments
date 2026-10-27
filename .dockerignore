@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/public
+var
+reports
+.git
+.env*
+*.tgz
+*.zip
+verification
+evidencias

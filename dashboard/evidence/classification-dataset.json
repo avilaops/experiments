@@ -1,0 +1,61 @@
+{
+  "id": "document-completeness",
+  "version": "1",
+  "split": "development",
+  "cases": [
+    {
+      "id": "complete",
+      "group": "ordinary",
+      "input": {
+        "title": "Report",
+        "body": "Reviewed content"
+      },
+      "expected": "complete"
+    },
+    {
+      "id": "missing-body",
+      "group": "ordinary",
+      "input": {
+        "title": "Report",
+        "body": ""
+      },
+      "expected": "incomplete"
+    },
+    {
+      "id": "missing-title",
+      "group": "ordinary",
+      "input": {
+        "title": "",
+        "body": "Content"
+      },
+      "expected": "incomplete"
+    },
+    {
+      "id": "whitespace-title",
+      "group": "edge",
+      "input": {
+        "title": "  ",
+        "body": "Content"
+      },
+      "expected": "incomplete"
+    },
+    {
+      "id": "whitespace-body",
+      "group": "edge",
+      "input": {
+        "title": "Report",
+        "body": "\n\t"
+      },
+      "expected": "incomplete"
+    },
+    {
+      "id": "padded-content",
+      "group": "edge",
+      "input": {
+        "title": " Report ",
+        "body": " Content "
+      },
+      "expected": "complete"
+    }
+  ]
+}

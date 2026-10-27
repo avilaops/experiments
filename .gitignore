@@ -1,0 +1,10 @@
+node_modules/
+dist/
+reports/
+*.tgz
+var/
+dashboard/public/
+dashboard/.env*
+.env*
+evidencias/screenshots/
+*.log

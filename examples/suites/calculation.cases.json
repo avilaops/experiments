@@ -1,0 +1,21 @@
+{
+  "id": "custom-calculation-cases",
+  "version": "2",
+  "split": "development",
+  "cases": [
+    { "id": "decimal-addition", "group": "decimals", "input": { "operation": "add", "left": 0.1, "right": 0.2 }, "expected": 0.3 },
+    { "id": "decimal-subtraction", "group": "decimals", "input": { "operation": "subtract", "left": 1, "right": 0.9 }, "expected": 0.1 },
+    { "id": "fraction", "group": "decimals", "input": { "operation": "divide", "left": 1, "right": 2 }, "expected": 0.5 },
+    { "id": "multiplication", "group": "ordinary", "input": { "operation": "multiply", "left": 2.5, "right": 4 }, "expected": 10 },
+    { "id": "lower-bound", "group": "boundaries", "input": { "operation": "add", "left": 0, "right": 0 }, "expected": 0 },
+    { "id": "upper-bound", "group": "boundaries", "input": { "operation": "add", "left": 60, "right": 40 }, "expected": 100 },
+    { "id": "one-third", "group": "repeating-decimals", "input": { "operation": "divide", "left": 1, "right": 3 }, "expected": 0.3333333333333333 },
+    { "id": "two-thirds", "group": "repeating-decimals", "input": { "operation": "divide", "left": 2, "right": 3 }, "expected": 0.6666666666666666 },
+    { "id": "one-seventh", "group": "repeating-decimals", "input": { "operation": "divide", "left": 1, "right": 7 }, "expected": 0.14285714285714285 },
+    { "id": "negative-operands", "group": "signed", "input": { "operation": "divide", "left": -1, "right": -3 }, "expected": 0.3333333333333333 },
+    { "id": "subtract-negative", "group": "signed", "input": { "operation": "subtract", "left": -0.1, "right": -0.3 }, "expected": 0.2 },
+    { "id": "near-zero", "group": "boundaries", "input": { "operation": "divide", "left": 1, "right": 10000000000 }, "expected": 0.0000000001 },
+    { "id": "near-upper-bound", "group": "boundaries", "input": { "operation": "subtract", "left": 100, "right": 0.0000000001 }, "expected": 99.9999999999 },
+    { "id": "negative-zero", "group": "boundaries", "input": { "operation": "multiply", "left": -1, "right": 0 }, "expected": 0 }
+  ]
+}

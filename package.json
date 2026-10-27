@@ -1,0 +1,28 @@
+{
+  "name": "@avilaops/experiments",
+  "version": "0.3.0",
+  "description": "Versioned, reproducible experiments with explicit gates and comparable evidence.",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./api": { "types": "./dist/lab/server.d.ts", "import": "./dist/lab/server.js" }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "api": "npm run build && node dist/lab/serve.js",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "demo": "npm run build && node examples/document-classification.mjs",
+    "test:custom": "npm run build && node examples/custom-tests.mjs",
+    "test:path": "npm run build && node examples/path-policy.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.6",
+    "typescript": "6.0.3"
+  }
+}

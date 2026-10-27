@@ -1,0 +1,41 @@
+# Evidência antes de confiança.
+
+Este laboratório publica resultados reproduzíveis de cálculos e políticas de
+execução. Os dados abaixo vêm de uma seleção explícita de relatórios sintéticos
+do núcleo **Ávila Experiments 0.3.0**. Não há edição ou execução nesta página.
+
+<Evidence/>
+
+## O que esses resultados permitem concluir
+
+A calculadora candidata preserva frações; a base arredonda o resultado.
+O critério numérico usa erro absoluto **ou** relativo, separado dos limites
+comerciais. Os conjuntos têm split de desenvolvimento. Não demonstram
+generalização, cobertura de código ou desempenho estatístico.
+
+O teste de caminho executa chamadas locais instrumentadas. Um resultado
+numérico correto pode coexistir com uma etapa ausente, invertida ou falha.
+Este é um teste do avaliador, não uma integração com agentes reais, ERP,
+TensorFlow ou o runtime THESEUS. Cumprimento de política não é prova de ética.
+
+## Como ler os gráficos
+
+As barras de caminho contam os verdicts registrados, com denominador igual
+ao número de execuções do relatório. Não são PED ou F1 do THESEUS.
+O histograma usa o erro absoluto dividido pela tolerância absoluta declarada,
+apenas quando referência, saída e tolerância positiva estão disponíveis.
+Sua fronteira não equivale à fronteira comercial.
+
+Não há matriz de confusão numérica: a matriz apresentada pertence ao exemplo
+de classificação de completude documental e cruza a classe de referência
+com a classe realmente produzida.
+
+## Proveniência e limites
+
+Os JSONs completos, tamanhos, datas e hashes estão disponíveis abaixo.
+Um hash verifica correspondência de conteúdo; não impede que um administrador
+altere o disco. Tokens e custos ausentes significam **Não medido**.
+Os relatórios são snapshots: não representam atualização ao vivo.
+O painel privado consulta seu histórico a cada dez segundos.
+
+<Downloads/>
