@@ -24,6 +24,8 @@ O contrato completo está em <http://127.0.0.1:3300/openapi.json>.
 | GET | `/health` | Saúde e indicação de autenticação |
 | GET | `/openapi.json` | Contrato OpenAPI 3.1 |
 | GET | `/api/v1/suite` | Suíte atual, parâmetros e cabeçalho ETag |
+| POST | `/api/v1/policies/import/preview` | Validar arquivo de fichas sem gravar; retorna prévia e ETag |
+| POST | `/api/v1/policies/import` | Importar somente códigos novos com If-Match e motivo, em uma única gravação |
 | PUT | `/api/v1/suite` | Salvar suíte usando o ETag no cabeçalho If-Match |
 | POST | `/api/v1/runs` | Executar base e candidata; corpo `{"revision":1}` |
 | GET | `/api/v1/runs?limit=25&offset=0` | Histórico paginado |
@@ -80,3 +82,22 @@ do navegador. Saúde, contrato e página inicial não retornam dados de experime
   sem evidência de generalização ou benchmark estatístico de latência.
 
 Para o painel e a publicação, consulte [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## Importação de políticas
+
+Envie `{ "document": [...] }` à prévia. `document` aceita uma lista de fichas
+sem metadados ou a exportação completa do caderno. A resposta contém `revision`,
+`createCount`, `preserveCount` e itens com `policy`, `action` e `different`.
+`different` informa que o arquivo difere da ficha existente, que será preservada.
+
+Para gravar, envie o mesmo `document` e `changeNote` para `/api/v1/policies/import`,
+com o ETag da prévia em If-Match. A resposta contém `catalog`, `created` e
+`preserved`, com o ETag resultante. Cada lote com fichas novas aumenta a revisão
+uma vez e registra um snapshot por ficha. Lote só com códigos existentes não
+grava nem altera a revisão. A API valida todos os registros novamente no commit.
+
+Sem If-Match: 428; revisão desatualizada: 412; ficha, motivo, limite ou formato
+inválido: 400. Os limites continuam sendo 1 MiB por requisição e 500 fichas no
+caderno. A recusa de um lote não cria nenhuma de suas fichas. Versões e histórico
+de uma exportação não são restaurados. Os endpoints exigem a mesma autenticação
+das políticas e o BFF conserva o token fora do navegador.

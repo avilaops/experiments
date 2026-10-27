@@ -248,3 +248,114 @@ test("policy fields stay locked during saves, and existing records can be delibe
   assert.equal(saved.title, "Título revisado");
   assert.equal(saved.version, 2);
 });
+
+const importDraft = (id = "CRM-IMPORT-001") => ({ id, product: "crm", title: "Inventário para revisão", category: "access", state: "proposed",
+  rule: "Conferir autorização por empresa.", owner: "A definir", enforcement: "A mapear", verificationDate: "", sources: [] });
+const importFile = value => ({ name: "inventario.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(value)) });
+
+async function openImport(page, base) {
+  await page.goto(base + "/experiments/policies");
+  await page.getByRole("button", { name: "Importar fichas JSON", exact: true }).click();
+}
+
+test("import preview requires explicit review, creates only new records and preserves existing policy content", async t => {
+  const { page, base, data } = await fixture(t);
+  const original = await data("/api/v1/policies");
+  const { version, updatedAt, ...existing } = original.policies[0];
+  await openImport(page, base);
+  assert.equal(await page.getByRole("button", { name: "Nova política", exact: true }).isDisabled(), true);
+  await page.getByLabel("Arquivo de fichas JSON").setInputFiles(importFile([
+    importDraft(), { ...existing, title: "Incoming title must not replace existing content" }, importDraft("CRM-IMPORT-002"),
+  ]));
+  await page.getByRole("status").filter({ hasText: "2 fichas novas" }).waitFor();
+  assert.deepEqual(await data("/api/v1/policies"), original);
+  const save = page.getByRole("button", { name: "Importar fichas novas", exact: true });
+  assert.equal(await save.isDisabled(), true);
+  await page.locator(".policy-import form").evaluate(form => form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+  assert.deepEqual(await data("/api/v1/policies"), original);
+  await page.getByLabel("Motivo da importação").fill("Inventário conferido no navegador");
+  assert.equal(await save.isDisabled(), true);
+  await page.getByLabel("Conferi as fichas e entendo que os códigos existentes serão preservados.").check();
+  await page.locator(".policy-import details").nth(1).locator("summary").click();
+  assert.match(await page.locator(".policy-import details").nth(1).innerText(), /preservada integralmente/);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await save.click();
+  await page.getByRole("status").filter({ hasText: "2 fichas cadastradas; 1 código existente preservado" }).waitFor();
+  const result = await data("/api/v1/policies");
+  assert.equal(result.revision, 2);
+  assert.deepEqual(result.policies.slice(0, 8), original.policies);
+  assert.equal(result.policies.length, 10);
+  assert.equal(result.history.at(-1).changeNote, "Inventário conferido no navegador");
+});
+
+test("an import conflict requires a refreshed preview and renewed review while preserving another tab's new policy", async t => {
+  const { page, base, data } = await fixture(t);
+  await openImport(page, base);
+  await page.getByLabel("Arquivo de fichas JSON").setInputFiles(importFile([importDraft(), importDraft("CRM-IMPORT-002")]));
+  await page.getByRole("status").filter({ hasText: "2 fichas novas" }).waitFor();
+  await page.getByLabel("Motivo da importação").fill("Motivo mantido após conflito");
+  await page.getByLabel("Conferi as fichas e entendo que os códigos existentes serão preservados.").check();
+  const other = await page.context().newPage();
+  await other.goto(base + "/experiments/policies");
+  await other.getByRole("button", { name: "Nova política", exact: true }).click();
+  await other.getByLabel("Código da política").fill("CRM-IMPORT-001");
+  await other.getByLabel("Produto da política").selectOption("crm");
+  await other.getByLabel("Título da política").fill("Ficha criada na outra tela");
+  await other.getByLabel("O que a regra exige").fill("Regra preservada da outra tela");
+  await savePolicy(other, "Criação independente");
+  await other.getByRole("status").filter({ hasText: "Política salva" }).waitFor();
+  await page.getByRole("button", { name: "Importar fichas novas", exact: true }).click();
+  await page.getByRole("button", { name: "Atualizar prévia", exact: true }).waitFor();
+  assert.equal((await data("/api/v1/policies")).policies.some(policy => policy.id === "CRM-IMPORT-002"), false);
+  await page.getByRole("button", { name: "Atualizar prévia", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "1 ficha nova · 1 código existente" }).waitFor();
+  assert.equal(await page.getByLabel("Motivo da importação").inputValue(), "Motivo mantido após conflito");
+  assert.equal(await page.getByLabel("Conferi as fichas e entendo que os códigos existentes serão preservados.").isChecked(), false);
+  assert.equal(await page.getByRole("button", { name: "Importar fichas novas", exact: true }).isDisabled(), true);
+  await page.getByLabel("Conferi as fichas e entendo que os códigos existentes serão preservados.").check();
+  await page.getByRole("button", { name: "Importar fichas novas", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "1 ficha cadastrada; 1 código existente preservado" }).waitFor();
+  const catalog = await data("/api/v1/policies");
+  assert.equal(catalog.revision, 3);
+  assert.equal(catalog.policies.find(policy => policy.id === "CRM-IMPORT-001").title, "Ficha criada na outra tela");
+  assert.ok(catalog.policies.some(policy => policy.id === "CRM-IMPORT-002"));
+});
+
+test("invalid JSON, oversized files and an invalid record never enable or partially import the file", async t => {
+  const { page, base, data } = await fixture(t);
+  const original = await data("/api/v1/policies");
+  let previews = 0;
+  page.on("request", request => { if (request.url().endsWith("/policies/import/preview")) previews++; });
+  await openImport(page, base);
+  const input = page.getByLabel("Arquivo de fichas JSON");
+  await input.setInputFiles({ name: "invalid.json", mimeType: "application/json", buffer: Buffer.from("{invalid") });
+  await page.getByRole("alert").filter({ hasText: "não contém JSON válido" }).waitFor();
+  assert.equal(previews, 0);
+  await input.setInputFiles({ name: "large.json", mimeType: "application/json", buffer: Buffer.alloc(1024 * 1024 + 1, "x") });
+  await page.getByRole("alert").filter({ hasText: "excede 1 MiB" }).waitFor();
+  assert.equal(previews, 0);
+  await input.setInputFiles(importFile([importDraft(), { ...importDraft("CRM-IMPORT-002"), state: "verified" }]));
+  await page.getByRole("alert").filter({ hasText: "Ficha 2" }).waitFor();
+  assert.equal(previews, 1);
+  assert.equal(await page.getByRole("button", { name: "Importar fichas novas", exact: true }).count(), 0);
+  assert.deepEqual(await data("/api/v1/policies"), original);
+});
+
+test("the dashboard's own JSON export can be reviewed and reimported without rewriting existing records", async t => {
+  const { page, base, data } = await fixture(t);
+  const original = await data("/api/v1/policies");
+  await page.goto(base + "/experiments/policies");
+  const downloaded = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Exportar caderno JSON", exact: true }).click();
+  const stream = await (await downloaded).createReadStream();
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  await page.getByRole("button", { name: "Importar fichas JSON", exact: true }).click();
+  await page.getByLabel("Arquivo de fichas JSON").setInputFiles({ name: "caderno.json", mimeType: "application/json", buffer: Buffer.concat(chunks) });
+  await page.getByRole("status").filter({ hasText: "0 fichas novas · 8 códigos existentes" }).waitFor();
+  await page.getByLabel("Motivo da importação").fill("Conferir arquivo exportado");
+  await page.getByLabel("Conferi as fichas e entendo que os códigos existentes serão preservados.").check();
+  await page.getByRole("button", { name: "Concluir sem alterações", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "0 fichas cadastradas; 8 códigos existentes preservados" }).waitFor();
+  assert.deepEqual(await data("/api/v1/policies"), original);
+});

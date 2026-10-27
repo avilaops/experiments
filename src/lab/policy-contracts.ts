@@ -36,3 +36,14 @@ export interface PolicyCatalog {
   policies: Policy[];
   history: PolicyChange[];
 }
+export interface PolicyImportPreview {
+  revision: number;
+  createCount: number;
+  preserveCount: number;
+  items: { policy: PolicyDraft; action: "create" | "preserve"; different: boolean }[];
+}
+export interface PolicyImportResult {
+  catalog: PolicyCatalog;
+  created: string[];
+  preserved: string[];
+}

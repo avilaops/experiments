@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { PRODUCTS, POLICY_CATEGORIES, POLICY_STATES, SOURCE_KINDS, type Policy, type PolicyCatalog as Catalog, type PolicyDraft } from "../../src/lab/policy-contracts.js";
 import { mergePolicyDraft, POLICY_FIELD_LABELS, type PolicyField } from "./policy-merge.js";
+import { PolicyImport } from "./PolicyImport.js";
 
 const endpoint = "/experiments/api/v1/policies";
 const emptyPolicy = (): PolicyDraft => ({ id: "", product: "erp", title: "", category: "access", state: "proposed", rule: "", owner: "A definir", enforcement: "", verificationDate: "", sources: [] });
@@ -30,6 +31,7 @@ export function PolicyCatalog() {
   const [message, setMessage] = useState("");
   const [conflict, setConflict] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   async function readCatalog() {
     const response = await fetch(endpoint);
@@ -111,8 +113,13 @@ export function PolicyCatalog() {
           <label>Situação<select value={state} onChange={event => setState(event.target.value)}><option value="">Todas as situações</option>{Object.entries(POLICY_STATES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label></div>
         <div className="policy-products">{PRODUCTS.map(item => { const count = catalog?.policies.filter(policy => policy.product === item.id).length ?? 0; return <button key={item.id} aria-pressed={product === item.id} onClick={() => { setProduct(item.id); setSelectedId(""); }}><strong>{item.name}</strong><span>{count ? `${count} fichas cadastradas` : "Inventário pendente"}</span></button>; })}</div>
         <p className="muted">Princípios compartilhados também aparecem nos filtros por produto. Sua aplicação em cada sistema precisa ser verificada.</p>
-        <div className="actions"><button className="primary" disabled={!catalog || !!draft} onClick={() => edit()}>Nova política</button><button disabled={!catalog} onClick={exportCatalog}>Exportar caderno JSON</button></div>
+        <div className="actions"><button className="primary" disabled={!catalog || !!draft || importing} onClick={() => edit()}>Nova política</button><button disabled={!catalog || !!draft || importing} onClick={() => setImporting(true)}>Importar fichas JSON</button><button disabled={!catalog} onClick={exportCatalog}>Exportar caderno JSON</button></div>
       </section>
+      {importing && <PolicyImport onCancel={() => setImporting(false)} onComplete={(result, revision) => {
+        setCatalog(result.catalog); setEtag(revision); setImporting(false);
+        if (result.created[0]) setSelectedId(result.created[0]);
+        setMessage(`${result.created.length} ${result.created.length === 1 ? "ficha cadastrada" : "fichas cadastradas"}; ${result.preserved.length} ${result.preserved.length === 1 ? "código existente preservado" : "códigos existentes preservados"}.`);
+      }}/>}
       {draft && <section className="policy-editor"><h2>{editing ? "Revisar política" : "Cadastrar política"}</h2>
         <form onSubmit={event => { event.preventDefault(); void save(); }}><fieldset disabled={busy} className="editor-fields" aria-label="Editar política">
           <div className="fields"><label>Código da política<input required maxLength={80} pattern="[A-Z][A-Z0-9]*(-[A-Z0-9]+)+" placeholder="ERP-ACCESS-003" disabled={editing} value={draft.id} onChange={event => setDraft({ ...draft, id: event.target.value })}/></label>
@@ -145,7 +152,7 @@ export function PolicyCatalog() {
         {visible.map(policy => <button className={selectedId === policy.id ? "policy-card selected" : "policy-card"} key={policy.id} onClick={() => setSelectedId(policy.id)}><span className="hash">{policy.id} · v{policy.version} · {productName(policy.product)}</span><strong>{policy.title}</strong><span>{POLICY_STATES[policy.state]}</span><span className="muted">{policy.owner}</span></button>)}
       </section>
       <section className="policy-paper" aria-label="Ficha da política">{selected ? <>
-        <div className="section-title"><p className="hash">{selected.id} · versão {selected.version}</p><div className="actions"><button disabled={!!draft} onClick={() => edit(selected)}>Editar política</button><button onClick={() => window.print()}>Imprimir ficha</button></div></div>
+        <div className="section-title"><p className="hash">{selected.id} · versão {selected.version}</p><div className="actions"><button disabled={!!draft || importing} onClick={() => edit(selected)}>Editar política</button><button onClick={() => window.print()}>Imprimir ficha</button></div></div>
         <h2>{selected.title}</h2><dl className="policy-facts"><div><dt>Produto</dt><dd>{productName(selected.product)}</dd></div><div><dt>Situação declarada</dt><dd>{POLICY_STATES[selected.state]}</dd></div><div><dt>Categoria</dt><dd>{POLICY_CATEGORIES[selected.category]}</dd></div><div><dt>Responsável</dt><dd>{selected.owner}</dd></div></dl>
         <h3>O que a regra exige</h3><p className="policy-text">{selected.rule}</p><h3>Onde é aplicada</h3><p className="policy-text">{selected.enforcement || "Local de aplicação ainda não mapeado."}</p>
         <h3>Fontes e evidências</h3>{selected.sources.length ? selected.sources.map((source, index) => <div className="policy-source" key={index}><strong>{SOURCE_KINDS[source.kind]}</strong><p className="hash">{source.location}</p><p>{source.note}</p></div>) : <p>Nenhuma fonte cadastrada.</p>}

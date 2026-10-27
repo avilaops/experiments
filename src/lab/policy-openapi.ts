@@ -19,6 +19,20 @@ export const POLICY_SCHEMAS = {
     ...fields, version: { type: "integer", minimum: 1 }, updatedAt: { type: "string", format: "date-time" },
   } },
   PolicyUpdate: { type: "object", additionalProperties: false, required: ["policy", "changeNote"], properties: { policy: ref("PolicyDraft"), changeNote: string(2000) } },
+  PolicyImportDocument: { description: "Lista de fichas sem metadados ou exportação completa do caderno. Apenas os campos atuais das fichas são importados; revisão, versões e histórico do arquivo não são restaurados.", anyOf: [
+    { type: "array", minItems: 1, maxItems: 500, items: ref("PolicyDraft") }, ref("PolicyCatalog"),
+  ] },
+  PolicyImportPreviewRequest: { type: "object", additionalProperties: false, required: ["document"], properties: { document: ref("PolicyImportDocument") } },
+  PolicyImportRequest: { type: "object", additionalProperties: false, required: ["document", "changeNote"], properties: { document: ref("PolicyImportDocument"), changeNote: string(2000) } },
+  PolicyImportPreview: { type: "object", additionalProperties: false, required: ["revision", "createCount", "preserveCount", "items"], properties: {
+    revision: { type: "integer", minimum: 1 }, createCount: { type: "integer", minimum: 0 }, preserveCount: { type: "integer", minimum: 0 },
+    items: { type: "array", maxItems: 500, items: { type: "object", required: ["policy", "action", "different"], properties: {
+      policy: ref("PolicyDraft"), action: { enum: ["create", "preserve"] }, different: { type: "boolean" },
+    } } },
+  } },
+  PolicyImportResult: { type: "object", required: ["catalog", "created", "preserved"], properties: {
+    catalog: ref("PolicyCatalog"), created: { type: "array", items: { type: "string" } }, preserved: { type: "array", items: { type: "string" } },
+  } },
   PolicyCatalog: { type: "object", required: ["revision", "updatedAt", "products", "policies", "history"], properties: {
     revision: { type: "integer", minimum: 1 }, updatedAt: { type: "string", format: "date-time" },
     products: { type: "array", items: { type: "object", required: ["id", "name"], properties: { id: { type: "string" }, name: { type: "string" } } } },

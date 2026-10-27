@@ -2,8 +2,9 @@ import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { ApiError, record } from "./contracts.js";
+import { canonicalJson } from "../json.js";
 
-import { PRODUCTS, POLICY_STATES, POLICY_CATEGORIES, SOURCE_KINDS, type PolicyDraft, type Policy, type PolicyCatalog } from "./policy-contracts.js";
+import { PRODUCTS, POLICY_STATES, POLICY_CATEGORIES, SOURCE_KINDS, type PolicyDraft, type Policy, type PolicyCatalog, type PolicyImportPreview, type PolicyImportResult } from "./policy-contracts.js";
 
 function invalid(message: string): never { throw new ApiError(400, "INVALID_POLICY", message); }
 function text(value: unknown, name: string, maximum: number, optional = false): string {
@@ -95,6 +96,52 @@ export function initialPolicies(): PolicyDraft[] {
 
 function missing(error: unknown): boolean { return !!error && typeof error === "object" && "code" in error && error.code === "ENOENT"; }
 
+export function parsePolicyImportDocument(value: unknown): PolicyDraft[] {
+  let entries: unknown[];
+  if (Array.isArray(value)) entries = value;
+  else {
+    const catalog = record(value, "arquivo");
+    exact(catalog, ["revision", "updatedAt", "products", "policies", "history"]);
+    if (!Array.isArray(catalog.policies)) invalid("O arquivo deve conter uma lista de fichas ou uma exportação do caderno.");
+    if (catalog.policies.length < 1 || catalog.policies.length > 500) invalid("O arquivo deve conter de 1 a 500 fichas.");
+    // An export transfers current policy fields only. Revision, history and
+    // snapshot metadata never become imported audit records.
+    entries = catalog.policies.map((value, index) => {
+      const { version, updatedAt, ...policy } = record(value, "ficha exportada");
+      if (!Number.isSafeInteger(version) || (version as number) < 1 || typeof updatedAt !== "string" || !Number.isFinite(Date.parse(updatedAt))) {
+        invalid(`Ficha ${index + 1}: metadados inválidos na ficha exportada.`);
+      }
+      return policy;
+    });
+  }
+  if (entries.length < 1 || entries.length > 500) invalid("O arquivo deve conter de 1 a 500 fichas.");
+  const ids = new Set<string>();
+  return entries.map((entry, index) => {
+    try {
+      const policy = parsePolicy(entry);
+      if (ids.has(policy.id)) invalid(`Código duplicado no arquivo: ${policy.id}.`);
+      ids.add(policy.id);
+      return policy;
+    } catch (error) {
+      if (error instanceof ApiError) throw new ApiError(error.status, error.code, `Ficha ${index + 1}: ${error.message}`);
+      throw error;
+    }
+  });
+}
+
+function planImport(current: PolicyCatalog, document: unknown): PolicyImportPreview {
+  const existing = new Map(current.policies.map(policy => [policy.id, policy]));
+  const items = parsePolicyImportDocument(document).map(policy => {
+    const previous = existing.get(policy.id);
+    if (!previous) return { policy, action: "create" as const, different: false };
+    const { version: _version, updatedAt: _updatedAt, ...previousDraft } = previous;
+    return { policy, action: "preserve" as const, different: canonicalJson(previousDraft) !== canonicalJson(policy) };
+  });
+  const createCount = items.filter(item => item.action === "create").length;
+  if (current.policies.length + createCount > 500) invalid(`A importação excederia o limite de 500 políticas. Há ${500 - current.policies.length} vagas e o arquivo tem ${createCount} códigos novos.`);
+  return { revision: current.revision, createCount, preserveCount: items.length - createCount, items };
+}
+
 export class PolicyStore {
   readonly #file: string;
   #updates: Promise<unknown> = Promise.resolve();
@@ -119,6 +166,31 @@ export class PolicyStore {
   }
   async #read(): Promise<PolicyCatalog> { return JSON.parse(await readFile(this.#file, "utf8")) as PolicyCatalog; }
   async catalog() { await this.#updates; return this.#read(); }
+  async previewImport(document: unknown): Promise<PolicyImportPreview> {
+    await this.#updates;
+    return planImport(await this.#read(), document);
+  }
+  importPolicies(document: unknown, changeNote: unknown, revision: number): Promise<PolicyImportResult> {
+    const operation = this.#updates.then(async () => {
+      const current = await this.#read();
+      if (current.revision !== revision) throw new ApiError(412, "REVISION_CONFLICT", "O caderno mudou. Atualize e confira a prévia antes de importar novamente.");
+      const note = text(changeNote, "Motivo da importação", 2000);
+      const preview = planImport(current, document);
+      const created = preview.items.filter(item => item.action === "create").map(item => item.policy.id);
+      const preserved = preview.items.filter(item => item.action === "preserve").map(item => item.policy.id);
+      if (!created.length) return { catalog: current, created, preserved };
+      const at = new Date().toISOString();
+      const saved: Policy[] = preview.items.filter(item => item.action === "create").map(item => ({ ...item.policy, version: 1, updatedAt: at }));
+      const next = { ...current, revision: current.revision + 1, updatedAt: at,
+        policies: [...current.policies, ...saved],
+        history: [...current.history, ...saved.map(policy => ({ revision: current.revision + 1, at, changeNote: note, policy }))] };
+      // A single atomic catalog replacement commits the whole validated batch.
+      await this.#write(next);
+      return { catalog: next, created, preserved };
+    });
+    this.#updates = operation.then(() => undefined, () => undefined);
+    return operation;
+  }
   update(policy: PolicyDraft, changeNote: string, revision: number): Promise<PolicyCatalog> {
     const operation = this.#updates.then(async () => {
       const current = await this.#read();

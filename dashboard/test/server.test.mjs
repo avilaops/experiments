@@ -57,3 +57,35 @@ test("public export contains only allowlisted synthetic evidence", async () => {
   assert.ok(!html.includes("Executar suíte"));
   assert.ok(!html.includes("LAB_API_TOKEN"));
 });
+
+test("BFF protects import preview and commit, forwards ETags and preserves batches on conflicts", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "avila-bff-import-"));
+  const api = await createApiServer({ dataDirectory: directory, token: "private-import-token" });
+  const apiUrl = await listen(api);
+  const bff = createDashboard({ apiUrl, apiToken: "private-import-token", username: "tester", password: "long-test-password-123", origin: "https://lab.example", assetDirectory: "unused" });
+  const url = await listen(bff);
+  const endpoint = url + "/experiments/api/v1/policies/import";
+  const auth = { Authorization: "Basic " + Buffer.from("tester:long-test-password-123").toString("base64"), "Content-Type": "application/json", Origin: "https://lab.example" };
+  const document = [{ id: "CRM-BFF-001", product: "crm", title: "Importação BFF", category: "access", state: "proposed", rule: "Regra de teste", owner: "A definir", enforcement: "", verificationDate: "", sources: [] }];
+  try {
+    assert.equal((await fetch(endpoint + "/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ document }) })).status, 401);
+    assert.equal((await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ document, changeNote: "Unauthorized" }) })).status, 401);
+    const preview = await fetch(endpoint + "/preview", { method: "POST", headers: auth, body: JSON.stringify({ document }) });
+    assert.equal(preview.status, 200);
+    assert.equal(preview.headers.get("etag"), '"1"');
+    assert.equal((await preview.json()).createCount, 1);
+    const save = headers => fetch(endpoint, { method: "POST", headers: { ...auth, ...headers }, body: JSON.stringify({ document, changeNote: "Conferência no BFF" }) });
+    assert.equal((await save({ Origin: "https://evil.example", "If-Match": '"1"' })).status, 403);
+    assert.equal((await save({})).status, 428);
+    const committed = await save({ "If-Match": '"1"' });
+    assert.equal(committed.status, 200);
+    assert.equal(committed.headers.get("etag"), '"2"');
+    assert.deepEqual((await committed.json()).created, ["CRM-BFF-001"]);
+    assert.equal((await save({ "If-Match": '"1"' })).status, 412);
+  } finally {
+    await close(bff); await close(api);
+    assert.equal(path.dirname(directory), tmpdir());
+    assert.ok(path.basename(directory).startsWith("avila-bff-import-"));
+    await rm(directory, { recursive: true, force: true });
+  }
+});

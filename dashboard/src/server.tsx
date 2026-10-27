@@ -14,7 +14,7 @@ export interface DashboardOptions {
   assetDirectory: string;
 }
 const hash = (value: string) => createHash("sha256").update(value).digest();
-const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies)$/;
+const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?)$/;
 export function createDashboard(options: DashboardOptions) {
   if (!options.apiToken.trim() || !options.username.trim() || options.password.length < 16) {
     throw new Error("API token and dashboard credentials (password >= 16 characters) are required");

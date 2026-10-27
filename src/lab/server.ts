@@ -116,6 +116,23 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
           throw new ApiError(401, "UNAUTHORIZED", "Token de acesso necessário.");
         }
       }
+      if (url.pathname === "/api/v1/policies/import/preview" && request.method === "POST") {
+        const input = record(await readJson(request), "preview");
+        exactFields(input, ["document"]);
+        const preview = await policies.previewImport(input.document);
+        respond(response, 200, preview, { ETag: `"${preview.revision}"` });
+        return;
+      }
+      if (url.pathname === "/api/v1/policies/import" && request.method === "POST") {
+        const match = request.headers["if-match"];
+        if (match === undefined) throw new ApiError(428, "REVISION_REQUIRED", "Envie If-Match com a revisão da prévia.");
+        if (typeof match !== "string" || !/^"[1-9][0-9]*"$/.test(match)) throw new ApiError(400, "INVALID_INPUT", "If-Match inválido.");
+        const input = record(await readJson(request), "import");
+        exactFields(input, ["document", "changeNote"]);
+        const result = await policies.importPolicies(input.document, input.changeNote, positiveInteger(Number(match.slice(1, -1)), "revision"));
+        respond(response, 200, result, { ETag: `"${result.catalog.revision}"` });
+        return;
+      }
       if (url.pathname === "/api/v1/policies" && request.method === "GET") {
         const catalog = await policies.catalog();
         respond(response, 200, catalog, { ETag: `"${catalog.revision}"` });

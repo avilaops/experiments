@@ -16,12 +16,25 @@ const reportSelector = {
 export const OPENAPI = {
   openapi: "3.1.0",
   info: {
-    title: "Ávila Experiments API", version: "1.0.0",
+    title: "Ávila Experiments API", version: "1.1.0",
     description: "Laboratório local: cálculos determinísticos, suítes versionadas e evidências persistentes. O serviço não executa código arbitrário nem aciona modelos de ML. O token é exigido quando configurado; a CLI exige token ao escutar fora do loopback.",
   },
   servers: [{ url: "/" }],
   security: [{ bearerAuth: [] }, {}],
   paths: {
+    "/api/v1/policies/import/preview": {
+      post: { operationId: "previewPolicyImport", requestBody: body("PolicyImportPreviewRequest"),
+        description: "Valida todas as fichas e a capacidade do caderno sem gravar. Informa quais códigos serão criados ou preservados. A prévia não comprova fontes nem executa testes.",
+        responses: { "200": { ...success("PolicyImportPreview"), headers: { ETag: { schema: { type: "string" } } } }, "413": success("Error", "Corpo excede 1 MiB"), "415": success("Error", "JSON obrigatório"), ...errors },
+      },
+    },
+    "/api/v1/policies/import": {
+      post: { operationId: "importPolicies", requestBody: body("PolicyImportRequest"),
+        description: "Importa somente códigos novos em uma única gravação. Exige motivo e a revisão da prévia em If-Match. Validação ou conflito impedem todo o lote. Se todos os códigos já existirem, preserva o arquivo e a revisão sem gravar. Histórico do arquivo importado não é restaurado.",
+        parameters: [{ name: "If-Match", in: "header", required: true, schema: { type: "string", pattern: '^"[1-9][0-9]*"$' } }],
+        responses: { "200": { ...success("PolicyImportResult"), headers: { ETag: { schema: { type: "string" } } } }, "412": success("Error", "Caderno mudou; conferir nova prévia"), "428": success("Error", "If-Match obrigatório"), "413": success("Error", "Corpo excede 1 MiB"), "415": success("Error", "JSON obrigatório"), ...errors },
+      },
+    },
     "/api/v1/policies": {
       get: { operationId: "getPolicyCatalog", description: "Cadastro privado e parcial das políticas por produto. Produtos sem fichas ainda não foram inventariados. Não executa regras nem testes.", responses: { "200": { ...success("PolicyCatalog"), headers: { ETag: { schema: { type: "string" } } } }, ...errors } },
       put: { operationId: "savePolicy", requestBody: body("PolicyUpdate"),

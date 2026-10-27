@@ -116,6 +116,33 @@ A impressão contém a ficha salva, com versão, responsável, situação e font
 Rascunhos, navegação e histórico não integram essa impressão. A indicação de
 cadastro privado e manual acompanha a ficha no papel ou PDF.
 
+## Importar fichas pelo painel
+
+Use "Importar fichas JSON" e selecione uma lista no formato `PolicyDraft` ou uma
+exportação completa do próprio caderno. O arquivo deve conter de uma a 500 fichas
+e ter até 1 MiB; os dados enviados com o motivo também precisam caber nesse limite.
+
+1. Confira a prévia: ela lista as fichas novas e os códigos já existentes.
+2. Abra os detalhes para conferir produto, situação, responsável, regra e fontes.
+3. Informe o motivo e marque a confirmação de conferência.
+4. Importe as fichas novas. Códigos existentes permanecem integralmente preservados,
+   mesmo quando o arquivo apresenta valores diferentes.
+
+O arquivo inteiro é validado antes da gravação. Código duplicado no arquivo,
+ficha inválida ou falta de capacidade recusam o lote inteiro. A gravação inclui
+todas as fichas novas e seus snapshots em uma única revisão do caderno.
+Reimportar somente códigos já existentes não grava nem aumenta a revisão.
+
+Se o catálogo mudar depois da prévia, a importação retorna 412 sem aplicar o lote.
+Use "Atualizar prévia", confira as novas contagens e confirme novamente. O arquivo
+e o motivo ficam preservados nessa tela. Caso a resposta de uma gravação se perca,
+confira o caderno e uma nova prévia antes de repetir.
+
+Uma exportação transfere apenas os campos atuais das fichas. Seus números de
+revisão, versões e histórico antigos não são restaurados. Fichas novas recebem
+versão 1 e histórico com a data e o motivo da importação atual. Fontes continuam
+sendo declarações manuais e não são abertas ou executadas durante a importação.
+
 Não exportar esse cadastro, suas referências internas ou seu histórico para a
 página pública de evidências. O exportador público continua limitado aos JSONs
 sintéticos selecionados separadamente.
@@ -155,6 +182,8 @@ O importador valida as fichas antes de solicitar gravações, exige ETag, não s
 redirecionamentos e preserva IDs já existentes. Uma disputa de revisão interrompe
 a importação; confira o histórico antes de repetir. Gravações anteriores ao
 conflito podem ter sido concluídas. Repetir não sobrescreve fichas já cadastradas.
+Esse CLI anterior permanece sequencial. A importação em lote pelo painel usa as
+novas rotas de prévia e gravação única, com a garantia de recusa integral do lote.
 
 A proposta de evolução do motor fiscal do ERP está em
 [docs/FISCAL-DECISION-PROPOSAL.md](docs/FISCAL-DECISION-PROPOSAL.md).

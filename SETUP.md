@@ -91,6 +91,19 @@ Não registrar credenciais de produção neste documento.
 
 ## Próximos passos
 
+### Importação revisada de políticas pelo painel
+
+A continuação implementa prévia validada e importação atômica de fichas novas,
+com preservação de códigos existentes, motivo, If-Match e conferência explícita.
+Aceita listas de fichas e a exportação do próprio caderno, sem restaurar revisões,
+versões ou histórico antigos. O CLI anterior permanece sequencial.
+
+Validação local: 127 testes núcleo/API, 12 do painel e 11 no Chrome aprovados.
+Os cenários cobrem recusa integral de lote inválido, concorrência, capacidade,
+reimportação sem mudanças e confirmação renovada após conflito. A publicação
+depende da CI desta revisão. Os inventários de outros produtos continuam
+dependendo de fontes conferidas e responsáveis reais.
+
 ### Executor local de referências
 
 O [carregador de referências](docs/FISCAL-REFERENCE-EXECUTOR.md) lê arquivos JSON,
