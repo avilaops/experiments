@@ -8,6 +8,8 @@ O [contrato fiscal experimental](docs/FISCAL-INPUT-CONTRACT.md) define o primeir
 JSON de contexto com validador e exemplos, sem cálculo ou autorização fiscal.
 O [planejamento de execução fiscal](docs/FISCAL-EXECUTION-CONTRACT.md) acrescenta
 rotas condicionais e cenários sintéticos para o pathFidelity.
+O [executor local de referências](docs/FISCAL-REFERENCE-EXECUTOR.md) confere
+arquivos, hashes, intervalos e vínculo ao contexto antes de produzir uma resolução.
 
 Pacote local para experimentos versionados, avaliadores explícitos e relatórios
 comparáveis. Requer Node.js 24 ou superior. Não executa deploys.

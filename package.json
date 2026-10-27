@@ -23,6 +23,7 @@
     "src"
   ],
   "scripts": {
+    "test:fiscal-reference": "npm run build && node examples/fiscal-reference.mjs",
     "test:fiscal-path": "npm run build && node examples/fiscal-paths.mjs",
     "collect:siscomex": "node scripts/collect-siscomex.mjs",
     "build": "tsc -p tsconfig.json",

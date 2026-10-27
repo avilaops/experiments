@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:avilaops:fiscal-reference:0.1",
+  "title": "Snapshot sintético de referência por operação",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "purpose", "id", "version", "validFrom", "validUntil", "contextFingerprint", "lines"],
+  "properties": {
+    "schemaVersion": { "const": "0.1" },
+    "purpose": { "const": "engineering_fixture" },
+    "id": { "$ref": "urn:avilaops:fiscal-resolution:0.1#/$defs/reference" },
+    "version": { "$ref": "urn:avilaops:fiscal-resolution:0.1#/$defs/reference" },
+    "validFrom": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "validUntil": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "contextFingerprint": { "$ref": "urn:avilaops:fiscal-resolution:0.1#/$defs/hash" },
+    "lines": { "$ref": "urn:avilaops:fiscal-resolution:0.1#/properties/lines" }
+  }
+}

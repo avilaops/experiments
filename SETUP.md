@@ -57,6 +57,17 @@ Não registrar credenciais de produção neste documento.
 
 ## Próximos passos
 
+### Executor local de referências
+
+O [carregador de referências](docs/FISCAL-REFERENCE-EXECUTOR.md) lê arquivos JSON,
+confere hash dos bytes, identidade, versão, intervalo e fingerprint do contexto
+antes de produzir a resolução e chamar o planejador. Aceita somente referências
+de engenharia por operação, sem cálculo ou validação fiscal oficial.
+
+`npm test`: 116 aprovados. `npm run test:fiscal-reference`: cinco cenários
+reconhecidos e 16 artefatos com hashes/tamanhos conferidos. Evidência em
+[fiscal-reference-20261027.md](evidencias/fiscal-reference-20261027.md).
+
 ### Planejamento de caminhos fiscais 0.1
 
 O [contrato de execução](docs/FISCAL-EXECUTION-CONTRACT.md) acrescenta schema de

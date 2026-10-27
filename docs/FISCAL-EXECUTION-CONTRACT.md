@@ -104,6 +104,10 @@ callbacks de fixtures; elas não validam NCM/CEST nem calculam ICMS, ST ou DIFAL
 
 ## Próxima fronteira
 
+O [executor local de referências](FISCAL-REFERENCE-EXECUTOR.md) já lê arquivos,
+confere bytes e contexto e produz resoluções de fixtures. Essa implementação
+substitui a passagem manual da resolução no exemplo novo, sem resolver normas.
+
 Um recorte fiscal revisado deverá especificar regras, vigência, valores de
 referência, precisão e arredondamento antes de implementar cálculo determinístico.
 O executor real precisará resolver cadastros e regras, registrar os resultados de
