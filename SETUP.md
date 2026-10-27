@@ -155,6 +155,49 @@ para preservar o ETag da revisão durante a passagem pelo proxy de compressão.
 Os inventários de outros produtos continuam
 dependendo de fontes conferidas e responsáveis reais.
 
+### Reservas persistentes e reconciliação — AVL-342
+
+O executor agora aceita armazenamento privado opcional de operações. A criação
+exclusiva da reserva impede redispatch após reinício ou disputa entre processos
+no mesmo sistema de arquivos local. A consulta `reconcile` tem autorização
+separada e só resolve a incerteza mediante recibo confirmado do domínio.
+O replay persistente informa quando a saída bruta não está disponível, sem
+gravar dados empresariais para reconstruí-la.
+
+Foram aprovados 147 testes núcleo/API; os 12 novos cobrem reservas, queda de
+processo, concorrência, integridade, conflitos e recibo HTTP. O exemplo
+`npm run test:tools:durable` usa três processos locais e dados sintéticos.
+Ver [contrato](docs/TOOL-OPERATION-STORE.md) e
+[evidência](evidencias/durable-tools-20261027.md).
+
+A primeira inspeção SSH desta continuação encontrou a revisão `57b2418`.
+Uma implantação independente avançou o servidor durante o trabalho; a verificação
+final confirmou API e painel saudáveis com tags
+`sha-0dba98de0ce1ad04f700a87017d3285d4bb214f2`, correspondentes ao `REVISION`
+da release. Os checkpoints anteriores de imagem são históricos. Esta etapa não
+alterou o servidor. Os componentes de persistência são opt-in e ainda não estão
+integrados a um serviço de staging.
+
+O [PR #1](https://github.com/avilaops/experiments/pull/1) reúne o executor e as
+reservas persistentes. Na revisão de código `5e205ee`, passaram as CIs de
+[push](https://github.com/avilaops/experiments/actions/runs/40564524943) e
+[pull request](https://github.com/avilaops/experiments/actions/runs/40564603608),
+incluindo testes de navegador; as imagens foram construídas no GitHub.
+
+O proprietário esclareceu que a geração de PDF conectada ao fiscal do ERP-Next
+ainda não existe. A lacuna consta na [proposta fiscal](docs/FISCAL-DECISION-PROPOSAL.md)
+e permanece separada da impressão das fichas do laboratório.
+
+### Executor instrumentado — AVL-342
+
+Primeira entrega local de `tool-execution/1`, autorização por chamada, journal
+privado, redação integral de payloads e tratamento de interrupção/repetição.
+Ver [contrato e limites](docs/TOOL-EXECUTION.md) e
+[evidência com inspeção SSH](evidencias/tool-execution-20261027.md).
+O aceite de staging permanece pendente. A API implantada em `apps-noclient`
+foi inspecionada por hashes e ainda corresponde ao código anterior ao caderno;
+não é o HEAD local nem esta entrega. Nenhuma implantação foi executada.
+
 ### Executor local de referências
 
 O [carregador de referências](docs/FISCAL-REFERENCE-EXECUTOR.md) lê arquivos JSON,
