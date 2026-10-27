@@ -1,3 +1,4 @@
+import { POLICY_SCHEMAS } from "./policy-openapi.js";
 const reference = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 const json = (schema: object) => ({ "application/json": { schema } });
 const success = (name: string, description = "Sucesso") => ({ description, content: json(reference(name)) });
@@ -21,6 +22,14 @@ export const OPENAPI = {
   servers: [{ url: "/" }],
   security: [{ bearerAuth: [] }, {}],
   paths: {
+    "/api/v1/policies": {
+      get: { operationId: "getPolicyCatalog", description: "Cadastro privado e parcial das políticas por produto. Produtos sem fichas ainda não foram inventariados. Não executa regras nem testes.", responses: { "200": { ...success("PolicyCatalog"), headers: { ETag: { schema: { type: "string" } } } }, ...errors } },
+      put: { operationId: "savePolicy", requestBody: body("PolicyUpdate"),
+        description: "Cria ou revisa uma ficha, exigindo motivo e If-Match. Preserva o snapshot da versão no histórico. Produto de ficha existente não pode mudar. Situação verificada exige data, código, teste e evidência; a declaração não é atestado automático.",
+        parameters: [{ name: "If-Match", in: "header", required: true, schema: { type: "string", pattern: '^"[1-9][0-9]*"$' } }],
+        responses: { "200": { ...success("PolicyCatalog"), headers: { ETag: { schema: { type: "string" } } } }, "412": success("Error", "Caderno mudou"), "428": success("Error", "If-Match obrigatório"), "413": success("Error", "Corpo excede 1 MiB"), "415": success("Error", "JSON obrigatório"), ...errors },
+      },
+    },
     "/health": { get: { operationId: "health", security: [], responses: { "200": success("Health") } } },
     "/openapi.json": { get: { operationId: "openapi", security: [], responses: { "200": { description: "Este contrato", content: json({ type: "object" }) } } } },
     "/api/v1/suite": {
@@ -58,6 +67,7 @@ export const OPENAPI = {
   components: {
     securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } },
     schemas: {
+      ...POLICY_SCHEMAS,
       Health: { type: "object", required: ["status", "service"], properties: { status: { const: "ok" }, service: { const: "avila-experiments" }, authRequired: { type: "boolean" } } },
       Error: { type: "object", properties: { error: { type: "object", required: ["code", "message"], properties: { code: { type: "string" }, message: { type: "string" } } } } },
       Settings: {

@@ -13,7 +13,8 @@ const root = fileURLToPath(new URL("./", import.meta.url));
 await mkdir(root + "dist", { recursive: true });
 await build({ entryPoints: [root + "src/client.tsx"], outfile: root + "dist/client.js", bundle: true, minify: true, jsx: "automatic", define: { "process.env.NODE_ENV": '"production"' }, platform: "browser", target: "es2022" });
 for (const file of ["server", "serve"]) await build({ entryPoints: [root + "src/" + file + (file === "server" ? ".tsx" : ".ts")], outfile: root + "dist/" + file + ".mjs", bundle: true, packages: "external", platform: "node", format: "esm", jsx: "automatic" });
-await copyFile(root + "src/style.css", root + "dist/style.css");
+const stylesheet = await readFile(root + "src/style.css", "utf8") + "\n" + await readFile(root + "src/policies.css", "utf8");
+await writeFile(root + "dist/style.css", stylesheet);
 const allowlist = JSON.parse(await readFile(root + "evidence.allowlist.json", "utf8"));
 await publishPublicExport(root, allowlist, async output => {
   await mkdir(path.join(output, "data"), { recursive: true });
@@ -62,6 +63,6 @@ await publishPublicExport(root, allowlist, async output => {
   const { default: Narrative } = await evaluate(await readFile(root + "content/evidence.mdx", "utf8"), { ...jsx });
   const html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ávila Experiments | Evidências públicas</title><link rel="stylesheet" href="style.css"></head><body>' + renderToStaticMarkup(h("div", null, h("header", null, h("a", { className: "brand", href: "./" }, "Ávila", h("span", null, "Experiments")), h("nav", null, h("a", { href: "https://github.com/avilaops/experiments" }, "Código e documentação"), h("a", { href: "/experiments/" }, "Acessar laboratório")), h("span", { className: "private" }, "Evidências públicas")), h("main", { className: "public-main" }, h("article", null, h(Narrative, { components: { Evidence, Downloads } }))), h("footer", { className: "public-main", style: { margin: "auto" } }, "Snapshots sintéticos selecionados. Sem execução pública."))) + "</body></html>";
   await writeFile(path.join(output, "index.html"), html);
-  await copyFile(root + "src/style.css", path.join(output, "style.css"));
+  await writeFile(path.join(output, "style.css"), stylesheet);
   await writeFile(path.join(output, "manifest.json"), JSON.stringify({ schemaVersion: "1", coreVersion: "0.3.0", artifacts: artifacts.map(({ value, ...item }) => item) }, null, 2) + "\n");
 });

@@ -11,8 +11,12 @@ const dashboard = fileURLToPath(new URL("../", import.meta.url));
 
 test("consecutive exports remove revoked evidence and stale files from the entire public tree", async () => {
   // Keep the fixture beside the dashboard so build dependencies resolve normally.
-  const directory = await mkdtemp(path.join(dashboard, ".export-test-"));
+  const workspace = await mkdtemp(path.join(dashboard, ".export-test-"));
+  const directory = path.join(workspace, "dashboard");
   try {
+    await mkdir(directory);
+    await mkdir(path.join(workspace, "src", "lab"), { recursive: true });
+    await cp(path.join(dashboard, "..", "src", "lab", "policy-contracts.ts"), path.join(workspace, "src", "lab", "policy-contracts.ts"));
     for (const entry of ["build.mjs", "public-export.mjs", "src", "content", "evidence", "evidence.allowlist.json"]) {
       await cp(path.join(dashboard, entry), path.join(directory, entry), { recursive: true });
     }
@@ -47,7 +51,7 @@ test("consecutive exports remove revoked evidence and stale files from the entir
     assert.deepEqual((await readdir(directory)).filter(name => name.startsWith(".public-")), []);
   } finally {
     // directory comes directly from mkdtemp beneath this dashboard's root.
-    assert.equal(path.dirname(path.resolve(directory)), path.resolve(dashboard));
-    await rm(directory, { recursive: true, force: true });
+    assert.equal(path.dirname(path.resolve(workspace)), path.resolve(dashboard));
+    await rm(workspace, { recursive: true, force: true });
   }
 });

@@ -3,6 +3,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { renderToString } from "react-dom/server";
 import { App } from "./App.js";
+import { PolicyCatalog } from "./PolicyCatalog.js";
 
 export interface DashboardOptions {
   apiUrl: string;
@@ -13,7 +14,7 @@ export interface DashboardOptions {
   assetDirectory: string;
 }
 const hash = (value: string) => createHash("sha256").update(value).digest();
-const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons)$/;
+const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies)$/;
 export function createDashboard(options: DashboardOptions) {
   if (!options.apiToken.trim() || !options.username.trim() || options.password.length < 16) {
     throw new Error("API token and dashboard credentials (password >= 16 characters) are required");
@@ -64,9 +65,9 @@ export function createDashboard(options: DashboardOptions) {
         res.setHeader("Content-Type", filename.endsWith(".js") ? "text/javascript; charset=utf-8" : "text/css; charset=utf-8");
         res.end(await readFile(options.assetDirectory + "/" + filename)); return;
       }
-      if (req.method === "GET" && pathname === "/") {
+      if (req.method === "GET" && ["/", "/policies", "/policies/"].includes(pathname)) {
         res.setHeader("Content-Type", "text/html; charset=utf-8");
-        res.end('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ávila Experiments | Laboratório</title><link rel="stylesheet" href="/experiments/assets/style.css"></head><body><div id="root">' + renderToString(<App/>) + '</div><script type="module" src="/experiments/assets/client.js"></script></body></html>'); return;
+        res.end('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ávila Experiments | Laboratório</title><link rel="stylesheet" href="/experiments/assets/style.css"></head><body><div id="root">' + renderToString(pathname.startsWith("/policies") ? <PolicyCatalog/> : <App/>) + '</div><script type="module" src="/experiments/assets/client.js"></script></body></html>'); return;
       }
       send(404, { error: { message: "Não encontrado." } });
     })().catch(error => { if (!res.headersSent) send(error instanceof RangeError ? 413 : 502, { error: { message: error instanceof RangeError ? "Corpo excede 1 MiB." : "Serviço indisponível. Tente novamente." } }); else res.end(); });

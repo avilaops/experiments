@@ -1,5 +1,8 @@
 # Experiments 0.3.0
 
+O [setup e ponto de continuidade](SETUP.md) registra as decisões e o estado atual.
+O [caderno de políticas](POLICIES.md) organiza regras, fontes e evidências por produto.
+
 Pacote local para experimentos versionados, avaliadores explícitos e relatórios
 comparáveis. Requer Node.js 24 ou superior. Não executa deploys.
 

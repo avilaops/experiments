@@ -18,6 +18,17 @@ test("BFF authenticates, withholds the API token, preserves ETag and protects mu
   try {
     assert.equal((await fetch(url + "/experiments/")).status, 401);
     assert.equal((await fetch(url + "/experiments/api/v1/suite")).status, 401);
+    assert.equal((await fetch(url + "/experiments/policies")).status, 401);
+    assert.equal((await fetch(url + "/experiments/api/v1/policies")).status, 401);
+    assert.equal((await fetch(url + "/experiments/policies", { headers: auth })).status, 200);
+    const policyResponse = await fetch(url + "/experiments/api/v1/policies", { headers: auth });
+    assert.equal(policyResponse.status, 200);
+    assert.equal(policyResponse.headers.get("etag"), '"1"');
+    const policyCatalog = await policyResponse.json();
+    const { version, updatedAt, ...policy } = policyCatalog.policies[0];
+    const updatePolicy = () => fetch(url + "/experiments/api/v1/policies", { method: "PUT", headers: { ...auth, "Content-Type": "application/json", "If-Match": '"1"', Origin: "https://lab.example" }, body: JSON.stringify({ policy, changeNote: "Conferir encaminhamento autenticado" }) });
+    assert.equal((await updatePolicy()).status, 200);
+    assert.equal((await updatePolicy()).status, 412);
     assert.equal((await fetch(url + "/experiments/api/v1/suite", { headers: { Authorization: "Basic wrong" } })).status, 401);
     const html = await (await fetch(url + "/experiments/", { headers: auth })).text();
     assert.ok(html.includes("O resultado importa"));
