@@ -1,5 +1,30 @@
 # Setup e ponto de continuidade — 27/10/2026
 
+## Continuação: executor e inventário de rotas implantados
+
+Revisão implantada em `apps-noclient`:
+`5b89544c9589aa322b805298e4d328b6515d4e3a`, integrada pelo
+[PR #3](https://github.com/avilaops/experiments/pull/3). A
+[CI da main](https://github.com/avilaops/experiments/actions/runs/40600115055)
+aprovou 200 testes núcleo/API, 14 do painel e 12 no navegador e construiu as imagens.
+O servidor apenas carregou essas imagens e iniciou os serviços com `--no-build`.
+
+A tela privada <https://ml.avilaops.com/experiments/routes> recebeu a captura
+atual de fontes do ERP: 166 páginas e 50 registros de métodos BFF, na revisão 1.
+A captura informa checkout com alterações; a API não foi capturada e todos os
+216 registros permanecem sem teste funcional. O ERP foi somente inspecionado.
+
+Importação, filtros, recarga, isolamento entre produtos e largura móvel de 390 px
+foram conferidos no domínio real. As 16 fichas e o histórico do caderno continuam
+na revisão 2. Os quatro arquivos anteriores mantiveram seus hashes, com backup
+validado e a imagem anterior preservada para rollback.
+
+O executor e as reservas persistentes estão disponíveis na biblioteca. A entrega
+não configura adaptadores de produtos nem comprova chamadas reais em staging.
+Os próximos trabalhos são essas integrações e a verificação funcional por fluxo,
+com autorização e evidências próprias. Evidências e limites em
+[implantacao-executor-rotas-20261027.md](evidencias/implantacao-executor-rotas-20261027.md).
+
 ## Continuação: inventário parcial registrado em produção
 
 Oito fichas de Mail, CMS, CRM e TMS foram importadas explicitamente no painel
