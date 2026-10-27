@@ -1,5 +1,25 @@
 # Setup e ponto de continuidade — 27/10/2026
 
+## Atualização implantada em 27/10/2026
+
+As quatro correções da revisão foram implantadas em `apps-noclient`, revisão
+`57b2418622321f46f6ef34d3a14b3af4b25ea91b`, após a CI aprovada na main.
+O caderno está disponível em <https://ml.avilaops.com/experiments/policies>,
+com autenticação. A instalação em produção contém oito fichas iniciais na
+revisão 1; os inventários adicionais da prévia local não foram importados.
+
+Foram corrigidos os metadados mutáveis dos avaliadores, o cadastro com código
+duplicado, a edição durante gravações e a leitura integral do histórico em cada
+página. A CI valida núcleo, painel e navegador e constrói as imagens no GitHub.
+Os dados anteriores foram preservados por hash e há backup e imagens anteriores
+para rollback. Detalhes e evidências em
+[correcoes-review-20261027.md](evidencias/correcoes-review-20261027.md).
+
+As contagens e afirmações de ausência de implantação nas seções de checkpoints
+abaixo descrevem as respectivas etapas anteriores. Esta seção registra a
+implantação atual; não afirma que os inventários, integrações ou pilotos
+pendentes tenham sido concluídos.
+
 ## Repositório de trabalho
 
 O laboratório independente está em `D:\Projetos\avila-experiments`.
