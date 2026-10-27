@@ -6,6 +6,7 @@ import { LabStore } from "./store.js";
 import { OPENAPI } from "./openapi.js";
 import { LANDING_HTML } from "./landing.js";
 import { PolicyStore, parsePolicyUpdate } from "./policies.js";
+import { ROUTE_PRODUCTS, RouteInventoryStore } from "./route-inventories.js";
 
 export interface ApiOptions {
   dataDirectory: string;
@@ -71,6 +72,7 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
   await store.initialize(options.seed);
   const policies = new PolicyStore(options.dataDirectory);
   await policies.initialize();
+  const routeInventories = new RouteInventoryStore(options.dataDirectory);
 
   const server = createServer((request, response) => {
     void (async () => {
@@ -115,6 +117,24 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
         if (!timingSafeEqual(tokenHash, createHash("sha256").update(supplied).digest())) {
           throw new ApiError(401, "UNAUTHORIZED", "Token de acesso necessário.");
         }
+      }
+      if (url.pathname === "/api/v1/route-inventories" && request.method === "GET") {
+        respond(response, 200, { products: ROUTE_PRODUCTS });
+        return;
+      }
+      const inventoryMatch = url.pathname.match(/^\/api\/v1\/route-inventories\/([a-z]+)$/);
+      if (inventoryMatch && request.method === "GET") {
+        const result = await routeInventories.get(inventoryMatch[1]!);
+        respond(response, 200, result, { ETag: `"${result.revision}"` });
+        return;
+      }
+      if (inventoryMatch && request.method === "PUT") {
+        const match = request.headers["if-match"];
+        if (match === undefined) throw new ApiError(428, "REVISION_REQUIRED", "Envie If-Match com a revisão do inventário.");
+        if (typeof match !== "string" || !/^"(?:0|[1-9][0-9]*)"$/.test(match) || !Number.isSafeInteger(Number(match.slice(1, -1)))) throw new ApiError(400, "INVALID_INPUT", "If-Match inválido.");
+        const result = await routeInventories.save(inventoryMatch[1]!, await readJson(request), Number(match.slice(1, -1)));
+        respond(response, 200, result, { ETag: `"${result.revision}"` });
+        return;
       }
       if (url.pathname === "/api/v1/policies" && request.method === "GET") {
         const catalog = await policies.catalog();

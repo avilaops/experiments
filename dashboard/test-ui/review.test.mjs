@@ -10,27 +10,33 @@ import { createDashboard } from "../dist/server.mjs";
 
 async function fixture(t) {
   const directory = await mkdtemp(path.join(tmpdir(), "avila-review-ui-"));
+  let api, bff, browser;
+  t.after(async () => {
+    try { if (browser) await browser.close(); }
+    finally {
+      try { if (bff?.listening) await new Promise(resolve => bff.close(resolve)); }
+      finally {
+        try { if (api?.listening) await new Promise(resolve => api.close(resolve)); }
+        finally {
+          assert.equal(path.dirname(directory), tmpdir());
+          assert.ok(path.basename(directory).startsWith("avila-review-ui-"));
+          await rm(directory, { recursive: true, force: true });
+        }
+      }
+    }
+  });
   const token = "ephemeral-ui-test-token";
-  const api = await createApiServer({ dataDirectory: directory, token });
+  api = await createApiServer({ dataDirectory: directory, token });
   await new Promise(resolve => api.listen(0, "127.0.0.1", resolve));
   const apiUrl = "http://127.0.0.1:" + api.address().port;
   const options = {
     apiUrl, apiToken: token, username: "tester", password: "ephemeral-ui-test-password",
-    origin: "http://localhost", assetDirectory: fileURLToPath(new URL("../dist/", import.meta.url)),
+    assetDirectory: fileURLToPath(new URL("../dist/", import.meta.url)),
   };
-  const bff = createDashboard(options);
+  bff = createDashboard(options);
   await new Promise(resolve => bff.listen(0, "127.0.0.1", resolve));
-  options.origin = "http://127.0.0.1:" + bff.address().port;
-  let browser;
-  t.after(async () => {
-    if (browser) await browser.close();
-    await new Promise(resolve => bff.close(resolve));
-    await new Promise(resolve => api.close(resolve));
-    assert.equal(path.dirname(directory), tmpdir());
-    assert.ok(path.basename(directory).startsWith("avila-review-ui-"));
-    await rm(directory, { recursive: true, force: true });
-  });
-  browser = await chromium.launch({ headless: true, channel: "chrome" });
+  const base = "http://127.0.0.1:" + bff.address().port;
+  browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
   const context = await browser.newContext({
     httpCredentials: { username: options.username, password: options.password },
     viewport: { width: 390, height: 844 },
@@ -39,8 +45,12 @@ async function fixture(t) {
   context.on("page", page => page.on("pageerror", error => errors.push(error.message)));
   const page = await context.newPage();
   t.after(() => assert.deepEqual(errors, []));
-  const data = async route => (await fetch(apiUrl + route, { headers: { Authorization: "Bearer " + token } })).json();
-  return { page, base: options.origin, data };
+  const data = async route => {
+    const response = await fetch(apiUrl + route, { headers: { Authorization: "Bearer " + token } });
+    assert.equal(response.ok, true);
+    return response.json();
+  };
+  return { page, base, data };
 }
 
 async function holdSave(page, routePattern) {
@@ -247,4 +257,34 @@ test("policy fields stay locked during saves, and existing records can be delibe
   const saved = (await data("/api/v1/policies")).policies.find(item => item.id === "ERP-ACCESS-001");
   assert.equal(saved.title, "Título revisado");
   assert.equal(saved.version, 2);
+});
+
+test("product routes import, filter, reload and keep products without capture pending", async t => {
+  const { page, base } = await fixture(t);
+  await page.goto(base + "/experiments/");
+  await page.getByRole("link", { name: "Rotas por produto", exact: true }).click();
+  await page.getByRole("heading", { name: "Inventário pendente", exact: true }).waitFor();
+  const report = { schemaVersion: "route-inventory/2", runId: "11111111-1111-4111-8111-111111111111", recordedAt: "2026-10-27T20:00:00Z",
+    source: { head: "a".repeat(40), fingerprint: "b".repeat(64), dirty: true },
+    web: { pages: [{ path: "/products", source: "products/page.tsx" }], handlers: [{ path: "/api/products", source: "api/products/route.ts", declaredMethods: ["GET", "POST"], exports: [{ method: "GET", status: "callable" }, { method: "POST", status: "needs_review" }] }], review: [], conflicts: [] }, api: null };
+  const upload = page.getByLabel("Importar inventário JSON para este produto");
+  await upload.setInputFiles({ name: "inventory.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(report)) });
+  await page.getByRole("heading", { name: "3 registros encontrados de 3", exact: true }).waitFor();
+  await page.getByRole("region", { name: "Origem do inventário", exact: true }).getByText("API não capturada", { exact: false }).waitFor();
+  await page.getByLabel("Camada", { exact: true }).selectOption("bff");
+  await page.getByLabel("Método", { exact: true }).selectOption("POST");
+  const endpoints = page.getByRole("region", { name: "Endpoints do produto", exact: true });
+  assert.equal(await endpoints.getByRole("row").count(), 2);
+  assert.match(await endpoints.innerText(), /POST/);
+  assert.match(await endpoints.innerText(), /revisar handler/);
+  await page.getByLabel("Buscar rota", { exact: true }).fill("absent");
+  await page.getByText("Nenhum registro corresponde aos filtros.", { exact: true }).waitFor();
+  await page.getByLabel("Produto", { exact: true }).selectOption("cms");
+  await page.getByRole("heading", { name: "Inventário pendente", exact: true }).waitFor();
+  assert.equal(await page.getByRole("region", { name: "Endpoints do produto", exact: true }).count(), 0);
+  await page.getByLabel("Produto", { exact: true }).selectOption("erp");
+  await page.getByRole("heading", { name: "3 registros encontrados de 3", exact: true }).waitFor();
+  await page.reload();
+  await page.getByRole("heading", { name: "3 registros encontrados de 3", exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
 });

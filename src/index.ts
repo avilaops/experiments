@@ -15,3 +15,5 @@ export type {
 export { createFileExecutionJournal } from "./execution-journal.js";
 export { createFileToolOperationStore, ToolOperationConflictError } from "./tool-operation-store.js";
 export type { ToolOperationRequest, StoredToolOperation, ToolOperationStore } from "./tool-operation-store.js";
+export { assessFlow, validateFlowPlan, verifyFlowArtifact } from "./flow-verification.js";
+export type { FlowPlan, FlowRun, FlowObservation, FlowDimension } from "./flow-verification.js";

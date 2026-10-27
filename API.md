@@ -29,6 +29,13 @@ O contrato completo está em <http://127.0.0.1:3300/openapi.json>.
 | GET | `/api/v1/runs?limit=25&offset=0` | Histórico paginado |
 | GET | `/api/v1/runs/{id}` | Evidência completa com snapshot da suíte |
 | POST | `/api/v1/comparisons` | Comparar variantes de execuções persistidas |
+| GET | `/api/v1/route-inventories` | Produtos disponíveis para inventário de rotas |
+| GET | `/api/v1/route-inventories/{product}` | Captura atual e ETag; inventário ausente retorna `inventory: null` |
+| PUT | `/api/v1/route-inventories/{product}` | Importar projeção de `route-inventory/2`, exigindo If-Match |
+
+A consulta por produto está em `/experiments/routes` no dashboard privado.
+Escopo, limites da importação e procedimento de captura estão em
+[ERP-FLOW-VERIFICATION.md](docs/ERP-FLOW-VERIFICATION.md).
 
 ```powershell
 $labBase = 'http://127.0.0.1:3300'

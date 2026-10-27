@@ -23,6 +23,8 @@
     "src"
   ],
   "scripts": {
+    "test:ui:local": "npm run build && npm --prefix dashboard run build && node scripts/ui-check.mjs",
+    "inventory:erp": "npm run build && node scripts/inventory-erp-routes.mjs",
     "test:tools": "npm run build && node examples/tool-execution.mjs",
     "test:tools:durable": "npm run build && node examples/durable-tool-execution.mjs",
     "test:fiscal-reference": "npm run build && node examples/fiscal-reference.mjs",
@@ -38,6 +40,7 @@
     "prepack": "npm run build"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "13.1.0",
     "@types/node": "24.13.6",
     "ajv": "8.20.0",
     "typescript": "6.0.3"
