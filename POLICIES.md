@@ -33,8 +33,9 @@ Princípios registrados:
 
 ## Usar
 
-Na implantação que contiver esta funcionalidade, abra
-`/experiments/policies`, sob a autenticação privada do painel.
+Abra <https://ml.avilaops.com/experiments/policies>, sob a autenticação privada
+do painel. A implantação de 27/10/2026 foi conferida em
+[correcoes-review-20261027.md](evidencias/correcoes-review-20261027.md).
 O link também aparece na navegação do laboratório.
 
 - Pesquise por texto, produto, situação, responsável ou local de implementação.
@@ -142,8 +143,9 @@ Esse desenho não implementa cálculo, aprovação ou integração tributária.
 ### Entregas seguintes
 
 1. Validar a ficha, a edição e a impressão no navegador desktop e móvel.
-2. Publicar esta versão do serviço e do painel com backup e rollback, preservando
-   o volume e a seleção pública. Somente então declarar a URL de produção disponível.
+2. Publicação concluída em 27/10/2026, com backup e imagens anteriores preservados.
+   Atualizações seguintes devem manter a validação da CI, o backup do volume e
+   a separação da seleção pública.
 3. Inventariar cada produto por fontes verificadas e atribuir responsáveis.
 4. Vincular execuções reais de testes às fichas; a marcação manual atual não é
    uma integração automática com o CI.
