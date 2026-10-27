@@ -4,22 +4,26 @@ import { readFile } from "node:fs/promises";
 import { renderToString } from "react-dom/server";
 import { App } from "./App.js";
 import { PolicyCatalog } from "./PolicyCatalog.js";
+import { RouteCatalog } from "./RouteCatalog.js";
 
 export interface DashboardOptions {
   apiUrl: string;
   apiToken: string;
   username: string;
   password: string;
-  origin: string;
+  origin?: string;
   assetDirectory: string;
 }
 const hash = (value: string) => createHash("sha256").update(value).digest();
-const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?)$/;
+const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?|route-inventories(?:\/[a-z]+)?)$/;
 export function createDashboard(options: DashboardOptions) {
   if (!options.apiToken.trim() || !options.username.trim() || options.password.length < 16) {
     throw new Error("API token and dashboard credentials (password >= 16 characters) are required");
   }
   const credentialHash = hash(options.username + ":" + options.password);
+  const configuredOrigin = options.origin;
+  if (configuredOrigin !== undefined && (!["http:", "https:"].includes(new URL(configuredOrigin).protocol)
+    || new URL(configuredOrigin).origin !== configuredOrigin)) throw new TypeError("Use an exact HTTP(S) origin");
   const server = createServer((req, res) => {
     const send = (status: number, value: unknown) => {
       res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store, no-transform" });
@@ -44,7 +48,10 @@ export function createDashboard(options: DashboardOptions) {
         // Preserve the revision validator that the API expects in If-Match.
         res.setHeader("Cache-Control", "no-store, no-transform");
         if (!["GET", "POST", "PUT"].includes(req.method ?? "")) { send(405, { error: { message: "Método não permitido." } }); return; }
-        if (req.headers.origin && req.headers.origin !== options.origin) { send(403, { error: { message: "Origem não autorizada." } }); return; }
+        const address = server.address();
+        const localOrigin = typeof address === "object" && address && ["127.0.0.1", "::1"].includes(address.address)
+          ? `http://${address.address === "::1" ? "[::1]" : address.address}:${address.port}` : undefined;
+        if (req.headers.origin && req.headers.origin !== (configuredOrigin ?? localOrigin)) { send(403, { error: { message: "Origem não autorizada." } }); return; }
         let body: string | undefined;
         if (req.method !== "GET") {
           if (req.headers["content-type"]?.split(";")[0] !== "application/json") { send(415, { error: { message: "Envie JSON." } }); return; }
@@ -68,9 +75,9 @@ export function createDashboard(options: DashboardOptions) {
         res.setHeader("Content-Type", filename.endsWith(".js") ? "text/javascript; charset=utf-8" : "text/css; charset=utf-8");
         res.end(await readFile(options.assetDirectory + "/" + filename)); return;
       }
-      if (req.method === "GET" && ["/", "/policies", "/policies/"].includes(pathname)) {
+      if (req.method === "GET" && ["/", "/policies", "/policies/", "/routes", "/routes/"].includes(pathname)) {
         res.setHeader("Content-Type", "text/html; charset=utf-8");
-        res.end('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ávila Experiments | Laboratório</title><link rel="stylesheet" href="/experiments/assets/style.css"></head><body><div id="root">' + renderToString(pathname.startsWith("/policies") ? <PolicyCatalog/> : <App/>) + '</div><script type="module" src="/experiments/assets/client.js"></script></body></html>'); return;
+        res.end('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ávila Experiments | Laboratório</title><link rel="stylesheet" href="/experiments/assets/style.css"></head><body><div id="root">' + renderToString(pathname.startsWith("/routes") ? <RouteCatalog/> : pathname.startsWith("/policies") ? <PolicyCatalog/> : <App/>) + '</div><script type="module" src="/experiments/assets/client.js"></script></body></html>'); return;
       }
       send(404, { error: { message: "Não encontrado." } });
     })().catch(error => { if (!res.headersSent) send(error instanceof RangeError ? 413 : 502, { error: { message: error instanceof RangeError ? "Corpo excede 1 MiB." : "Serviço indisponível. Tente novamente." } }); else res.end(); });

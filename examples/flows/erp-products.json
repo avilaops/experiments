@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "flow-plan/1",
+  "id": "erp-products-roundtrip",
+  "version": "1",
+  "product": "ERP-Next",
+  "reference": "https://linear.app/avilaops/document/027651cb-8e29-4917-8bc6-0c442eaf8985",
+  "checks": [
+    { "id": "open-create-edit", "dimension": "interface", "criterion": "Abrir lista, criar produto e acessar edição pelo navegador", "required": true, "method": "runtime_assertion" },
+    { "id": "http-contract", "dimension": "request", "criterion": "Capturar POST/GET/PUT de products com corpos e respostas compatíveis com o contrato da versão", "required": true, "method": "runtime_assertion" },
+    { "id": "tenant-and-permissions", "dimension": "authorization", "criterion": "Recusar escrita por leitor e acesso ao registro por outra empresa", "required": true, "method": "runtime_assertion" },
+    { "id": "decimal-and-sku", "dimension": "domain", "criterion": "Conservar preço decimal e aplicar as regras de SKU, sem aceitar entrada inválida", "required": true, "method": "runtime_assertion" },
+    { "id": "persist-after-restart", "dimension": "persistence", "criterion": "Consultar valores criados e editados após recarregar a página e reiniciar a API", "required": true, "method": "runtime_assertion" },
+    { "id": "no-unrequested-stock-effect", "dimension": "effects", "criterion": "Cadastrar ou editar produto não movimenta estoque sem comando explícito", "required": true, "method": "runtime_assertion" },
+    { "id": "revision-conflict", "dimension": "failure", "criterion": "Recusar revisão antiga e preservar o formulário, sem mensagem de sucesso indevida", "required": true, "method": "runtime_assertion" },
+    { "id": "readback-matches", "dimension": "response", "criterion": "Tela e nova leitura HTTP mostram os mesmos valores persistidos", "required": true, "method": "runtime_assertion" }
+  ]
+}

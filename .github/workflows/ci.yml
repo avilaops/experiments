@@ -33,9 +33,19 @@ jobs:
         working-directory: dashboard
       - run: npm test
         working-directory: dashboard
-      - run: google-chrome --version
+      - run: npx playwright install --with-deps chromium
+        working-directory: dashboard
       - run: npm run test:ui
         working-directory: dashboard
+      - run: node scripts/ui-check.mjs
+      - name: Preserve local UI test evidence
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: ui-check-${{ github.sha }}-${{ github.run_attempt }}
+          path: reports/ui-check/
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Build release images on GitHub
         if: github.event_name != 'pull_request'
         run: |
