@@ -35,9 +35,9 @@ async function fixture(t) {
     httpCredentials: { username: options.username, password: options.password },
     viewport: { width: 390, height: 844 },
   });
-  const page = await context.newPage();
   const errors = [];
-  page.on("pageerror", error => errors.push(error.message));
+  context.on("page", page => page.on("pageerror", error => errors.push(error.message)));
+  const page = await context.newPage();
   t.after(() => assert.deepEqual(errors, []));
   const data = async route => (await fetch(apiUrl + route, { headers: { Authorization: "Bearer " + token } })).json();
   return { page, base: options.origin, data };
@@ -87,6 +87,126 @@ test("new policy rejects duplicate IDs without locking the code or replacing the
   assert.equal(await code.isDisabled(), true);
   assert.equal(await page.getByLabel("Produto da política").isDisabled(), true);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+});
+
+async function openPolicy(page, base, id = "ERP-ACCESS-001") {
+  await page.goto(base + "/experiments/policies");
+  await page.locator(".policy-card").filter({ hasText: id }).click();
+  await page.getByRole("button", { name: "Editar política", exact: true }).click();
+}
+
+async function savePolicy(page, note) {
+  await page.getByLabel("Motivo da alteração").fill(note);
+  await page.getByRole("button", { name: "Salvar política", exact: true }).click();
+}
+
+test("two tabs reconcile overlapping fields explicitly while preserving independent edits and the change note", async t => {
+  const { page: first, base, data } = await fixture(t);
+  const second = await first.context().newPage();
+  await openPolicy(first, base);
+  await openPolicy(second, base);
+  await first.getByLabel("Título da política").fill("Título da primeira tela");
+  await first.getByLabel("Responsável", { exact: true }).fill("Equipe atual");
+  await savePolicy(first, "Primeira tela");
+  await first.getByRole("status").filter({ hasText: "Política salva" }).waitFor();
+  await second.getByLabel("Título da política").fill("Título da segunda tela");
+  await second.getByLabel("O que a regra exige").fill("Regra da segunda tela");
+  await savePolicy(second, "Motivo preservado");
+  await second.getByRole("button", { name: "Conferir versão atual", exact: true }).click();
+  const field = second.getByRole("group", { name: "Conflito: Título", exact: true });
+  await field.waitFor();
+  assert.match(await field.innerText(), /Título da primeira tela/);
+  assert.match(await field.innerText(), /Título da segunda tela/);
+  assert.equal(await second.getByLabel("Responsável", { exact: true }).inputValue(), "Equipe atual");
+  assert.equal(await second.getByLabel("O que a regra exige").inputValue(), "Regra da segunda tela");
+  assert.equal(await second.getByLabel("Motivo da alteração").inputValue(), "Motivo preservado");
+  assert.equal(await second.getByRole("button", { name: "Salvar política", exact: true }).isDisabled(), true);
+  await second.locator(".policy-editor form").evaluate(form => form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+  assert.equal((await data("/api/v1/policies")).revision, 2);
+  assert.equal(await second.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await field.getByRole("button", { name: "Manter minha edição", exact: true }).click();
+  await second.getByRole("button", { name: "Salvar política", exact: true }).click();
+  await second.getByRole("status").filter({ hasText: "Política salva" }).waitFor();
+  const catalog = await data("/api/v1/policies");
+  const saved = catalog.policies.find(item => item.id === "ERP-ACCESS-001");
+  assert.equal(saved.title, "Título da segunda tela");
+  assert.equal(saved.owner, "Equipe atual");
+  assert.equal(saved.rule, "Regra da segunda tela");
+  assert.equal(saved.version, 3);
+  assert.equal(catalog.history.at(-1).changeNote, "Motivo preservado");
+});
+
+test("accepting the current value still requires a new review if another edit arrives before saving", async t => {
+  const { page: first, base, data } = await fixture(t);
+  const second = await first.context().newPage();
+  await openPolicy(first, base);
+  await openPolicy(second, base);
+  await first.getByLabel("O que a regra exige").fill("Regra atual");
+  await savePolicy(first, "Atualização da regra");
+  await first.getByRole("status").filter({ hasText: "Política salva" }).waitFor();
+  await second.getByLabel("O que a regra exige").fill("Regra local");
+  await second.getByLabel("Título da política").fill("Título independente");
+  await savePolicy(second, "Conferência concorrente");
+  await second.getByRole("button", { name: "Conferir versão atual", exact: true }).click();
+  await second.getByRole("group", { name: "Conflito: Regra", exact: true }).getByRole("button", { name: "Usar versão atual", exact: true }).click();
+  assert.equal(await second.getByLabel("O que a regra exige").inputValue(), "Regra atual");
+  await openPolicy(first, base);
+  await first.getByLabel("Responsável", { exact: true }).fill("Equipe mais recente");
+  await savePolicy(first, "Nova alteração durante a conferência");
+  await first.getByRole("status").filter({ hasText: "Política salva" }).waitFor();
+  await second.getByRole("button", { name: "Salvar política", exact: true }).click();
+  await second.getByRole("button", { name: "Conferir versão atual", exact: true }).click();
+  await second.getByRole("status").filter({ hasText: "Alterações em campos diferentes foram reunidas" }).waitFor();
+  assert.equal(await second.getByLabel("Responsável", { exact: true }).inputValue(), "Equipe mais recente");
+  await second.getByRole("button", { name: "Salvar política", exact: true }).click();
+  await second.getByRole("status").filter({ hasText: "Política salva" }).waitFor();
+  const saved = (await data("/api/v1/policies")).policies.find(item => item.id === "ERP-ACCESS-001");
+  assert.equal(saved.title, "Título independente");
+  assert.equal(saved.rule, "Regra atual");
+  assert.equal(saved.owner, "Equipe mais recente");
+  assert.equal(saved.version, 4);
+});
+
+test("a catalog conflict caused by a different policy preserves both independent updates", async t => {
+  const { page: first, base, data } = await fixture(t);
+  const second = await first.context().newPage();
+  await openPolicy(first, base, "ERP-ACCESS-001");
+  await openPolicy(second, base, "ERP-ACCESS-002");
+  await first.getByLabel("Título da política").fill("Primeira ficha atualizada");
+  await savePolicy(first, "Atualizar primeira ficha");
+  await first.getByRole("status").filter({ hasText: "Política salva" }).waitFor();
+  await second.getByLabel("Título da política").fill("Segunda ficha atualizada");
+  await savePolicy(second, "Atualizar segunda ficha");
+  await second.getByRole("button", { name: "Conferir versão atual", exact: true }).click();
+  await second.getByRole("status").filter({ hasText: "Alterações em campos diferentes foram reunidas" }).waitFor();
+  await second.getByRole("button", { name: "Salvar política", exact: true }).click();
+  await second.getByRole("status").filter({ hasText: "Política salva" }).waitFor();
+  const catalog = await data("/api/v1/policies");
+  assert.equal(catalog.policies.find(item => item.id === "ERP-ACCESS-001").title, "Primeira ficha atualizada");
+  assert.equal(catalog.policies.find(item => item.id === "ERP-ACCESS-002").title, "Segunda ficha atualizada");
+});
+
+test("print media and A4 PDF include the saved policy and sources without editor, history or navigation", async t => {
+  const { page, base, data } = await fixture(t);
+  const original = (await data("/api/v1/policies")).policies.find(item => item.id === "ERP-ACCESS-001");
+  await page.goto(base + "/experiments/policies");
+  await page.locator(".policy-card").filter({ hasText: original.id }).click();
+  await page.getByRole("button", { name: "Editar política", exact: true }).click();
+  await page.getByLabel("Título da política").fill("Rascunho não salvo");
+  await page.setViewportSize({ width: 794, height: 1123 });
+  await page.emulateMedia({ media: "print" });
+  for (const selector of ["header", ".policy-controls", ".policy-editor", ".policy-list", ".policy-history", "footer"]) {
+    assert.equal(await page.locator(selector).isVisible(), false);
+  }
+  assert.equal(await page.locator(".policy-paper h2").innerText(), original.title);
+  assert.equal(await page.locator(".policy-print-note").isVisible(), true);
+  assert.match(await page.locator(".policy-paper").innerText(), /Cadastro privado e manual/);
+  assert.match(await page.locator(".policy-paper").innerText(), /versão 1/);
+  assert.equal(await page.locator(".policy-source").first().isVisible(), true);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  const pdf = await page.pdf({ format: "A4", printBackground: true });
+  assert.equal(pdf.subarray(0, 5).toString(), "%PDF-");
+  assert.ok(pdf.length > 5000);
 });
 
 test("suite controls stay locked until saving finishes and the UI agrees with persistence", async t => {
