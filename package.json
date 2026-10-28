@@ -16,6 +16,10 @@
     "./api": {
       "types": "./dist/lab/server.d.ts",
       "import": "./dist/lab/server.js"
+    },
+    "./node-test-reporter": {
+      "types": "./dist/node-test-reporter.d.ts",
+      "import": "./dist/node-test-reporter.js"
     }
   },
   "files": [
