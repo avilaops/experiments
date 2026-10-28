@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createApiServer } from "./server.js";
+import { shutdownObservability } from "../observability.js";
 import { DEFAULT_DRAFT, type SuiteDraft } from "./contracts.js";
 
 const host = process.env.LAB_HOST ?? "127.0.0.1";
@@ -26,5 +27,7 @@ const server = await createApiServer({
 server.listen(port, host, () => console.log(`Ávila Experiments API: http://${host.includes(":") ? `[${host}]` : host}:${port}`));
 server.on("error", (error) => { console.error(error.message); process.exitCode = 1; });
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.once(signal, () => server.close(() => { process.exitCode = 0; }));
+  process.once(signal, () => server.close(() => {
+    void shutdownObservability().finally(() => { process.exitCode = 0; });
+  }));
 }

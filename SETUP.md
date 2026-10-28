@@ -306,13 +306,16 @@ Langfuse >= 4.59.0). Tracing is disabled by default. Set these variables through
 the deployment secret manager; never commit values:
 
 ```dotenv
-LANGFUSE_TRACING_ENABLED=true
+LANGFUSE_ENABLED=true
 LANGFUSE_PUBLIC_KEY=
 LANGFUSE_SECRET_KEY=
 LANGFUSE_BASE_URL=https://cloud.langfuse.com
 ```
 
-All four settings are required. HTTPS without credentials in the URL is required.
+All four settings are required. HTTPS without credentials, query or fragment in
+the URL is required. `LANGFUSE_TRACING_ENABLED` remains a compatibility alias;
+`LANGFUSE_ENABLED` takes precedence. `LANGFUSE_TRACING_ENVIRONMENT` and
+`LANGFUSE_RELEASE` accept safe letters, digits, dots, underscores and hyphens.
 Existing Compose `env_file` forwards these settings to the API. Configuration
 is read on the first instrumented operation; restart after changing it.
 
@@ -325,7 +328,8 @@ business effect references and exception messages remain private. There are
 no generation, model or token observations because these paths do not call LLMs.
 
 Short-lived library callers should `await flushObservability()` before exiting;
-the SDK also shuts down on `beforeExit`. The exporter is asynchronous and failures
+the API explicitly shuts down telemetry after draining requests on SIGTERM/SIGINT,
+and the SDK also shuts down on `beforeExit`. The exporter is asynchronous and failures
 do not change experiment or tool results. OpenTelemetry SDK 0.220.0 is pinned
 because SDK 0.300.0 requires API 1.10, incompatible with Langfuse's current peers.
 Tests and builds run only in the existing GitHub CI workflow. Live trace delivery

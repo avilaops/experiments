@@ -4,11 +4,13 @@ import assert from "node:assert/strict";
 const observations = [];
 let failStart = false;
 let failUpdate = false;
+let processorOptions;
+let sdkOptions;
 mock.module("@opentelemetry/sdk-node", { namedExports: {
-  NodeSDK: class { start() {} async shutdown() {} },
+  NodeSDK: class { constructor(options) { sdkOptions = options; } start() {} async shutdown() {} },
 } });
 mock.module("@langfuse/otel", { namedExports: {
-  LangfuseSpanProcessor: class { async forceFlush() {} },
+  LangfuseSpanProcessor: class { constructor(options) { processorOptions = options; } async forceFlush() {} },
 } });
 mock.module("@langfuse/tracing", { namedExports: {
   async startActiveObservation(name, action, options) {
@@ -21,7 +23,7 @@ mock.module("@langfuse/tracing", { namedExports: {
     } });
   },
 } });
-process.env.LANGFUSE_TRACING_ENABLED = "true";
+process.env.LANGFUSE_ENABLED = "true";
 process.env.LANGFUSE_PUBLIC_KEY = "test-public";
 process.env.LANGFUSE_SECRET_KEY = "test-secret";
 process.env.LANGFUSE_BASE_URL = "https://example.invalid";
@@ -35,6 +37,16 @@ await assert.rejects(traceOperation("run-experiment", "span", { repetitions: 1 }
   });
 }), (error) => error === privateError);
 assert.equal(calls, 1);
+assert.equal(processorOptions.mediaUploadEnabled, false);
+assert.equal(processorOptions.timeout, 3);
+assert.equal(sdkOptions.autoDetectResources, false);
+assert.deepEqual(sdkOptions.instrumentations, []);
+assert.equal(processorOptions.shouldExportSpan({ otelSpan: {
+  name: "run-experiment", instrumentationScope: { name: "langfuse-sdk" },
+} }), true);
+assert.equal(processorOptions.shouldExportSpan({ otelSpan: {
+  name: "private-unrelated-request", instrumentationScope: { name: "express" },
+} }), false);
 assert.deepEqual(observations.map(({ type }) => type), ["span", "tool"]);
 assert.ok(observations.every(({ updates }) => updates.at(-1).level === "ERROR"));
 assert.ok(!JSON.stringify(observations).includes(privateError.message));
