@@ -28,14 +28,19 @@ function assess(configuration, bytes, sha = digest(bytes)) {
 }
 
 async function execute(configuration, source, callback) {
+  assert.ok(adapter, "Node test evidence adapter is not implemented");
   const directory = await mkdtemp(path.join(tmpdir(), "experiments-node-evidence-"));
   try {
     await writeFile(path.join(directory, "fixture.test.mjs"), source);
     await writeFile(path.join(directory, "evidence-config.json"), JSON.stringify({ run: configuration.run, manifest: configuration.manifest }));
     const reporter = fileURLToPath(new URL("../dist/node-test-reporter.js", import.meta.url));
+    const childEnvironment = { ...process.env, EXPERIMENTS_NODE_TEST_CONFIG: path.join(directory, "evidence-config.json") };
+    // O contexto interno do executor pai desabilita o isolamento do executor
+    // filho; ele precisa iniciar uma execução real, independente.
+    delete childEnvironment.NODE_TEST_CONTEXT;
     const result = spawnSync(process.execPath, ["--test", "--test-reporter", reporter, "fixture.test.mjs"], {
       cwd: directory, encoding: "utf8", timeout: 15_000,
-      env: { ...process.env, EXPERIMENTS_NODE_TEST_CONFIG: path.join(directory, "evidence-config.json") },
+      env: childEnvironment,
     });
     await callback({ result, bytes: Buffer.from(result.stdout), directory });
   } finally { await rm(directory, { recursive: true, force: true }); }
