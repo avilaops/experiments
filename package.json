@@ -16,6 +16,10 @@
     "./api": {
       "types": "./dist/lab/server.d.ts",
       "import": "./dist/lab/server.js"
+    },
+    "./node-test-reporter": {
+      "types": "./dist/node-test-reporter.d.ts",
+      "import": "./dist/node-test-reporter.js"
     }
   },
   "files": [
@@ -38,6 +42,7 @@
     "demo": "npm run build && node examples/document-classification.mjs",
     "test:custom": "npm run build && node examples/custom-tests.mjs",
     "test:path": "npm run build && node examples/path-policy.mjs",
+    "demo:flow-evidence": "npm run build && node examples/node-test-flow.mjs",
     "prepack": "npm run build"
   },
   "devDependencies": {
