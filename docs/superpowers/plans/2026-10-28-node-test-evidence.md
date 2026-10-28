@@ -26,10 +26,10 @@ não enfraquece o plano de oito dimensões e não declara o piloto aprovado.
 
 ## Execução
 
-- [ ] Escrever regressões e reproduzir ausência do adapter/reporter no GitHub CI.
-- [ ] Implementar validação de manifesto, parser de artefato e projeção conservadora.
-- [ ] Implementar reporter redigido e conferir resultados de processos node:test reais.
-- [ ] Exportar tipos/API/reporter e documentar integração, limites e exemplo sintético.
+- [x] Escrever regressões e reproduzir ausência do adapter/reporter no GitHub CI.
+- [x] Implementar validação de manifesto, parser de artefato e projeção conservadora.
+- [x] Implementar reporter redigido e conferir resultados de processos node:test reais.
+- [x] Exportar tipos/API/reporter e documentar integração, limites e exemplo sintético.
 - [ ] Revisar independentemente, aprovar CI completa do SHA final e registrar no Linear.
 
 ## Verificação
@@ -40,3 +40,18 @@ segredos sentinela nos logs/exceções não entram no artefato e que bytes adult
 ou execuções incompletas nunca aprovam um fluxo. O workflow existente é preservado.
 
 Referência de eventos: https://nodejs.org/docs/latest-v24.x/api/test.html#class-testsstream
+
+## Evidências da implementação
+
+- RED inicial correto: CI 40643645924, 200 testes existentes aprovados e sete
+  regressões recusadas por ausência do adapter.
+- Primeira implementação: CI 40643969302 e 40643963687 aprovadas, inclusive
+  dashboard, navegador e empacotamento de imagens no GitHub.
+- Revisão independente encontrou soma inconsistente de contadores e prioridade
+  de skip/todo. Regressões e casos adicionais executados na CI 40644362910:
+  211 aprovados e uma falha, exatamente a aceitação do resumo contraditório.
+  A combinação skip/todo já passou no evento real; a prioridade foi alinhada
+  explicitamente ao executor. As duas correções foram enviadas.
+- Suíte agora cobre 12 cenários do adapter, incluindo conjunção de vários casos,
+  timeout real, limites e versão não suportada. A validação final e os artefatos
+  do exemplo permanecem pendentes até observar a CI do SHA final.
