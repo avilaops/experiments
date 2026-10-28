@@ -113,6 +113,8 @@ export function assessNodeTestEvidence(plan: FlowPlan, context: FlowRun, mapping
     } else fail("EVIDENCE_MALFORMED");
   }
   if (!summary) fail("EVIDENCE_INCOMPLETE");
+  if (summary.counts.passed + summary.counts.failed + summary.counts.cancelled
+    + summary.counts.skipped + summary.counts.todo !== summary.counts.tests) fail("EVIDENCE_MALFORMED");
   const cases = [...results.values()];
   const count = (status: NodeTestCaseStatus) => cases.filter(item => item.status === status).length;
   if (summary.unboundFailures > 0 || (!summary.success && count("failed") + count("error") === 0)) fail("UNBOUND_TEST_FAILURE");

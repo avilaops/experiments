@@ -16,6 +16,8 @@ As [reservas persistentes](docs/TOOL-OPERATION-STORE.md) conservam resultados
 desconhecidos após reinício e permitem reconciliação por recibos do domínio.
 O [inventário de rotas do ERP](docs/ERP-FLOW-VERIFICATION.md) captura fontes e
 contrato, aponta ambiguidades e mantém a verificação funcional separada.
+O [adapter de evidências node:test](docs/NODE-TEST-EVIDENCE.md) liga resultados
+reais a checks por manifesto, confere bytes/hash e conserva falhas e lacunas.
 
 Pacote local para experimentos versionados, avaliadores explícitos e relatórios
 comparáveis. Requer Node.js 24 ou superior. Não executa deploys.

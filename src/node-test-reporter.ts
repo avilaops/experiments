@@ -39,7 +39,7 @@ export default async function* nodeTestReporter(events: AsyncIterable<Event>) {
       const parent = details.type === "suite" || (typeof data.file === "string" && parents.has(data.file));
       const error = record(details.error) ? details.error : {};
       const cancelled = ["cancelledByParent", "testTimeoutFailure", "testAborted"].includes(error.failureType as string);
-      const status: NodeTestCaseStatus = marked(data.todo) ? "todo" : marked(data.skip) ? "skipped"
+      const status: NodeTestCaseStatus = marked(data.skip) ? "skipped" : marked(data.todo) ? "todo"
         : parent ? "inconclusive" : event.type === "test:pass" ? "passed" : cancelled ? "error" : "failed";
       if (caseId) yield line({ type: "case", id: caseId, status });
       else if (status === "failed" || status === "error") unboundFailures++;

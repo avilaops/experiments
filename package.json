@@ -42,6 +42,7 @@
     "demo": "npm run build && node examples/document-classification.mjs",
     "test:custom": "npm run build && node examples/custom-tests.mjs",
     "test:path": "npm run build && node examples/path-policy.mjs",
+    "demo:flow-evidence": "npm run build && node examples/node-test-flow.mjs",
     "prepack": "npm run build"
   },
   "devDependencies": {
