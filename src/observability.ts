@@ -34,17 +34,33 @@ export async function traceOperation<T>(name: string, type: "span" | "tool" | "e
   // Catch inside the callback: SDK exception recording must never capture private error messages.
   let failure: unknown;
   let failed = false;
+  let started = false;
   let value!: T;
-  await tracing.startActiveObservation(name, async (observation) => {
-    observation.update({ input: metadata });
+  const operation = async (observation: { update: (attributes: {
+    input?: Metadata; output?: { completed: boolean }; level?: "ERROR"; statusMessage?: string;
+  }) => unknown }) => {
+    try { observation.update({ input: metadata }); } catch { /* Best effort. */ }
+    started = true;
     try {
       value = await action();
-      observation.update({ output: { completed: true } });
     } catch (error) {
       failure = error; failed = true;
-      observation.update({ level: "ERROR", statusMessage: "operation_failed", output: { completed: false } });
     }
-  }, { asType: type });
+    try {
+      observation.update(failed
+        ? { level: "ERROR", statusMessage: "operation_failed", output: { completed: false } }
+        : { output: { completed: true } });
+    } catch { /* Best effort. */ }
+  };
+  try {
+    // SDK overloads require a literal observation type.
+    if (type === "tool") await tracing.startActiveObservation(name, operation, { asType: "tool" });
+    else if (type === "evaluator") await tracing.startActiveObservation(name, operation, { asType: "evaluator" });
+    else await tracing.startActiveObservation(name, operation, { asType: "span" });
+  } catch {
+    // Never retry an application operation after it may have committed an effect.
+    if (!started) return action();
+  }
   if (failed) throw failure;
   return value;
 }
