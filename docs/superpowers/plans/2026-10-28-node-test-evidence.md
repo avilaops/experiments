@@ -30,7 +30,7 @@ não enfraquece o plano de oito dimensões e não declara o piloto aprovado.
 - [x] Implementar validação de manifesto, parser de artefato e projeção conservadora.
 - [x] Implementar reporter redigido e conferir resultados de processos node:test reais.
 - [x] Exportar tipos/API/reporter e documentar integração, limites e exemplo sintético.
-- [ ] Revisar independentemente, aprovar CI completa do SHA final e registrar no Linear.
+- [x] Revisar independentemente, aprovar CI completa do SHA final e registrar no Linear.
 
 ## Verificação
 
@@ -53,5 +53,13 @@ Referência de eventos: https://nodejs.org/docs/latest-v24.x/api/test.html#class
   A combinação skip/todo já passou no evento real; a prioridade foi alinhada
   explicitamente ao executor. As duas correções foram enviadas.
 - Suíte agora cobre 12 cenários do adapter, incluindo conjunção de vários casos,
-  timeout real, limites e versão não suportada. A validação final e os artefatos
-  do exemplo permanecem pendentes até observar a CI do SHA final.
+  timeout real, limites e versão não suportada.
+- Validação do código completo no commit 354ea2314e6e3590a53f742d890fbf98c34a2575:
+  CI push 40644662834 e PR 40644669048 aprovadas. Núcleo: 212/212;
+  dashboard: 14/14; navegador: 12/12. Build e imagens concluídos no GitHub.
+- Artefato 12796444627 baixado e inspecionado: revisão exata, cinco hashes de
+  fontes iguais aos arquivos versionados, quatro digests de eventos iguais aos
+  relatórios. Cenários passed/failed/skipped/missing preservam respectivamente
+  passed/failed/inconclusive/inconclusive; ausência mantém not_run.
+- Revisão e correções concluídas. O PR e o Linear registram o resultado final.
+  Este módulo não inclui merge, deploy, publicação npm nem aprovação de produto.
