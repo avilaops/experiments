@@ -140,3 +140,25 @@ test("a test cannot be reused for multiple checks and unknown check IDs are reje
     assert.throws(() => assess(unknown, bytes), /MANIFEST/);
   });
 });
+
+test("contradictory summary counters are refused even when the digest is recalculated", async () => {
+  const configuration = config();
+  await execute(configuration, allPass(configuration), async ({ result, bytes }) => {
+    assert.equal(result.status, 0, result.stderr);
+    const rows = bytes.toString().trim().split("\n").map(line => JSON.parse(line));
+    rows.at(-1).counts.skipped = 8;
+    const changed = Buffer.from(rows.map(row => JSON.stringify(row)).join("\n") + "\n");
+    assert.throws(() => assess(configuration, changed), /MALFORMED/);
+  });
+});
+
+test("skip takes precedence over todo exactly as in the real Node runner", async () => {
+  const configuration = config();
+  await execute(configuration, "import test from 'node:test'; test('case-interface',{skip:true,todo:true},()=>{});", async ({ result, bytes }) => {
+    assert.equal(result.status, 0, result.stderr);
+    const report = assess(configuration, bytes);
+    assert.equal(report.flow.coverage.inconclusive, 1);
+    assert.equal(report.flow.coverage.not_run, 7);
+    assert.equal(report.cases[0].status, "skipped");
+  });
+});
