@@ -13,7 +13,7 @@ export interface NodeTestCaseResult { id: string; status: NodeTestCaseStatus }
 export class NodeTestEvidenceError extends Error {
   constructor(public readonly code: string) { super(code); this.name = "NodeTestEvidenceError"; }
 }
-const fail = (code: string): never => { throw new NodeTestEvidenceError(code); };
+function fail(code: string): never { throw new NodeTestEvidenceError(code); }
 const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
 const sha = (value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 const id = (value: unknown): value is string => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(value);
