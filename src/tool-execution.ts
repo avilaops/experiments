@@ -216,11 +216,16 @@ export function createToolExecutor(options: ToolExecutorOptions): ToolExecutor {
       onAbort = () => reject(new Error("aborted"));
       signal.addEventListener("abort", onAbort, { once: true });
     });
+    // Lazy telemetry initialization can yield before the dispatch race is attached.
+    void aborted.catch(() => undefined);
     try {
       // Invoke registered code here; a caller-supplied trace is never consulted.
-      const raw = await traceOperation("dispatch-registered-tool", "tool", { reconciliation: call.action === "reconcile" }, async () => Promise.race([dispatch(snapshot(input), {
+      const raw = await traceOperation("dispatch-registered-tool", "tool", { reconciliation: call.action === "reconcile" }, async () => {
+        if (signal.aborted) throw new Error("aborted");
+        return Promise.race([dispatch(snapshot(input), {
         ...snapshot(identity), executionId, callId: call.callId, idempotencyKey, signal,
-      }), aborted]));
+        }), aborted]);
+      });
       try {
         const outcome = outcomeOf(raw);
         call.effect = call.action === "reconcile" && outcome.effect.status !== "confirmed" ? { status: "unknown" } : outcome.effect;
