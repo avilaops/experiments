@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { traceOperation } from "./observability.js";
 import { snapshot, fingerprint } from "./json.js";
 import type { AgentTrace } from "./evaluators.js";
 import type { JsonValue } from "./types.js";
@@ -217,9 +218,9 @@ export function createToolExecutor(options: ToolExecutorOptions): ToolExecutor {
     });
     try {
       // Invoke registered code here; a caller-supplied trace is never consulted.
-      const raw = await Promise.race([dispatch(snapshot(input), {
+      const raw = await traceOperation("dispatch-registered-tool", "tool", { reconciliation: call.action === "reconcile" }, async () => Promise.race([dispatch(snapshot(input), {
         ...snapshot(identity), executionId, callId: call.callId, idempotencyKey, signal,
-      }), aborted]);
+      }), aborted]));
       try {
         const outcome = outcomeOf(raw);
         call.effect = call.action === "reconcile" && outcome.effect.status !== "confirmed" ? { status: "unknown" } : outcome.effect;
@@ -238,7 +239,7 @@ export function createToolExecutor(options: ToolExecutorOptions): ToolExecutor {
     identifier(toolName); identifier(idempotencyKey);
     // Capture before queueing: neither the caller nor the authorizer may rewrite the invocation.
     const input = snapshot(arguments_);
-    return enqueue(async (): Promise<ToolCallResult> => {
+    return enqueue(() => traceOperation("execute-tool-call", "span", { reconciliation: action === "reconcile" }, async (): Promise<ToolCallResult> => {
       if (closed || journalFailed) throw new Error("Execution is closed or its journal is unavailable");
       const inputHash = fingerprint({ tool: toolName, arguments: input });
       const cached = action === "execute" ? cache.get(idempotencyKey) : undefined;
@@ -316,7 +317,7 @@ export function createToolExecutor(options: ToolExecutorOptions): ToolExecutor {
       }
       await record("call_finished", call);
       return result;
-    });
+    }));
   }
 
   return {

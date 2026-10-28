@@ -6,6 +6,7 @@ export {
   type AgentTraceStep, type AgentTrace, type PathFidelityOptions,
 } from "./evaluators.js";
 export { runExperiment } from "./runner.js";
+export { flushObservability } from "./observability.js";
 export { compareExperiments } from "./comparison.js";
 export { createToolExecutor, toolExecutionPath } from "./tool-execution.js";
 export type {

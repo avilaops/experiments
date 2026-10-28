@@ -299,3 +299,34 @@ de impacto e aprovação; não declara essas novas capacidades implementadas.
 SEO, indexação e mídias têm seu planejamento anterior no roadmap do experimento
 do checkout ERP. Antes de consolidar documentos entre repositórios, conferir as
 versões e manter rastreabilidade, sem sobrescrever fontes.
+# Optional Langfuse tracing
+
+The backend supports Langfuse JS SDK 6.0.2 (Langfuse Cloud v4 or self-hosted
+Langfuse >= 4.59.0). Tracing is disabled by default. Set these variables through
+the deployment secret manager; never commit values:
+
+```dotenv
+LANGFUSE_TRACING_ENABLED=true
+LANGFUSE_PUBLIC_KEY=
+LANGFUSE_SECRET_KEY=
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+```
+
+All four settings are required. HTTPS without credentials in the URL is required.
+Existing Compose `env_file` forwards these settings to the API. Configuration
+is read on the first instrumented operation; restart after changing it.
+
+`run-experiment` contains executor and evaluator observations. Real registered
+tool dispatches have type `tool`, nested under `execute-tool-call`. Denied and
+replayed attempts retain the parent observation without inventing a dispatch.
+Only numeric counts, repetition numbers, completion flags and reconciliation
+flags are exported. Inputs, outputs, identities, tenant IDs, tool names,
+business effect references and exception messages remain private. There are
+no generation, model or token observations because these paths do not call LLMs.
+
+Short-lived library callers should `await flushObservability()` before exiting;
+the SDK also shuts down on `beforeExit`. The exporter is asynchronous and failures
+do not change experiment or tool results. OpenTelemetry SDK 0.220.0 is pinned
+because SDK 0.300.0 requires API 1.10, incompatible with Langfuse's current peers.
+Tests and builds run only in the existing GitHub CI workflow. Live trace delivery
+must be checked after configuring project credentials in an authorized environment.
