@@ -162,3 +162,43 @@ test("skip takes precedence over todo exactly as in the real Node runner", async
     assert.equal(report.cases[0].status, "skipped");
   });
 });
+
+test("every case bound to a check is required, including missing and skipped cases", async () => {
+  const configuration = config();
+  configuration.manifest.bindings = configuration.manifest.bindings.filter(binding => binding.checkId !== "request");
+  configuration.manifest.bindings[0].caseIds.push("request");
+  for (const [second, expected] of [["", "inconclusive"],
+    ["test('case-request',{skip:true},()=>{});", "inconclusive"],
+    ["test('case-request',()=>assert.fail('deliberate'));", "failed"],
+    ["test('case-request',()=>{});", "passed"]]) {
+    await execute(configuration, `import test from 'node:test'; import assert from 'node:assert/strict'; test('case-interface',()=>{}); ${second}`, async ({ bytes }) => {
+      const report = assess(configuration, bytes).flow;
+      assert.equal(report.checks.find(check => check.id === "interface").status, expected);
+      assert.equal(report.checks.find(check => check.id === "request").status, "not_run");
+    });
+  }
+});
+
+test("unsupported producer, malformed UTF-8 and size limits cannot be approved", async () => {
+  const configuration = config();
+  await execute(configuration, allPass(configuration), async ({ result, bytes }) => {
+    assert.equal(result.status, 0, result.stderr);
+    const rows = bytes.toString().trim().split("\n").map(line => JSON.parse(line));
+    rows[0].producer.node = "v25.0.0";
+    assert.throws(() => assess(configuration, Buffer.from(rows.map(row => JSON.stringify(row)).join("\n") + "\n")), /UNSUPPORTED_NODE_VERSION/);
+    assert.throws(() => assess(configuration, Buffer.concat([Buffer.from([0xff]), bytes])), /MALFORMED/);
+    assert.throws(() => assess(configuration, Buffer.alloc(4 * 1024 * 1024 + 1)), /TOO_LARGE/);
+    assert.throws(() => assess(configuration, Buffer.alloc(0)), /TOO_LARGE/);
+  });
+});
+
+test("a real timeout remains an execution error rather than a missing or passing check", async () => {
+  const configuration = config();
+  await execute(configuration, "import test from 'node:test'; test('case-interface',{timeout:10},()=>new Promise(resolve=>setTimeout(resolve,100)));", async ({ result, bytes }) => {
+    assert.equal(result.status, 1);
+    const report = assess(configuration, bytes).flow;
+    assert.equal(report.verdict, "error");
+    assert.equal(report.coverage.error, 1);
+    assert.equal(report.coverage.not_run, 7);
+  });
+});
