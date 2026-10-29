@@ -4,6 +4,7 @@ COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci --no-audit --no-fund
 COPY src ./src
 COPY examples ./examples
+COPY schemas ./schemas
 RUN npm run build
 
 FROM core-build AS dashboard-build
@@ -16,7 +17,10 @@ RUN npm run build
 FROM node:24-alpine AS api
 WORKDIR /app
 ENV NODE_ENV=production LAB_HOST=0.0.0.0 LAB_PORT=3300 LAB_DATA_DIR=/data
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
 COPY --from=core-build --chown=node:node /app/dist ./dist
+COPY --from=core-build --chown=node:node /app/schemas ./schemas
 COPY --from=core-build --chown=node:node /app/examples/suites ./examples/suites
 RUN mkdir /data && chown node:node /data
 USER node

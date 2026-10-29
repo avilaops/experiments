@@ -7,11 +7,13 @@ import { OPENAPI } from "./openapi.js";
 import { LANDING_HTML } from "./landing.js";
 import { PolicyStore, parsePolicyUpdate } from "./policies.js";
 import { ROUTE_PRODUCTS, RouteInventoryStore } from "./route-inventories.js";
+import { ProductContextStore } from "./product-contexts.js";
 
 export interface ApiOptions {
   dataDirectory: string;
   seed?: SuiteDraft;
   token?: string;
+  contextToken?: string;
   allowedOrigins?: string[];
 }
 
@@ -62,17 +64,20 @@ function selector(value: unknown): { id: string; variant: "baseline" | "candidat
 
 export async function createApiServer(options: ApiOptions): Promise<Server> {
   if (options.token !== undefined && !options.token.trim()) throw new TypeError("The API token cannot be empty");
+  if (options.contextToken !== undefined && (!options.contextToken.trim() || !options.token || options.contextToken === options.token)) throw new TypeError("The context token must be nonempty, distinct, and paired with the API token");
   const origins = new Set((options.allowedOrigins ?? []).map((origin) => {
     const url = new URL(origin);
     if (!["http:", "https:"].includes(url.protocol) || url.origin !== origin) throw new TypeError("Allowed origins must be exact HTTP(S) origins");
     return origin;
   }));
   const tokenHash = options.token === undefined ? null : createHash("sha256").update(options.token).digest();
+  const contextTokenHash = options.contextToken === undefined ? null : createHash("sha256").update(options.contextToken).digest();
   const store = new LabStore(options.dataDirectory);
   await store.initialize(options.seed);
   const policies = new PolicyStore(options.dataDirectory);
   await policies.initialize();
   const routeInventories = new RouteInventoryStore(options.dataDirectory);
+  const productContexts = new ProductContextStore(options.dataDirectory);
 
   const server = createServer((request, response) => {
     void (async () => {
@@ -114,8 +119,31 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
       }
       if (tokenHash !== null) {
         const supplied = request.headers.authorization?.match(/^Bearer (.+)$/)?.[1] ?? "";
-        if (!timingSafeEqual(tokenHash, createHash("sha256").update(supplied).digest())) {
+        const suppliedHash = createHash("sha256").update(supplied).digest();
+        const contextAccess = contextTokenHash !== null && timingSafeEqual(contextTokenHash, suppliedHash)
+          && url.pathname === "/api/v1/product-contexts/erp" && ["GET", "PUT"].includes(request.method ?? "");
+        if (!timingSafeEqual(tokenHash, suppliedHash) && !contextAccess) {
           throw new ApiError(401, "UNAUTHORIZED", "Token de acesso necessário.");
+        }
+      }
+      if (url.pathname === "/api/v1/product-contexts/erp") {
+        if (request.method === "GET") {
+          const keys = [...url.searchParams.keys()];
+          if (keys.length > 1 || keys.some(key => !["sha256", "requestId"].includes(key))) throw new ApiError(400, "INVALID_INPUT", "Use apenas sha256 ou requestId.");
+          const digest = url.searchParams.get("sha256"), id = url.searchParams.get("requestId");
+          if (digest !== null) respond(response, 200, await productContexts.snapshot(digest));
+          else if (id !== null) respond(response, 200, await productContexts.receipt(id));
+          else { const state = await productContexts.state(); respond(response, 200, state, { ETag: `"${state.revision}"` }); }
+          return;
+        }
+        if (request.method === "PUT") {
+          if (url.search) throw new ApiError(400, "INVALID_INPUT", "A importação não aceita parâmetros de consulta.");
+          const match = request.headers["if-match"];
+          if (match === undefined) throw new ApiError(428, "REVISION_REQUIRED", "Envie If-Match com a revisão do contexto.");
+          if (typeof match !== "string" || !/^"(?:0|[1-9][0-9]*)"$/.test(match) || !Number.isSafeInteger(Number(match.slice(1, -1)))) throw new ApiError(400, "INVALID_INPUT", "If-Match inválido.");
+          const result = await productContexts.save(await readJson(request), Number(match.slice(1, -1)));
+          respond(response, 200, result, { ETag: `"${result.currentRevision}"` });
+          return;
         }
       }
       if (url.pathname === "/api/v1/policies/import/preview" && request.method === "POST") {

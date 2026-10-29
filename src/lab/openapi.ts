@@ -22,6 +22,15 @@ export const OPENAPI = {
   servers: [{ url: "/" }],
   security: [{ bearerAuth: [] }, {}],
   paths: {
+    "/api/v1/product-contexts/erp": {
+      get: { operationId: "getErpProductContext", description: "Sem parâmetros: revisão, última importação e última versão observada. sha256: captura completa imutável. requestId: recibo confirmado. Use apenas um parâmetro. Observações históricas não garantem a versão atual nem a execução de fluxos.",
+        parameters: ["sha256", "requestId"].map(name => ({ name, in: "query", schema: { type: "string", pattern: "^[a-f0-9]{64}$" } })),
+        responses: { "200": { description: "Estado, captura ou recibo conforme a consulta.", content: json({ type: "object" }) }, "404": success("Error", "Captura ou recibo ausente"), ...errors } },
+      put: { operationId: "importErpProductContext", description: "Importa erp-product-context/1 completo, validado pelos schemas canônicos distribuídos em schemas/erp. Grava captura por hash e recibo em catálogo com substituição atômica; não altera capturas antigas. Repetir requestId confirma o recibo anterior sem promover uma captura antiga. confirmPublication exige checkout limpo e conferência independente do health fixo do ERP. Uma instância escreve o volume.",
+        parameters: [{ name: "If-Match", in: "header", required: true, schema: { type: "string", pattern: '^"(?:0|[1-9][0-9]*)"$' } }],
+        requestBody: { required: true, content: json({ type: "object", additionalProperties: false, required: ["context", "confirmPublication"], properties: { context: { type: "object", description: "Artefato completo erp-product-context/1 com hash válido." }, confirmPublication: { type: "boolean" } } }) },
+        responses: { "200": { description: "Recibo confirmado e revisão atual; reused identifica repetição.", content: json({ type: "object" }) }, "409": success("Error", "Conteúdo divergente ou publicação não confirmada"), "412": success("Error", "Revisão mudou"), "428": success("Error", "If-Match obrigatório"), "413": success("Error", "Limite de 1 MiB"), "415": success("Error", "JSON obrigatório"), ...errors } },
+    },
     "/api/v1/policies/import/preview": {
       post: { operationId: "previewPolicyImport", requestBody: body("PolicyImportPreviewRequest"),
         description: "Valida todas as fichas e a capacidade do caderno sem gravar. Informa quais códigos serão criados ou preservados. A prévia não comprova fontes nem executa testes.",
