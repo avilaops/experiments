@@ -164,7 +164,11 @@ export class PolicyStore {
         history: policies.map(policy => ({ revision: 1, at, changeNote: "Inventário inicial parcial, com fontes e limitações declaradas.", policy })) });
     }
   }
-  async #read(): Promise<PolicyCatalog> { return JSON.parse(await readFile(this.#file, "utf8")) as PolicyCatalog; }
+  async #read(): Promise<PolicyCatalog> {
+    const catalog = JSON.parse(await readFile(this.#file, "utf8")) as PolicyCatalog;
+    // Product metadata follows the application catalog, including for existing volumes.
+    return { ...catalog, products: PRODUCTS };
+  }
   async catalog() { await this.#updates; return this.#read(); }
   async previewImport(document: unknown): Promise<PolicyImportPreview> {
     await this.#updates;

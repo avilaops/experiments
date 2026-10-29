@@ -1,14 +1,12 @@
 export const PRODUCTS = [
   { id: "shared", name: "Princípios Ávila Ops" },
+  { id: "auth", name: "Ávila Auth" },
   { id: "mail", name: "Ávila Mail" }, { id: "cms", name: "Ávila CMS" },
   { id: "crm", name: "Ávila CRM" }, { id: "erp", name: "Ávila ERP" },
   { id: "lojas", name: "Ávila Lojas" }, { id: "tms", name: "Ávila TMS" },
   { id: "experiments", name: "Ávila Experiments" },
 ] as const;
-export const ROUTE_PRODUCTS = [
-  { id: "auth", name: "Ávila Auth" },
-  ...PRODUCTS.filter(product => product.id !== "shared"),
-] as const;
+export const ROUTE_PRODUCTS = PRODUCTS.filter(product => product.id !== "shared");
 export const POLICY_STATES = {
   proposed: "Proposta", documented: "Documentada", implemented: "Implementada",
   verified: "Verificada com evidência", retired: "Retirada de uso",
