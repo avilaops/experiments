@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createApiServer } from "../dist/lab/server.js";
@@ -25,7 +25,7 @@ async function start(t, token) {
     assert.ok(path.basename(directory).startsWith("avila-policies-"));
     await rm(directory, { recursive: true, force: true });
   });
-  return { ...await open(), open };
+  return { ...await open(), open, directory };
 }
 
 test("policy inventory distinguishes proposals, source-backed records and uninventoried products", async t => {
@@ -33,12 +33,35 @@ test("policy inventory distinguishes proposals, source-backed records and uninve
   const response = await send();
   assert.equal(response.headers.get("etag"), '"1"');
   const catalog = await response.json();
-  assert.equal(catalog.products.length, 8);
+  assert.equal(catalog.products.length, 9);
   assert.equal(catalog.policies.length, 8);
   assert.equal(catalog.policies.filter(policy => policy.state === "verified").length, 0);
   assert.equal(catalog.policies.filter(policy => policy.product === "lojas").every(policy => policy.state === "proposed"), true);
   assert.equal(catalog.policies.some(policy => policy.product === "mail"), false);
   assert.equal(catalog.history.length, 8);
+});
+
+test("existing policy volumes expose Auth without rewriting history and persist its policies", async t => {
+  const { send, open, directory } = await start(t);
+  const file = path.join(directory, "policies.json");
+  const original = JSON.parse(await readFile(file, "utf8"));
+  const legacy = { ...original, products: original.products.filter(product => product.id !== "auth") };
+  await writeFile(file, JSON.stringify(legacy));
+  const bytes = await readFile(file, "utf8");
+  const catalog = await (await send()).json();
+  assert.deepEqual(catalog.products.find(product => product.id === "auth"), { id: "auth", name: "Ávila Auth" });
+  assert.equal(catalog.revision, legacy.revision);
+  assert.deepEqual(catalog.history, legacy.history);
+  assert.deepEqual(catalog.policies, legacy.policies);
+  assert.equal(await readFile(file, "utf8"), bytes);
+  const policy = { ...draft(), id: "AUTH-ACCESS-001", product: "auth" };
+  const response = await send("PUT", { policy, changeNote: "Registrar proposta de Auth" }, { "If-Match": '"1"' });
+  assert.equal(response.status, 200);
+  const saved = await response.json();
+  assert.equal(saved.policies.at(-1).product, "auth");
+  assert.equal(saved.policies.at(-1).state, "proposed");
+  const restarted = await open();
+  assert.deepEqual(await (await restarted.send()).json(), saved);
 });
 
 test("policy revisions, complete snapshots and retirement survive a service restart", async t => {
