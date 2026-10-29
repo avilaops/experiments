@@ -8,6 +8,7 @@ import { LANDING_HTML } from "./landing.js";
 import { PolicyStore, parsePolicyUpdate } from "./policies.js";
 import { ROUTE_PRODUCTS, RouteInventoryStore } from "./route-inventories.js";
 import { ProductContextStore } from "./product-contexts.js";
+import { ClientContractStore } from "./client-contracts.js";
 
 export interface ApiOptions {
   dataDirectory: string;
@@ -78,6 +79,7 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
   await policies.initialize();
   const routeInventories = new RouteInventoryStore(options.dataDirectory);
   const productContexts = new ProductContextStore(options.dataDirectory);
+  const clientContracts = new ClientContractStore(options.dataDirectory);
 
   const server = createServer((request, response) => {
     void (async () => {
@@ -125,6 +127,28 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
         if (!timingSafeEqual(tokenHash, suppliedHash) && !contextAccess) {
           throw new ApiError(401, "UNAUTHORIZED", "Token de acesso necessário.");
         }
+      }
+      if (url.pathname === "/api/v1/client-contracts" && ["GET", "PUT"].includes(request.method ?? "")) {
+        if (url.search) throw new ApiError(400, "INVALID_INPUT", "O cadastro não aceita parâmetros de consulta.");
+        if (request.method === "GET") {
+          const catalog = await clientContracts.catalog();
+          respond(response, 200, catalog, { ETag: `"${catalog.revision}"` });
+        } else {
+          const match = request.headers["if-match"];
+          if (match === undefined) throw new ApiError(428, "REVISION_REQUIRED", "Envie If-Match com a revisão do cadastro.");
+          if (typeof match !== "string" || !/^"(?:0|[1-9][0-9]*)"$/.test(match) || !Number.isSafeInteger(Number(match.slice(1, -1)))) throw new ApiError(400, "INVALID_INPUT", "If-Match inválido.");
+          const result = await clientContracts.save(await readJson(request), Number(match.slice(1, -1)));
+          respond(response, 200, result, { ETag: `"${result.catalog.revision}"` });
+        }
+        return;
+      }
+      const contractHistory = url.pathname.match(/^\/api\/v1\/client-contracts\/([^/]+)\/history$/);
+      if (contractHistory && request.method === "GET") {
+        if ([...url.searchParams.keys()].some(key => !["limit", "offset"].includes(key) || url.searchParams.getAll(key).length !== 1)) throw new ApiError(400, "INVALID_INPUT", "Use apenas limit e offset, uma vez cada.");
+        const limit = url.searchParams.get("limit") ?? "20", offset = url.searchParams.get("offset") ?? "0";
+        if (!/^[1-9]\d*$/.test(limit) || !/^(?:0|[1-9]\d*)$/.test(offset)) throw new ApiError(400, "INVALID_INPUT", "Paginação inválida.");
+        respond(response, 200, await clientContracts.history(contractHistory[1]!, Number(limit), Number(offset)));
+        return;
       }
       if (url.pathname === "/api/v1/product-contexts/erp") {
         if (request.method === "GET") {

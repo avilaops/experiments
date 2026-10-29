@@ -70,7 +70,7 @@ export function App() {
   }
   const report = selected?.[variant];
   return <div className="shell">
-    <header><a className="brand" href={base + "/"}>Ávila<span>Experiments</span></a><nav><a href={base + "/routes"}>Rotas por produto</a><a href={base + "/policies"}>Caderno de políticas</a><a href="/evidencias/">Evidências públicas</a><a href={base + "/openapi.json"}>Contrato API</a><a href="https://github.com/avilaops/experiments">Código e documentação</a></nav><span className="private">Laboratório privado</span></header>
+    <header><a className="brand" href={base + "/"}>Ávila<span>Experiments</span></a><nav><a href={base + "/contracts"}>Contratos com clientes</a><a href={base + "/routes"}>Rotas por produto</a><a href={base + "/policies"}>Caderno de políticas</a><a href="/evidencias/">Evidências públicas</a><a href={base + "/openapi.json"}>Contrato API</a><a href="https://github.com/avilaops/experiments">Código e documentação</a></nav><span className="private">Laboratório privado</span></header>
     <main><div className="intro"><div><p className="muted">Laboratório de engenharia baseada em evidências</p><h1>O resultado importa.<br/>O caminho também.</h1><p>Cálculos reproduzíveis, critérios explícitos e histórico de cada decisão.</p></div><div className="revision"><strong>{suite ? "r" + suite.revision : "…"}</strong><span>Revisão carregada<br/>Núcleo 0.3.0</span></div></div>
       <div role="status" aria-live="polite" className={message ? "notice" : ""}>{message}</div>
       {conflict && <div className="conflict" role="alert"><strong>Outra revisão foi salva.</strong><p>Sua edição permanece nesta tela. Copie o texto se quiser preservá-lo antes de recarregar.</p><button onClick={() => void action(loadSuite)}>Recarregar suíte</button></div>}

@@ -16,7 +16,9 @@ test("consecutive exports remove revoked evidence and stale files from the entir
   try {
     await mkdir(directory);
     await mkdir(path.join(workspace, "src", "lab"), { recursive: true });
-    await cp(path.join(dashboard, "..", "src", "lab", "policy-contracts.ts"), path.join(workspace, "src", "lab", "policy-contracts.ts"));
+    for (const file of ["policy-contracts.ts", "client-contract-types.ts"]) {
+      await cp(path.join(dashboard, "..", "src", "lab", file), path.join(workspace, "src", "lab", file));
+    }
     for (const entry of ["build.mjs", "public-export.mjs", "src", "content", "evidence", "evidence.allowlist.json"]) {
       await cp(path.join(dashboard, entry), path.join(directory, entry), { recursive: true });
     }
