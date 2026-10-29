@@ -1,5 +1,26 @@
 # Setup e ponto de continuidade — 27/10/2026
 
+## Continuação: contratos com clientes no laboratório — 28/10/2026
+
+O cadastro privado `/experiments/contracts` permite criar e editar contratos
+com cliente, referência externa, produto, vigência, valor em reais, periodicidade,
+situação e observações. Cada alteração exige motivo e mantém um snapshot
+versionado. A instalação começa vazia; nenhum cliente foi importado.
+
+A API exige a revisão atual em `If-Match`, recusa códigos duplicados e conserva
+edições locais quando outra tela salva primeiro. O token restrito de contextos
+ERP não tem acesso a contratos. O arquivo `client-contracts.json` usa o volume
+existente e uma única instância escritora, sem migração dos registros anteriores.
+Detalhes e limites em [contratos com clientes](docs/CUSTOMER-CONTRACTS.md).
+
+Validação local: compilação do núcleo e do painel; 213 testes do núcleo/API e
+mais um teste de validade do OpenAPI; 15 testes do painel; 14 no navegador; e o
+roteiro `scripts/ui-check.mjs`. Criação, edição, filtros, recarga, histórico,
+conflito entre telas e largura móvel de 390 px foram conferidos com dados
+sintéticos em diretórios temporários. Esta seção registra implementação e
+verificação local; a implantação deve ser comprovada pelo CI e pela revisão
+servida antes de ser declarada concluída.
+
 ## Continuação: executor e inventário de rotas implantados
 
 Revisão implantada em `apps-noclient`:

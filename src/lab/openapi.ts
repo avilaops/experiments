@@ -1,4 +1,5 @@
 import { POLICY_SCHEMAS } from "./policy-openapi.js";
+import { CLIENT_CONTRACT_PATHS, CLIENT_CONTRACT_SCHEMAS } from "./client-contract-openapi.js";
 const reference = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 const json = (schema: object) => ({ "application/json": { schema } });
 const success = (name: string, description = "Sucesso") => ({ description, content: json(reference(name)) });
@@ -22,6 +23,7 @@ export const OPENAPI = {
   servers: [{ url: "/" }],
   security: [{ bearerAuth: [] }, {}],
   paths: {
+    ...CLIENT_CONTRACT_PATHS,
     "/api/v1/product-contexts/erp": {
       get: { operationId: "getErpProductContext", description: "Sem parâmetros: revisão, última importação e última versão observada. sha256: captura completa imutável. requestId: recibo confirmado. Use apenas um parâmetro. Observações históricas não garantem a versão atual nem a execução de fluxos.",
         parameters: ["sha256", "requestId"].map(name => ({ name, in: "query", schema: { type: "string", pattern: "^[a-f0-9]{64}$" } })),
@@ -104,6 +106,7 @@ export const OPENAPI = {
     securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } },
     schemas: {
       ...POLICY_SCHEMAS,
+      ...CLIENT_CONTRACT_SCHEMAS,
       ProductRouteInventory: { type: "object", required: ["product", "revision", "inventory"], properties: { product: { type: "string" }, revision: { type: "integer", minimum: 0 }, inventory: { type: ["object", "null"], properties: {
         product: { type: "string" }, revision: { type: "integer", minimum: 1 }, importedAt: { type: "string", format: "date-time" }, runId: { type: "string" }, recordedAt: { type: "string", format: "date-time" },
         sourceHead: { type: "string" }, sourceDirty: { type: "boolean" }, sourceFingerprint: { type: "string", pattern: "^[a-f0-9]{64}$" }, apiCaptured: { type: "boolean" }, reviewItems: { type: "integer", minimum: 0 },

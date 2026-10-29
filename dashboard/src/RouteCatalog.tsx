@@ -44,7 +44,7 @@ export function RouteCatalog() {
   }
   const count = (value: RouteEntry["layer"]) => entries.filter(row => row.layer === value).length;
   return <div className="shell">
-    <header><a className="brand" href="/experiments/">Ávila<span>Experiments</span></a><nav><a href="/experiments/">Laboratório</a><a href="/experiments/routes" aria-current="page">Rotas por produto</a><a href="/experiments/policies">Caderno de políticas</a></nav><span className="private">Inventário privado</span></header>
+    <header><a className="brand" href="/experiments/">Ávila<span>Experiments</span></a><nav><a href="/experiments/">Laboratório</a><a href="/experiments/contracts">Contratos com clientes</a><a href="/experiments/routes" aria-current="page">Rotas por produto</a><a href="/experiments/policies">Caderno de políticas</a></nav><span className="private">Inventário privado</span></header>
     <main><div className="intro"><div><h1>Rotas por produto.</h1><p>Consulte páginas, handlers BFF e operações de API do inventário importado.</p></div></div>
       {message && <p role="status" className="notice">{message}</p>}
       <section aria-label="Consultar rotas"><div className="fields">
