@@ -1,4 +1,5 @@
 import { POLICY_SCHEMAS } from "./policy-openapi.js";
+import { ROUTE_PRODUCTS } from "./policy-contracts.js";
 import { CLIENT_CONTRACT_PATHS, CLIENT_CONTRACT_SCHEMAS } from "./client-contract-openapi.js";
 const reference = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 const json = (schema: object) => ({ "application/json": { schema } });
@@ -53,7 +54,7 @@ export const OPENAPI = {
       get: { operationId: "listRouteProducts", responses: { "200": { description: "Produtos disponíveis; ausência de inventário significa pendente.", content: json({ type: "object", properties: { products: { type: "array", items: { type: "object", required: ["id", "name"], properties: { id: { type: "string" }, name: { type: "string" } } } } } }) }, ...errors } },
     },
     "/api/v1/route-inventories/{product}": {
-      parameters: [{ name: "product", in: "path", required: true, schema: { type: "string", enum: ["mail", "cms", "crm", "erp", "lojas", "tms", "experiments"] } }],
+      parameters: [{ name: "product", in: "path", required: true, schema: { type: "string", enum: ROUTE_PRODUCTS.map(product => product.id) } }],
       get: { operationId: "getRouteInventory", responses: { "200": { ...success("ProductRouteInventory"), headers: { ETag: { schema: { type: "string" } } } }, "404": success("Error", "Produto desconhecido"), ...errors } },
       put: { operationId: "importRouteInventory", description: "Importa uma projeção de route-inventory/2 para o produto selecionado. Substitui a captura anterior, sem importar verdicts funcionais nem dados brutos arbitrários. Uma única instância do serviço deve escrever o volume.",
         parameters: [{ name: "If-Match", in: "header", required: true, schema: { type: "string", pattern: '^"(?:0|[1-9][0-9]*)"$' } }],
