@@ -5,7 +5,10 @@ export const PRODUCTS = [
   { id: "lojas", name: "Ávila Lojas" }, { id: "tms", name: "Ávila TMS" },
   { id: "experiments", name: "Ávila Experiments" },
 ] as const;
-export const ROUTE_PRODUCTS = PRODUCTS.filter(product => product.id !== "shared");
+export const ROUTE_PRODUCTS = [
+  { id: "auth", name: "Ávila Auth" },
+  ...PRODUCTS.filter(product => product.id !== "shared"),
+] as const;
 export const POLICY_STATES = {
   proposed: "Proposta", documented: "Documentada", implemented: "Implementada",
   verified: "Verificada com evidência", retired: "Retirada de uso",
