@@ -102,7 +102,7 @@ export function PolicyCatalog() {
   }
 
   return <div className="shell policy-shell">
-    <header><a className="brand" href="/experiments/">Ávila<span>Experiments</span></a><nav><a href="/experiments/">Laboratório</a><a href="/experiments/contracts">Contratos com clientes</a><a href="/experiments/policies" aria-current="page">Caderno de políticas</a><a href="/experiments/openapi.json">Contrato API</a></nav><span className="private">Cadastro privado</span></header>
+    <header><a className="brand" href="/experiments/">Ávila<span>Experiments</span></a><nav><a href="/experiments/flows">Fluxos do ERP</a><a href="/experiments/">Laboratório</a><a href="/experiments/contracts">Contratos com clientes</a><a href="/experiments/policies" aria-current="page">Caderno de políticas</a><a href="/experiments/openapi.json">Contrato API</a></nav><span className="private">Cadastro privado</span></header>
     <main>
       <div className="intro"><div><p className="muted">Um lugar para consultar as regras de cada produto</p><h1>Caderno de políticas.</h1><p>Qual é a regra, onde ela vive, quem cuida e qual evidência sustenta sua situação.</p></div><div className="revision"><strong>{catalog ? `r${catalog.revision}` : "…"}</strong><span>Revisão do caderno</span></div></div>
       <p className="notice">Inventário parcial. A situação de cada política é registrada pela equipe; cadastrar uma regra não a aplica nos produtos e não executa seus testes. Sem fichas significa inventário pendente, não ausência de políticas.</p>

@@ -6,6 +6,7 @@ import { App } from "./App.js";
 import { PolicyCatalog } from "./PolicyCatalog.js";
 import { RouteCatalog } from "./RouteCatalog.js";
 import { ClientContracts } from "./ClientContracts.js";
+import { ProductFlows } from "./ProductFlows.js";
 
 export interface DashboardOptions {
   apiUrl: string;
@@ -16,7 +17,7 @@ export interface DashboardOptions {
   assetDirectory: string;
 }
 const hash = (value: string) => createHash("sha256").update(value).digest();
-const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?|route-inventories(?:\/[a-z]+)?|client-contracts(?:\/[0-9a-f-]{36}\/history)?)$/;
+const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?|route-inventories(?:\/[a-z]+)?|product-contexts\/erp|client-contracts(?:\/[0-9a-f-]{36}\/history)?)$/;
 export function createDashboard(options: DashboardOptions) {
   if (!options.apiToken.trim() || !options.username.trim() || options.password.length < 16) {
     throw new Error("API token and dashboard credentials (password >= 16 characters) are required");
@@ -49,6 +50,7 @@ export function createDashboard(options: DashboardOptions) {
         // Preserve the revision validator that the API expects in If-Match.
         res.setHeader("Cache-Control", "no-store, no-transform");
         if (!["GET", "POST", "PUT"].includes(req.method ?? "")) { send(405, { error: { message: "Método não permitido." } }); return; }
+        if (pathname === "/api/v1/product-contexts/erp" && req.method !== "GET") { send(405, { error: { message: "Consulta de fluxos somente para leitura." } }); return; }
         const address = server.address();
         const localOrigin = typeof address === "object" && address && ["127.0.0.1", "::1"].includes(address.address)
           ? `http://${address.address === "::1" ? "[::1]" : address.address}:${address.port}` : undefined;
@@ -61,7 +63,7 @@ export function createDashboard(options: DashboardOptions) {
         const headers: Record<string, string> = { Authorization: "Bearer " + options.apiToken };
         if (body) headers["Content-Type"] = "application/json";
         if (req.headers["if-match"]) headers["If-Match"] = String(req.headers["if-match"]);
-        const query = pathname === "/api/v1/runs" || pathname.startsWith("/api/v1/client-contracts") ? url.search : "";
+        const query = ["/api/v1/runs", "/api/v1/product-contexts/erp"].includes(pathname) || pathname.startsWith("/api/v1/client-contracts") ? url.search : "";
         const upstream = await fetch(options.apiUrl + pathname + query, { method: req.method, headers, ...(body === undefined ? {} : { body }), signal: AbortSignal.timeout(30000), redirect: "error" });
         const bytes = await upstream.text();
         res.statusCode = upstream.status;
@@ -77,9 +79,9 @@ export function createDashboard(options: DashboardOptions) {
         res.setHeader("Content-Type", filename.endsWith(".js") ? "text/javascript; charset=utf-8" : "text/css; charset=utf-8");
         res.end(await readFile(options.assetDirectory + "/" + filename)); return;
       }
-      if (req.method === "GET" && ["/", "/policies", "/policies/", "/routes", "/routes/", "/contracts", "/contracts/"].includes(pathname)) {
+      if (req.method === "GET" && ["/", "/policies", "/policies/", "/routes", "/routes/", "/contracts", "/contracts/", "/flows", "/flows/"].includes(pathname)) {
         res.setHeader("Content-Type", "text/html; charset=utf-8");
-        res.end('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ávila Experiments | Laboratório</title><link rel="stylesheet" href="/experiments/assets/style.css"></head><body><div id="root">' + renderToString(pathname.startsWith("/contracts") ? <ClientContracts/> : pathname.startsWith("/routes") ? <RouteCatalog/> : pathname.startsWith("/policies") ? <PolicyCatalog/> : <App/>) + '</div><script type="module" src="/experiments/assets/client.js"></script></body></html>'); return;
+        res.end('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ávila Experiments | Laboratório</title><link rel="stylesheet" href="/experiments/assets/style.css"></head><body><div id="root">' + renderToString(pathname.startsWith("/flows") ? <ProductFlows/> : pathname.startsWith("/contracts") ? <ClientContracts/> : pathname.startsWith("/routes") ? <RouteCatalog/> : pathname.startsWith("/policies") ? <PolicyCatalog/> : <App/>) + '</div><script type="module" src="/experiments/assets/client.js"></script></body></html>'); return;
       }
       send(404, { error: { message: "Não encontrado." } });
     })().catch(error => { if (!res.headersSent) send(error instanceof RangeError ? 413 : 502, { error: { message: error instanceof RangeError ? "Corpo excede 1 MiB." : "Serviço indisponível. Tente novamente." } }); else res.end(); });

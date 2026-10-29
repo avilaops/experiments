@@ -4,10 +4,21 @@ import path from "node:path";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { ApiError, record } from "./contracts.js";
 
-interface ContextFlow {
-  definition: { id: string; title: string; dependencies: string[]; actionGroups: string[] };
+export interface ContextFlow {
+  definition: { id: string; title: string; goal: string; kind: "product" | "support"; nextStep: string; dependencies: string[]; actionGroups: string[];
+    journey?: { id: string; title: string; actionIds: string[]; authRefs: string[]; externalSystems: string[] }[] };
+  definitionState: "journey_defined" | "actions_mapped";
   actionIds: string[];
-  assessment: { publication: "not_observed"; execution: "not_observed" };
+  pages: string[];
+  permissions: string[];
+  assessment: { interface: { state: string; mappedActionIds: string[]; unmappedActionIds: string[] }; publication: "not_observed"; execution: "not_observed" };
+}
+export interface ContextAction {
+  id: string; flow: string; status: "implemented" | "blocked"; operation: { method: string; path: string };
+  permissions?: string[]; preconditions?: string[]; recovery?: string; sources?: string[];
+  input?: { body?: { source: string; type: string } | null };
+  response?: { action?: string };
+  ui?: { pages: string[]; bff?: { method: string; path: string } | null; gap?: string | null };
 }
 export interface ProductContext {
   schemaVersion: "erp-product-context/1";
@@ -16,7 +27,10 @@ export interface ProductContext {
   source: { repository: "avilaops/erp-next"; commit: string; dirty: boolean };
   selection: { targetFlow: string | null; includedFlows: string[] };
   flows: ContextFlow[];
-  actions: { id: string; flow: string }[];
+  actions: ContextAction[];
+  authActions: { path: string; method: string; action: string; recovery: string }[];
+  pendingFlows: { id: string; title: string; status: "needs_definition"; openDecisions: string[] }[];
+  limits: string[];
 }
 export type PublicationObservation = { state: "not_observed" } | {
   state: "version_observed"; origin: "https://erp.avilaops.com"; servedCommit: string; observedAt: string;
@@ -59,12 +73,21 @@ export function parseProductContext(value: unknown): ProductContext {
   }
   const actions = new Set<string>();
   for (const action of value.actions) {
+    for (const entries of [action.permissions, action.preconditions, action.sources]) if (entries !== undefined && (!Array.isArray(entries) || entries.some(entry => typeof entry !== "string"))) invalid();
+    if (action.response !== undefined && (!action.response || typeof action.response !== "object" || (action.response.action !== undefined && typeof action.response.action !== "string"))) invalid();
+    if (action.ui !== undefined) {
+      if (!action.ui || !Array.isArray(action.ui.pages) || action.ui.pages.some(page => typeof page !== "string")
+          || (action.ui.gap != null && typeof action.ui.gap !== "string")
+          || (action.ui.bff != null && (typeof action.ui.bff !== "object" || typeof action.ui.bff.method !== "string" || typeof action.ui.bff.path !== "string"))) invalid();
+    }
+    if (action.input !== undefined && (!action.input || typeof action.input !== "object"
+        || (action.input.body != null && (typeof action.input.body !== "object" || typeof action.input.body.type !== "string" || typeof action.input.body.source !== "string")))) invalid();
     if (actions.has(action.id) || !groups.has(action.flow)) invalid();
     actions.add(action.id);
     const owner = value.flows.find(flow => flow.definition.id === groups.get(action.flow))!;
     if (!owner.actionIds.includes(action.id)) invalid();
   }
-  for (const flow of value.flows) if (flow.actionIds.some(id => !actions.has(id))) invalid();
+  for (const flow of value.flows) if (flow.actionIds.some(id => !actions.has(id) || groups.get(value.actions.find(action => action.id === id)!.flow) !== flow.definition.id)) invalid();
   return value;
 }
 export function contextRequestId(digest: string, confirmPublication: boolean): string {
@@ -102,6 +125,42 @@ export class ProductContextStore {
     const receipt = (await this.#catalog()).imports.find(item => item.requestId === id);
     if (!receipt) throw new ApiError(404, "CONTEXT_IMPORT_NOT_FOUND", "Importação não encontrada.");
     return receipt;
+  }
+  async view(options: { digest?: string; mode?: string; flow?: string; indexOnly?: boolean } = {}) {
+    if (options.mode !== undefined && !["latest", "published"].includes(options.mode)) throw new ApiError(400, "INVALID_INPUT", "Modo inválido.");
+    if (options.digest !== undefined && !/^[a-f0-9]{64}$/.test(options.digest)) throw new ApiError(400, "INVALID_INPUT", "SHA-256 inválido.");
+    if (options.flow !== undefined && !/^[a-z][a-z0-9_-]{0,99}$/.test(options.flow)) throw new ApiError(400, "INVALID_INPUT", "Funcionalidade inválida.");
+    if (options.digest && options.mode === "published") throw new ApiError(400, "INVALID_INPUT", "Escolha o hash ou a última publicação observada.");
+    await this.#writes;
+    const catalog = await this.#catalog();
+    const published = catalog.imports.findLast(item => item.publication.state === "version_observed") ?? null;
+    const selected = options.digest ? catalog.imports.findLast(item => item.contentSha256 === options.digest)
+      : options.mode === "published" ? published : catalog.imports.at(-1);
+    if (!selected && (options.digest || options.mode === "published")) throw new ApiError(404, "CONTEXT_NOT_FOUND", "Não existe captura para essa seleção; nenhuma versão ativa foi presumida.");
+    const seen = new Set<string>();
+    const captures = [...catalog.imports].reverse().filter(item => { if (seen.has(item.contentSha256)) return false; seen.add(item.contentSha256); return true; }).slice(0, 50);
+    if (!selected) return { schemaVersion: "erp-product-flow-view/1" as const, revision: catalog.revision, capture: null, captures, latestPublication: published, flows: [], actions: [], pendingFlows: [], edges: [], limits: ["Nenhum contexto importado."] };
+    const context = await this.snapshot(selected.contentSha256);
+    const included = new Set<string>();
+    const include = (id: string) => { if (included.has(id)) return; const flow = context.flows.find(item => item.definition.id === id); if (!flow) throw new ApiError(404, "FLOW_NOT_FOUND", "Funcionalidade não encontrada nessa captura."); included.add(id); flow.definition.dependencies.forEach(include); };
+    if (options.flow) include(options.flow); else context.flows.forEach(flow => included.add(flow.definition.id));
+    const flows = context.flows.filter(flow => included.has(flow.definition.id));
+    const groups = new Set(flows.flatMap(flow => flow.definition.actionGroups));
+    const actions = context.actions.filter(action => groups.has(action.flow));
+    const summaries = flows.map(flow => {
+      const owned = actions.filter(action => flow.actionIds.includes(action.id));
+      return { ...flow, counts: { actions: owned.length, implemented: owned.filter(action => action.status === "implemented").length,
+        blocked: owned.filter(action => action.status === "blocked").length,
+        routesMapped: flow.assessment.interface.mappedActionIds.length } };
+    });
+    const result = { schemaVersion: "erp-product-flow-view/1" as const, revision: catalog.revision, capture: selected, captures, latestPublication: published,
+      selection: { targetFlow: options.flow ?? null, includedFlows: flows.map(flow => flow.definition.id) },
+      source: context.source, authActions: options.indexOnly ? [] : context.authActions,
+      flows: summaries, actions: options.indexOnly ? [] : actions, pendingFlows: context.pendingFlows,
+      edges: flows.flatMap(flow => flow.definition.dependencies.map(id => ({ from: flow.definition.id, to: id, relation: "depends_on" as const }))),
+      limits: context.limits,
+    };
+    return result;
   }
   async snapshot(digest: string): Promise<ProductContext> {
     if (!/^[a-f0-9]{64}$/.test(digest)) throw new ApiError(400, "INVALID_INPUT", "SHA-256 inválido.");

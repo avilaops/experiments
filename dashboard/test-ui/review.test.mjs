@@ -8,6 +8,17 @@ import { chromium } from "playwright";
 import { createApiServer } from "../../dist/lab/server.js";
 import { createDashboard } from "../dist/server.mjs";
 
+test("flow screen keeps missing captures and missing publication observations explicit on mobile", async t => {
+  const { page, base } = await fixture(t);
+  await page.goto(base + "/experiments/flows");
+  await page.getByRole("heading", { name: "Nenhum contexto importado", exact: true }).waitFor();
+  await page.getByLabel("Captura de contexto", { exact: true }).selectOption("published");
+  await page.getByRole("alert").getByText("Captura indisponível", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Voltar à última importação" }).click();
+  await page.getByRole("heading", { name: "Nenhum contexto importado", exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+});
+
 async function fixture(t) {
   const directory = await mkdtemp(path.join(tmpdir(), "avila-review-ui-"));
   let api, bff, browser;

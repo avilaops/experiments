@@ -15,6 +15,7 @@ export interface ApiOptions {
   seed?: SuiteDraft;
   token?: string;
   contextToken?: string;
+  contextReadToken?: string;
   allowedOrigins?: string[];
 }
 
@@ -66,6 +67,7 @@ function selector(value: unknown): { id: string; variant: "baseline" | "candidat
 export async function createApiServer(options: ApiOptions): Promise<Server> {
   if (options.token !== undefined && !options.token.trim()) throw new TypeError("The API token cannot be empty");
   if (options.contextToken !== undefined && (!options.contextToken.trim() || !options.token || options.contextToken === options.token)) throw new TypeError("The context token must be nonempty, distinct, and paired with the API token");
+  if (options.contextReadToken !== undefined && (!options.contextReadToken.trim() || !options.token || options.contextReadToken === options.token || options.contextReadToken === options.contextToken)) throw new TypeError("The read token must be nonempty, distinct, and paired with the API token");
   const origins = new Set((options.allowedOrigins ?? []).map((origin) => {
     const url = new URL(origin);
     if (!["http:", "https:"].includes(url.protocol) || url.origin !== origin) throw new TypeError("Allowed origins must be exact HTTP(S) origins");
@@ -73,6 +75,7 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
   }));
   const tokenHash = options.token === undefined ? null : createHash("sha256").update(options.token).digest();
   const contextTokenHash = options.contextToken === undefined ? null : createHash("sha256").update(options.contextToken).digest();
+  const contextReadHash = options.contextReadToken === undefined ? null : createHash("sha256").update(options.contextReadToken).digest();
   const store = new LabStore(options.dataDirectory);
   await store.initialize(options.seed);
   const policies = new PolicyStore(options.dataDirectory);
@@ -124,7 +127,9 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
         const suppliedHash = createHash("sha256").update(supplied).digest();
         const contextAccess = contextTokenHash !== null && timingSafeEqual(contextTokenHash, suppliedHash)
           && url.pathname === "/api/v1/product-contexts/erp" && ["GET", "PUT"].includes(request.method ?? "");
-        if (!timingSafeEqual(tokenHash, suppliedHash) && !contextAccess) {
+        const contextReadAccess = contextReadHash !== null && timingSafeEqual(contextReadHash, suppliedHash)
+          && url.pathname === "/api/v1/product-contexts/erp" && request.method === "GET";
+        if (!timingSafeEqual(tokenHash, suppliedHash) && !contextAccess && !contextReadAccess) {
           throw new ApiError(401, "UNAUTHORIZED", "Token de acesso necessário.");
         }
       }
@@ -152,6 +157,17 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
       }
       if (url.pathname === "/api/v1/product-contexts/erp") {
         if (request.method === "GET") {
+          const view = url.searchParams.get("view");
+          if (view !== null) {
+            if (!["flows", "index", "context"].includes(view) || [...url.searchParams.keys()].some(key => !["view", "sha256", "mode", "flow"].includes(key))
+                || [...new Set(url.searchParams.keys())].length !== [...url.searchParams.keys()].length) throw new ApiError(400, "INVALID_INPUT", "Seleção de contexto inválida.");
+            if (view === "context" && (!url.searchParams.has("sha256") || !url.searchParams.has("flow"))) throw new ApiError(400, "INVALID_INPUT", "Informe sha256 e flow para fixar a captura da funcionalidade.");
+            const result = await productContexts.view({ ...(url.searchParams.has("sha256") ? { digest: url.searchParams.get("sha256")! } : {}),
+              ...(url.searchParams.has("mode") ? { mode: url.searchParams.get("mode")! } : {}),
+              ...(url.searchParams.has("flow") ? { flow: url.searchParams.get("flow")! } : {}), indexOnly: view === "index" });
+            respond(response, 200, result, { ETag: `"${result.revision}"` });
+            return;
+          }
           const keys = [...url.searchParams.keys()];
           if (keys.length > 1 || keys.some(key => !["sha256", "requestId"].includes(key))) throw new ApiError(400, "INVALID_INPUT", "Use apenas sha256 ou requestId.");
           const digest = url.searchParams.get("sha256"), id = url.searchParams.get("requestId");

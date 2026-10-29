@@ -25,8 +25,11 @@ export const OPENAPI = {
   paths: {
     ...CLIENT_CONTRACT_PATHS,
     "/api/v1/product-contexts/erp": {
-      get: { operationId: "getErpProductContext", description: "Sem parâmetros: revisão, última importação e última versão observada. sha256: captura completa imutável. requestId: recibo confirmado. Use apenas um parâmetro. Observações históricas não garantem a versão atual nem a execução de fluxos.",
-        parameters: ["sha256", "requestId"].map(name => ({ name, in: "query", schema: { type: "string", pattern: "^[a-f0-9]{64}$" } })),
+      get: { operationId: "getErpProductContext", description: "Sem parâmetros: revisão e recibos. sha256 isolado: captura completa. requestId isolado: recibo. view=flows: projeção para a tela; view=index: metadados sem contratos das ações; view=context: contratos da funcionalidade flow e suas dependências transitivas, exigindo sha256 exato. Com view, mode=published seleciona apenas uma publicação observada e retorna 404 se não houver; não aceita sha256 junto com published. source e capture.contentSha256 identificam o artefato completo, não o hash de uma projeção parcial. Dependências declaradas não são chamadas observadas.",
+        parameters: [...["sha256", "requestId"].map(name => ({ name, in: "query", schema: { type: "string", pattern: "^[a-f0-9]{64}$" } })),
+          { name: "view", in: "query", schema: { type: "string", enum: ["flows", "index", "context"] } },
+          { name: "flow", in: "query", schema: { type: "string", pattern: "^[a-z][a-z0-9_-]{0,99}$" } },
+          { name: "mode", in: "query", schema: { type: "string", enum: ["latest", "published"] } }],
         responses: { "200": { description: "Estado, captura ou recibo conforme a consulta.", content: json({ type: "object" }) }, "404": success("Error", "Captura ou recibo ausente"), ...errors } },
       put: { operationId: "importErpProductContext", description: "Importa erp-product-context/1 completo, validado pelos schemas canônicos distribuídos em schemas/erp. Grava captura por hash e recibo em catálogo com substituição atômica; não altera capturas antigas. Repetir requestId confirma o recibo anterior sem promover uma captura antiga. confirmPublication exige checkout limpo e conferência independente do health fixo do ERP. Uma instância escreve o volume.",
         parameters: [{ name: "If-Match", in: "header", required: true, schema: { type: "string", pattern: '^"(?:0|[1-9][0-9]*)"$' } }],

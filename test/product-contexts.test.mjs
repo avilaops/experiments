@@ -46,6 +46,9 @@ test("hash tampering, fabricated runtime verdicts and conflicting revisions cann
   assert.throws(() => parseProductContext(tampered), error => error.code === "INVALID_PRODUCT_CONTEXT");
   const fabricated = structuredClone(context); fabricated.flows[0].assessment.execution = "passed";
   assert.throws(() => parseProductContext(fabricated), error => error.code === "INVALID_PRODUCT_CONTEXT");
+  const { contentSha256, ...malformed } = structuredClone(context);
+  malformed.actions[0].ui = { pages: "invalid" };
+  assert.throws(() => parseProductContext({ ...malformed, contentSha256: contextHash(canonicalContextJson(malformed)) }), error => error.code === "INVALID_PRODUCT_CONTEXT");
   await store.save({ context, confirmPublication: false }, 0);
   await assert.rejects(store.save({ context: fixture("7".repeat(40)), confirmPublication: false }, 0), error => error.status === 412);
   assert.equal((await store.state()).revision, 1);
@@ -80,7 +83,7 @@ test("publication observations are separate receipts and never promote product e
 });
 
 test("the integration token is restricted to ERP context; ETags and readback work over HTTP", async t => {
-  const server = await createApiServer({ dataDirectory: await directory(t), token: "admin-fixture", contextToken: "context-fixture" });
+  const server = await createApiServer({ dataDirectory: await directory(t), token: "admin-fixture", contextToken: "context-fixture", contextReadToken: "reader-fixture" });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
   const endpoint = `http://127.0.0.1:${server.address().port}/api/v1/product-contexts/erp`;
@@ -97,4 +100,38 @@ test("the integration token is restricted to ERP context; ETags and readback wor
   assert.deepEqual(await (await fetch(endpoint + "?sha256=" + context.contentSha256, { headers })).json(), context);
   assert.deepEqual(await (await fetch(endpoint + "?requestId=" + result.receipt.requestId, { headers })).json(), result.receipt);
   assert.equal((await fetch(endpoint + "?sha256=../private", { headers })).status, 400);
+  const reader = { Authorization: "Bearer reader-fixture" };
+  assert.equal((await fetch(endpoint + "?view=index", { headers: reader })).status, 200);
+  assert.equal((await fetch(endpoint, { method: "PUT", headers: { ...reader, "Content-Type": "application/json", "If-Match": '"1"' }, body })).status, 401);
+  assert.equal((await fetch(endpoint.replace("product-contexts/erp", "suite"), { headers: reader })).status, 401);
+  const selected = await (await fetch(endpoint + "?view=context&sha256=" + context.contentSha256 + "&flow=users", { headers: reader })).json();
+  assert.deepEqual(selected.selection.includedFlows, ["users"]);
+  assert.equal(selected.capture.contentSha256, context.contentSha256);
+  assert.equal((await fetch(endpoint + "?view=context&flow=users", { headers: reader })).status, 400);
+  assert.equal((await fetch(endpoint + "?view=flows&mode=published", { headers: reader })).status, 404);
+});
+
+test("flow views retain pinned captures, transitive dependencies and separate publication observations", async t => {
+  const store = new ProductContextStore(await directory(t));
+  const original = fixture();
+  const { contentSha256, ...payload } = structuredClone(original);
+  payload.flows[0].definition.dependencies = ["roles"];
+  const role = structuredClone(payload.flows[0]);
+  role.definition = { ...role.definition, id: "roles", title: "Papéis", actionGroups: ["roles"], dependencies: [] };
+  role.actionIds = ["read-roles"];
+  payload.flows.push(role);
+  payload.actions.push({ ...payload.actions[0], id: "read-roles", flow: "roles" });
+  payload.selection.includedFlows = ["users", "roles"];
+  const context = { ...payload, contentSha256: contextHash(canonicalContextJson(payload)) };
+  await store.save({ context, confirmPublication: false }, 0);
+  const selected = await store.view({ digest: context.contentSha256, flow: "users" });
+  assert.deepEqual(selected.selection.includedFlows, ["users", "roles"]);
+  assert.deepEqual(selected.edges, [{ from: "users", to: "roles", relation: "depends_on" }]);
+  assert.equal(selected.actions.length, 2);
+  assert.equal(selected.capture.publication.state, "not_observed");
+  assert.deepEqual((await store.view({ indexOnly: true })).actions, []);
+  await assert.rejects(store.view({ flow: "unknown" }), error => error.code === "FLOW_NOT_FOUND");
+  await store.save({ context: fixture("9".repeat(40)), confirmPublication: false }, 1);
+  assert.equal((await store.view({ digest: context.contentSha256 })).capture.sourceCommit, context.source.commit);
+  assert.equal((await store.view()).capture.sourceCommit, "9".repeat(40));
 });

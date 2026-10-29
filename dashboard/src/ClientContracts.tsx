@@ -93,7 +93,7 @@ export function ClientContracts() {
   }
 
   return <div className="shell contract-page">
-    <header><a className="brand" href="/experiments/">Ávila<span>Experiments</span></a><nav><a href="/experiments/">Laboratório</a><a href="/experiments/contracts" aria-current="page">Contratos com clientes</a><a href="/experiments/routes">Rotas por produto</a><a href="/experiments/policies">Caderno de políticas</a><a href="/experiments/openapi.json">Contrato API</a></nav><span className="private">Cadastro privado</span></header>
+    <header><a className="brand" href="/experiments/">Ávila<span>Experiments</span></a><nav><a href="/experiments/flows">Fluxos do ERP</a><a href="/experiments/">Laboratório</a><a href="/experiments/contracts" aria-current="page">Contratos com clientes</a><a href="/experiments/routes">Rotas por produto</a><a href="/experiments/policies">Caderno de políticas</a><a href="/experiments/openapi.json">Contrato API</a></nav><span className="private">Cadastro privado</span></header>
     <main><div className="intro"><div><h1>Contratos com clientes</h1><p>Cadastre o vínculo comercial, acompanhe a vigência e consulte as versões de cada contrato.</p></div></div>
       {error && <p role="alert" className="conflict">{error}</p>}
       <div role="status" aria-live="polite" className={message ? "notice" : ""}>{message}</div>

@@ -22,6 +22,7 @@ const server = await createApiServer({
   seed,
   ...(token === undefined ? {} : { token }),
   ...(process.env.LAB_ERP_CONTEXT_TOKEN === undefined ? {} : { contextToken: process.env.LAB_ERP_CONTEXT_TOKEN }),
+  ...(process.env.LAB_ERP_CONTEXT_READ_TOKEN === undefined ? {} : { contextReadToken: process.env.LAB_ERP_CONTEXT_READ_TOKEN }),
   allowedOrigins: (process.env.LAB_ALLOWED_ORIGINS ?? "").split(",").map((origin) => origin.trim()).filter(Boolean),
 });
 server.listen(port, host, () => console.log(`Ávila Experiments API: http://${host.includes(":") ? `[${host}]` : host}:${port}`));
