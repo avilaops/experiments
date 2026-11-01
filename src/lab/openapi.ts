@@ -22,7 +22,7 @@ export const OPENAPI = {
     description: "Laboratório local: cálculos determinísticos, suítes versionadas e evidências persistentes. O serviço não executa código arbitrário nem aciona modelos de ML. O token é exigido quando configurado; a CLI exige token ao escutar fora do loopback.",
   },
   servers: [{ url: "/" }],
-  security: [{ bearerAuth: [] }, {}],
+  security: [{ bearerAuth: [] }],
   paths: {
     ...CLIENT_CONTRACT_PATHS,
     "/api/v1/product-contexts/erp": {
@@ -73,7 +73,7 @@ export const OPENAPI = {
       },
     },
     "/health": { get: { operationId: "health", security: [], responses: { "200": success("Health") } } },
-    "/openapi.json": { get: { operationId: "openapi", security: [], responses: { "200": { description: "Este contrato", content: json({ type: "object" }) } } } },
+    "/openapi.json": { get: { operationId: "openapi", description: "Contrato técnico privado. A leitura exige o token administrativo quando a autenticação está configurada.", responses: { "200": { description: "Este contrato", content: json({ type: "object" }) }, "401": success("Error", "Token administrativo necessário") } } },
     "/api/v1/suite": {
       get: { operationId: "getSuite", responses: { "200": { ...success("Suite"), headers: { ETag: { schema: { type: "string" }, description: "Revisão entre aspas, por exemplo: \"1\"" } } }, ...errors } },
       put: {
