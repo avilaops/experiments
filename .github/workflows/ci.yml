@@ -27,6 +27,16 @@ jobs:
             dashboard/package-lock.json
       - run: npm ci --no-audit --no-fund
       - run: npm test
+      - name: Exercise real node:test evidence capture
+        run: node examples/node-test-flow.mjs
+      - name: Preserve node:test evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: node-test-evidence-${{ github.sha }}-${{ github.run_attempt }}
+          path: reports/node-test-evidence/
+          retention-days: 14
+          if-no-files-found: ignore
       - run: npm ci --no-audit --no-fund
         working-directory: dashboard
       - run: npm run build
