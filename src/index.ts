@@ -17,3 +17,5 @@ export { createFileToolOperationStore, ToolOperationConflictError } from "./tool
 export type { ToolOperationRequest, StoredToolOperation, ToolOperationStore } from "./tool-operation-store.js";
 export { assessFlow, validateFlowPlan, verifyFlowArtifact } from "./flow-verification.js";
 export type { FlowPlan, FlowRun, FlowObservation, FlowDimension } from "./flow-verification.js";
+export { assessNodeTestEvidence, validateNodeTestManifest, validateNodeTestRun, NodeTestEvidenceError } from "./node-test-evidence.js";
+export type { NodeTestManifest, NodeTestCaseStatus, NodeTestCaseResult } from "./node-test-evidence.js";

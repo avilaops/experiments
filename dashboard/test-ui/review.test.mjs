@@ -8,6 +8,31 @@ import { chromium } from "playwright";
 import { createApiServer } from "../../dist/lab/server.js";
 import { createDashboard } from "../dist/server.mjs";
 
+test("Auth is available in governance and contracts and its policy survives a page reload", async t => {
+  const { page, base, data } = await fixture(t);
+  await page.goto(base + "/experiments/policies");
+  await page.getByRole("button", { name: "Ávila Auth Inventário pendente", exact: true }).click();
+  await page.getByRole("button", { name: "Nova política", exact: true }).click();
+  await page.getByLabel("Produto da política").selectOption("auth");
+  await page.getByLabel("Código da política").fill("AUTH-ACCESS-TEST");
+  await page.getByLabel("Título da política").fill("Proposta de acesso para teste");
+  await page.getByLabel("O que a regra exige").fill("Revisar as regras de acesso do Auth.");
+  await page.getByLabel("Motivo da alteração").fill("Teste local do catálogo de governança");
+  await page.getByRole("button", { name: "Salvar política", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "Política salva" }).waitFor();
+  const saved = (await data("/api/v1/policies")).policies.find(policy => policy.id === "AUTH-ACCESS-TEST");
+  assert.equal(saved.product, "auth");
+  assert.equal(saved.state, "proposed");
+  await page.reload();
+  await page.getByRole("button", { name: "Ávila Auth 1 fichas cadastradas", exact: true }).click();
+  await page.getByRole("button").filter({ hasText: "AUTH-ACCESS-TEST · v1 · Ávila Auth" }).waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+  await page.goto(base + "/experiments/contracts");
+  await page.getByRole("button", { name: "Novo contrato", exact: true }).click();
+  await page.getByLabel("Produto do contrato").selectOption("auth");
+  assert.equal(await page.getByLabel("Produto do contrato").inputValue(), "auth");
+});
+
 test("flow screen keeps missing captures and missing publication observations explicit on mobile", async t => {
   const { page, base } = await fixture(t);
   await page.goto(base + "/experiments/flows");

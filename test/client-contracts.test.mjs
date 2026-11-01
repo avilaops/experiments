@@ -78,6 +78,26 @@ test("duplicate codes, missing records and stale writes preserve the previous fi
   assert.equal(await f.bytes(), bytes2); assert.equal(other.catalog.contracts.length, 2);
 });
 
+test("Auth contracts persist while unknown products return INVALID_INPUT without changing storage", async t => {
+  const f = await fixture(t);
+  const response = await f.save(update({ ...draft(), product: "auth" }));
+  assert.equal(response.status, 200);
+  const saved = await response.json();
+  assert.equal(saved.contract.product, "auth");
+  const bytes = await f.bytes();
+  for (const product of ["unknown", "Ávila Auth", "shared"]) {
+    const rejected = await f.save(update({ ...draft(), code: "INVALID", product }), 1);
+    assert.equal(rejected.status, 400);
+    assert.equal((await rejected.json()).error.code, "INVALID_INPUT");
+    assert.equal(await f.bytes(), bytes);
+  }
+  await f.restart();
+  assert.deepEqual(await (await f.request()).json(), saved.catalog);
+  const history = await (await f.request(`/${saved.contract.id}/history`)).json();
+  assert.equal(history.total, 1);
+  assert.equal(history.items[0].contract.product, "auth");
+});
+
 test("simultaneous writes with the same revision have exactly one winner", async t => {
   const f = await fixture(t);
   const responses = await Promise.all([f.save(update({ ...draft(), code: "FIRST" })), f.save(update({ ...draft(), code: "SECOND" }))]);
