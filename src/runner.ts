@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
+import { traceOperation } from "./observability.js";
 import { fingerprint, snapshot } from "./json.js";
 import { requirePositiveInteger, validateAssessment, validateExperiment, validateUsage } from "./validation.js";
 import type {
@@ -66,6 +67,13 @@ export async function runExperiment<Input extends JsonValue, Output extends Json
   execute: Executor<Input, Output>,
   options: { repetitions?: number } = {},
 ): Promise<ExperimentReport> {
+  return traceOperation("run-experiment", "span", { repetitions: options.repetitions ?? 1 },
+    () => runExperimentInternal(experiment, execute, options));
+}
+
+async function runExperimentInternal<Input extends JsonValue, Output extends JsonValue>(
+  experiment: Experiment<Input, Output>, execute: Executor<Input, Output>, options: { repetitions?: number },
+): Promise<ExperimentReport> {
   const definitions = validateExperiment(experiment);
   const repetitions = options.repetitions ?? 1;
   requirePositiveInteger(repetitions, "repetitions");
@@ -96,7 +104,8 @@ export async function runExperiment<Input extends JsonValue, Output extends Json
       const started = performance.now();
       let output: Output;
       try {
-        const execution = await execute(snapshot(item.input), { caseId: item.id, repetition });
+        const execution = await traceOperation("execute-experiment-case", "span", { repetition },
+          async () => execute(snapshot(item.input), { caseId: item.id, repetition }));
         output = snapshot(execution.output);
         result.outputHash = fingerprint(output);
         result.output = output;
@@ -113,12 +122,12 @@ export async function runExperiment<Input extends JsonValue, Output extends Json
       for (const evaluator of evaluators) {
         const definition = evaluator.definition;
         try {
-          const assessment = await evaluator.evaluate({
+          const assessment = await traceOperation("evaluate-experiment-case", "evaluator", { repetition }, async () => evaluator.evaluate({
             caseId: item.id,
             input: snapshot(item.input),
             expected: item.expected === undefined ? undefined : snapshot(item.expected),
             output: snapshot(output),
-          });
+          }));
           validateAssessment(assessment);
           const verdict = assessment.score === null ? "inconclusive" : definition.kind === "score" ? "scored" : assessment.score >= definition.threshold ? "passed" : "failed";
           result.evaluations.push({ evaluatorId: definition.id, score: assessment.score, reason: assessment.reason, verdict });

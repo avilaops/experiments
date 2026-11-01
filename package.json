@@ -46,6 +46,11 @@
     "prepack": "npm run build"
   },
   "dependencies": {
+    "@langfuse/otel": "6.0.2",
+    "@langfuse/tracing": "6.0.2",
+    "@opentelemetry/exporter-trace-otlp-http": "0.220.0",
+    "@opentelemetry/otlp-exporter-base": "0.220.0",
+    "@opentelemetry/sdk-node": "0.220.0",
     "ajv": "8.20.0"
   },
   "devDependencies": {
