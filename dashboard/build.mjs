@@ -13,7 +13,7 @@ const root = fileURLToPath(new URL("./", import.meta.url));
 await mkdir(root + "dist", { recursive: true });
 await build({ entryPoints: [root + "src/client.tsx"], outfile: root + "dist/client.js", bundle: true, minify: true, jsx: "automatic", define: { "process.env.NODE_ENV": '"production"' }, platform: "browser", target: "es2022" });
 for (const file of ["server", "serve"]) await build({ entryPoints: [root + "src/" + file + (file === "server" ? ".tsx" : ".ts")], outfile: root + "dist/" + file + ".mjs", bundle: true, packages: "external", platform: "node", format: "esm", jsx: "automatic" });
-const stylesheet = await readFile(root + "src/style.css", "utf8") + "\n" + await readFile(root + "src/policies.css", "utf8");
+const stylesheet = await readFile(root + "src/style.css", "utf8") + "\n" + await readFile(root + "src/policies.css", "utf8") + "\n" + await readFile(root + "src/flows.css", "utf8");
 await writeFile(root + "dist/style.css", stylesheet);
 const allowlist = JSON.parse(await readFile(root + "evidence.allowlist.json", "utf8"));
 await publishPublicExport(root, allowlist, async output => {

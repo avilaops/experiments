@@ -23,6 +23,13 @@ test("BFF authenticates, withholds the API token, preserves ETag and protects mu
     assert.equal((await fetch(url + "/experiments/policies")).status, 401);
     assert.equal((await fetch(url + "/experiments/api/v1/policies")).status, 401);
     assert.equal((await fetch(url + "/experiments/routes")).status, 401);
+    assert.equal((await fetch(url + "/experiments/flows")).status, 401);
+    assert.equal((await fetch(url + "/experiments/flows", { headers: auth })).status, 200);
+    const flows = await fetch(url + "/experiments/api/v1/product-contexts/erp?view=flows", { headers: auth });
+    assert.equal(flows.status, 200);
+    assert.equal((await flows.json()).capture, null);
+    assert.equal((await fetch(url + "/experiments/api/v1/product-contexts/erp?view=flows&mode=published", { headers: auth })).status, 404);
+    assert.equal((await fetch(url + "/experiments/api/v1/product-contexts/erp", { method: "PUT", headers: auth })).status, 405);
     assert.equal((await fetch(url + "/experiments/api/v1/route-inventories/erp")).status, 401);
     assert.equal((await fetch(url + "/experiments/routes", { headers: auth })).status, 200);
     const routeResponse = await fetch(url + "/experiments/api/v1/route-inventories/erp", { headers: auth });

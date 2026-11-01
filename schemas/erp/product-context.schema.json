@@ -1,0 +1,388 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erp.avilaops.com/schemas/product-context-1.json",
+  "title": "Contexto de funcionalidades do ERP",
+  "description": "Artefato derivado e determinístico. Não declara publicação ou execução observadas.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "product",
+    "contentSha256",
+    "source",
+    "selection",
+    "flows",
+    "actions",
+    "authActions",
+    "pendingFlows",
+    "limits"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "erp-product-context/1"
+    },
+    "product": {
+      "const": "erp"
+    },
+    "contentSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "repository",
+        "commit",
+        "dirty",
+        "gitStatusSha256",
+        "catalogSha256",
+        "inventorySha256",
+        "contextFiles"
+      ],
+      "properties": {
+        "repository": {
+          "const": "avilaops/erp-next"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "dirty": {
+          "type": "boolean"
+        },
+        "gitStatusSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "catalogSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "inventorySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "contextFiles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "selection": {
+      "type": "object",
+      "required": [
+        "targetFlow",
+        "includedFlows"
+      ],
+      "properties": {
+        "targetFlow": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "includedFlows": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "flows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "definition",
+          "definitionState",
+          "actionIds",
+          "pages",
+          "permissions",
+          "assessment"
+        ],
+        "properties": {
+          "definition": {
+            "$ref": "https://erp.avilaops.com/schemas/product-flow-definitions-1.json#/$defs/flow"
+          },
+          "definitionState": {
+            "enum": [
+              "journey_defined",
+              "actions_mapped"
+            ]
+          },
+          "actionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "pages": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "assessment": {
+            "type": "object",
+            "required": [
+              "code",
+              "interface",
+              "publication",
+              "execution"
+            ],
+            "properties": {
+              "code": {
+                "type": "object",
+                "required": [
+                  "implementedDeclarations",
+                  "blockedDeclarations"
+                ],
+                "properties": {
+                  "implementedDeclarations": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "blockedDeclarations": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false
+              },
+              "interface": {
+                "type": "object",
+                "required": [
+                  "state",
+                  "mappedActionIds",
+                  "unmappedActionIds"
+                ],
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "routes_mapped",
+                      "partially_mapped",
+                      "not_mapped"
+                    ]
+                  },
+                  "mappedActionIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "unmappedActionIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  }
+                },
+                "additionalProperties": false
+              },
+              "publication": {
+                "const": "not_observed"
+              },
+              "execution": {
+                "const": "not_observed"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "flow",
+          "status",
+          "operation",
+          "verification"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "flow": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "implemented",
+              "blocked"
+            ]
+          },
+          "operation": {
+            "type": "object",
+            "required": [
+              "method",
+              "path"
+            ],
+            "properties": {
+              "method": {
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE",
+                  "HEAD",
+                  "OPTIONS"
+                ]
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "verification": {
+            "type": "object",
+            "required": [
+              "status",
+              "criteria"
+            ],
+            "properties": {
+              "status": {
+                "const": "not_verified_by_catalog"
+              },
+              "criteria": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "authActions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "method",
+          "action",
+          "recovery"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "method": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "recovery": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "pendingFlows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status",
+          "openDecisions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "openDecisions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "status": {
+            "const": "needs_definition"
+          }
+        }
+      }
+    },
+    "limits": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "additionalProperties": false
+}

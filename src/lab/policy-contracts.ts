@@ -1,5 +1,6 @@
 export const PRODUCTS = [
   { id: "shared", name: "Princípios Ávila Ops" },
+  { id: "auth", name: "Ávila Auth" },
   { id: "mail", name: "Ávila Mail" }, { id: "cms", name: "Ávila CMS" },
   { id: "crm", name: "Ávila CRM" }, { id: "erp", name: "Ávila ERP" },
   { id: "lojas", name: "Ávila Lojas" }, { id: "tms", name: "Ávila TMS" },

@@ -1,4 +1,6 @@
 import { POLICY_SCHEMAS } from "./policy-openapi.js";
+import { ROUTE_PRODUCTS } from "./policy-contracts.js";
+import { CLIENT_CONTRACT_PATHS, CLIENT_CONTRACT_SCHEMAS } from "./client-contract-openapi.js";
 const reference = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 const json = (schema: object) => ({ "application/json": { schema } });
 const success = (name: string, description = "Sucesso") => ({ description, content: json(reference(name)) });
@@ -22,6 +24,19 @@ export const OPENAPI = {
   servers: [{ url: "/" }],
   security: [{ bearerAuth: [] }, {}],
   paths: {
+    ...CLIENT_CONTRACT_PATHS,
+    "/api/v1/product-contexts/erp": {
+      get: { operationId: "getErpProductContext", description: "Sem parâmetros: revisão e recibos. sha256 isolado: captura completa. requestId isolado: recibo. view=flows: projeção para a tela; view=index: metadados sem contratos das ações; view=context: contratos da funcionalidade flow e suas dependências transitivas, exigindo sha256 exato. Com view, mode=published seleciona apenas uma publicação observada e retorna 404 se não houver; não aceita sha256 junto com published. source e capture.contentSha256 identificam o artefato completo, não o hash de uma projeção parcial. Dependências declaradas não são chamadas observadas.",
+        parameters: [...["sha256", "requestId"].map(name => ({ name, in: "query", schema: { type: "string", pattern: "^[a-f0-9]{64}$" } })),
+          { name: "view", in: "query", schema: { type: "string", enum: ["flows", "index", "context"] } },
+          { name: "flow", in: "query", schema: { type: "string", pattern: "^[a-z][a-z0-9_-]{0,99}$" } },
+          { name: "mode", in: "query", schema: { type: "string", enum: ["latest", "published"] } }],
+        responses: { "200": { description: "Estado, captura ou recibo conforme a consulta.", content: json({ type: "object" }) }, "404": success("Error", "Captura ou recibo ausente"), ...errors } },
+      put: { operationId: "importErpProductContext", description: "Importa erp-product-context/1 completo, validado pelos schemas canônicos distribuídos em schemas/erp. Grava captura por hash e recibo em catálogo com substituição atômica; não altera capturas antigas. Repetir requestId confirma o recibo anterior sem promover uma captura antiga. confirmPublication exige checkout limpo e conferência independente do health fixo do ERP. Uma instância escreve o volume.",
+        parameters: [{ name: "If-Match", in: "header", required: true, schema: { type: "string", pattern: '^"(?:0|[1-9][0-9]*)"$' } }],
+        requestBody: { required: true, content: json({ type: "object", additionalProperties: false, required: ["context", "confirmPublication"], properties: { context: { type: "object", description: "Artefato completo erp-product-context/1 com hash válido." }, confirmPublication: { type: "boolean" } } }) },
+        responses: { "200": { description: "Recibo confirmado e revisão atual; reused identifica repetição.", content: json({ type: "object" }) }, "409": success("Error", "Conteúdo divergente ou publicação não confirmada"), "412": success("Error", "Revisão mudou"), "428": success("Error", "If-Match obrigatório"), "413": success("Error", "Limite de 1 MiB"), "415": success("Error", "JSON obrigatório"), ...errors } },
+    },
     "/api/v1/policies/import/preview": {
       post: { operationId: "previewPolicyImport", requestBody: body("PolicyImportPreviewRequest"),
         description: "Valida todas as fichas e a capacidade do caderno sem gravar. Informa quais códigos serão criados ou preservados. A prévia não comprova fontes nem executa testes.",
@@ -39,7 +54,7 @@ export const OPENAPI = {
       get: { operationId: "listRouteProducts", responses: { "200": { description: "Produtos disponíveis; ausência de inventário significa pendente.", content: json({ type: "object", properties: { products: { type: "array", items: { type: "object", required: ["id", "name"], properties: { id: { type: "string" }, name: { type: "string" } } } } } }) }, ...errors } },
     },
     "/api/v1/route-inventories/{product}": {
-      parameters: [{ name: "product", in: "path", required: true, schema: { type: "string", enum: ["mail", "cms", "crm", "erp", "lojas", "tms", "experiments"] } }],
+      parameters: [{ name: "product", in: "path", required: true, schema: { type: "string", enum: ROUTE_PRODUCTS.map(product => product.id) } }],
       get: { operationId: "getRouteInventory", responses: { "200": { ...success("ProductRouteInventory"), headers: { ETag: { schema: { type: "string" } } } }, "404": success("Error", "Produto desconhecido"), ...errors } },
       put: { operationId: "importRouteInventory", description: "Importa uma projeção de route-inventory/2 para o produto selecionado. Substitui a captura anterior, sem importar verdicts funcionais nem dados brutos arbitrários. Uma única instância do serviço deve escrever o volume.",
         parameters: [{ name: "If-Match", in: "header", required: true, schema: { type: "string", pattern: '^"(?:0|[1-9][0-9]*)"$' } }],
@@ -95,6 +110,7 @@ export const OPENAPI = {
     securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } },
     schemas: {
       ...POLICY_SCHEMAS,
+      ...CLIENT_CONTRACT_SCHEMAS,
       ProductRouteInventory: { type: "object", required: ["product", "revision", "inventory"], properties: { product: { type: "string" }, revision: { type: "integer", minimum: 0 }, inventory: { type: ["object", "null"], properties: {
         product: { type: "string" }, revision: { type: "integer", minimum: 1 }, importedAt: { type: "string", format: "date-time" }, runId: { type: "string" }, recordedAt: { type: "string", format: "date-time" },
         sourceHead: { type: "string" }, sourceDirty: { type: "boolean" }, sourceFingerprint: { type: "string", pattern: "^[a-f0-9]{64}$" }, apiCaptured: { type: "boolean" }, reviewItems: { type: "integer", minimum: 0 },

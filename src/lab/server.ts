@@ -7,11 +7,15 @@ import { OPENAPI } from "./openapi.js";
 import { LANDING_HTML } from "./landing.js";
 import { PolicyStore, parsePolicyUpdate } from "./policies.js";
 import { ROUTE_PRODUCTS, RouteInventoryStore } from "./route-inventories.js";
+import { ProductContextStore } from "./product-contexts.js";
+import { ClientContractStore } from "./client-contracts.js";
 
 export interface ApiOptions {
   dataDirectory: string;
   seed?: SuiteDraft;
   token?: string;
+  contextToken?: string;
+  contextReadToken?: string;
   allowedOrigins?: string[];
 }
 
@@ -62,17 +66,23 @@ function selector(value: unknown): { id: string; variant: "baseline" | "candidat
 
 export async function createApiServer(options: ApiOptions): Promise<Server> {
   if (options.token !== undefined && !options.token.trim()) throw new TypeError("The API token cannot be empty");
+  if (options.contextToken !== undefined && (!options.contextToken.trim() || !options.token || options.contextToken === options.token)) throw new TypeError("The context token must be nonempty, distinct, and paired with the API token");
+  if (options.contextReadToken !== undefined && (!options.contextReadToken.trim() || !options.token || options.contextReadToken === options.token || options.contextReadToken === options.contextToken)) throw new TypeError("The read token must be nonempty, distinct, and paired with the API token");
   const origins = new Set((options.allowedOrigins ?? []).map((origin) => {
     const url = new URL(origin);
     if (!["http:", "https:"].includes(url.protocol) || url.origin !== origin) throw new TypeError("Allowed origins must be exact HTTP(S) origins");
     return origin;
   }));
   const tokenHash = options.token === undefined ? null : createHash("sha256").update(options.token).digest();
+  const contextTokenHash = options.contextToken === undefined ? null : createHash("sha256").update(options.contextToken).digest();
+  const contextReadHash = options.contextReadToken === undefined ? null : createHash("sha256").update(options.contextReadToken).digest();
   const store = new LabStore(options.dataDirectory);
   await store.initialize(options.seed);
   const policies = new PolicyStore(options.dataDirectory);
   await policies.initialize();
   const routeInventories = new RouteInventoryStore(options.dataDirectory);
+  const productContexts = new ProductContextStore(options.dataDirectory);
+  const clientContracts = new ClientContractStore(options.dataDirectory);
 
   const server = createServer((request, response) => {
     void (async () => {
@@ -114,8 +124,66 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
       }
       if (tokenHash !== null) {
         const supplied = request.headers.authorization?.match(/^Bearer (.+)$/)?.[1] ?? "";
-        if (!timingSafeEqual(tokenHash, createHash("sha256").update(supplied).digest())) {
+        const suppliedHash = createHash("sha256").update(supplied).digest();
+        const contextAccess = contextTokenHash !== null && timingSafeEqual(contextTokenHash, suppliedHash)
+          && url.pathname === "/api/v1/product-contexts/erp" && ["GET", "PUT"].includes(request.method ?? "");
+        const contextReadAccess = contextReadHash !== null && timingSafeEqual(contextReadHash, suppliedHash)
+          && url.pathname === "/api/v1/product-contexts/erp" && request.method === "GET";
+        if (!timingSafeEqual(tokenHash, suppliedHash) && !contextAccess && !contextReadAccess) {
           throw new ApiError(401, "UNAUTHORIZED", "Token de acesso necessário.");
+        }
+      }
+      if (url.pathname === "/api/v1/client-contracts" && ["GET", "PUT"].includes(request.method ?? "")) {
+        if (url.search) throw new ApiError(400, "INVALID_INPUT", "O cadastro não aceita parâmetros de consulta.");
+        if (request.method === "GET") {
+          const catalog = await clientContracts.catalog();
+          respond(response, 200, catalog, { ETag: `"${catalog.revision}"` });
+        } else {
+          const match = request.headers["if-match"];
+          if (match === undefined) throw new ApiError(428, "REVISION_REQUIRED", "Envie If-Match com a revisão do cadastro.");
+          if (typeof match !== "string" || !/^"(?:0|[1-9][0-9]*)"$/.test(match) || !Number.isSafeInteger(Number(match.slice(1, -1)))) throw new ApiError(400, "INVALID_INPUT", "If-Match inválido.");
+          const result = await clientContracts.save(await readJson(request), Number(match.slice(1, -1)));
+          respond(response, 200, result, { ETag: `"${result.catalog.revision}"` });
+        }
+        return;
+      }
+      const contractHistory = url.pathname.match(/^\/api\/v1\/client-contracts\/([^/]+)\/history$/);
+      if (contractHistory && request.method === "GET") {
+        if ([...url.searchParams.keys()].some(key => !["limit", "offset"].includes(key) || url.searchParams.getAll(key).length !== 1)) throw new ApiError(400, "INVALID_INPUT", "Use apenas limit e offset, uma vez cada.");
+        const limit = url.searchParams.get("limit") ?? "20", offset = url.searchParams.get("offset") ?? "0";
+        if (!/^[1-9]\d*$/.test(limit) || !/^(?:0|[1-9]\d*)$/.test(offset)) throw new ApiError(400, "INVALID_INPUT", "Paginação inválida.");
+        respond(response, 200, await clientContracts.history(contractHistory[1]!, Number(limit), Number(offset)));
+        return;
+      }
+      if (url.pathname === "/api/v1/product-contexts/erp") {
+        if (request.method === "GET") {
+          const view = url.searchParams.get("view");
+          if (view !== null) {
+            if (!["flows", "index", "context"].includes(view) || [...url.searchParams.keys()].some(key => !["view", "sha256", "mode", "flow"].includes(key))
+                || [...new Set(url.searchParams.keys())].length !== [...url.searchParams.keys()].length) throw new ApiError(400, "INVALID_INPUT", "Seleção de contexto inválida.");
+            if (view === "context" && (!url.searchParams.has("sha256") || !url.searchParams.has("flow"))) throw new ApiError(400, "INVALID_INPUT", "Informe sha256 e flow para fixar a captura da funcionalidade.");
+            const result = await productContexts.view({ ...(url.searchParams.has("sha256") ? { digest: url.searchParams.get("sha256")! } : {}),
+              ...(url.searchParams.has("mode") ? { mode: url.searchParams.get("mode")! } : {}),
+              ...(url.searchParams.has("flow") ? { flow: url.searchParams.get("flow")! } : {}), indexOnly: view === "index" });
+            respond(response, 200, result, { ETag: `"${result.revision}"` });
+            return;
+          }
+          const keys = [...url.searchParams.keys()];
+          if (keys.length > 1 || keys.some(key => !["sha256", "requestId"].includes(key))) throw new ApiError(400, "INVALID_INPUT", "Use apenas sha256 ou requestId.");
+          const digest = url.searchParams.get("sha256"), id = url.searchParams.get("requestId");
+          if (digest !== null) respond(response, 200, await productContexts.snapshot(digest));
+          else if (id !== null) respond(response, 200, await productContexts.receipt(id));
+          else { const state = await productContexts.state(); respond(response, 200, state, { ETag: `"${state.revision}"` }); }
+          return;
+        }
+        if (request.method === "PUT") {
+          if (url.search) throw new ApiError(400, "INVALID_INPUT", "A importação não aceita parâmetros de consulta.");
+          const match = request.headers["if-match"];
+          if (match === undefined) throw new ApiError(428, "REVISION_REQUIRED", "Envie If-Match com a revisão do contexto.");
+          if (typeof match !== "string" || !/^"(?:0|[1-9][0-9]*)"$/.test(match) || !Number.isSafeInteger(Number(match.slice(1, -1)))) throw new ApiError(400, "INVALID_INPUT", "If-Match inválido.");
+          const result = await productContexts.save(await readJson(request), Number(match.slice(1, -1)));
+          respond(response, 200, result, { ETag: `"${result.currentRevision}"` });
+          return;
         }
       }
       if (url.pathname === "/api/v1/policies/import/preview" && request.method === "POST") {
