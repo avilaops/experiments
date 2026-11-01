@@ -24,6 +24,14 @@ test("BFF authenticates, withholds the API token, preserves ETag and protects mu
     assert.equal((await fetch(url + "/experiments/api/v1/policies")).status, 401);
     assert.equal((await fetch(url + "/experiments/routes")).status, 401);
     assert.equal((await fetch(url + "/experiments/flows")).status, 401);
+    assert.equal((await fetch(url + "/experiments/docs")).status, 401);
+    assert.equal((await fetch(url + "/experiments/openapi.json")).status, 401);
+    const docs = await fetch(url + "/experiments/docs", { headers: auth });
+    assert.equal(docs.status, 200);
+    assert.ok(!(await docs.text()).includes("private-upstream-token-for-test"));
+    const contract = await fetch(url + "/experiments/openapi.json", { headers: auth });
+    assert.equal(contract.status, 200);
+    assert.ok((await contract.json()).paths["/api/v1/client-contracts"]);
     assert.equal((await fetch(url + "/experiments/flows", { headers: auth })).status, 200);
     const flows = await fetch(url + "/experiments/api/v1/product-contexts/erp?view=flows", { headers: auth });
     assert.equal(flows.status, 200);
