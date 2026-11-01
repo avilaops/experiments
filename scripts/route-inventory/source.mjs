@@ -177,7 +177,7 @@ export async function inventoryWeb(appRoot) {
         metadata.push([relative, signature(await lstat(full, { bigint: true }))]);
         review.push({ source: relative, reason: "symlink_not_followed" }); continue;
       }
-      if (entry.name.startsWith("_") || entry.name.startsWith(".")) continue;
+      if (entry.name.startsWith("_") || (entry.name.startsWith(".") && entry.name !== ".well-known")) continue;
       if (entry.isDirectory()) { await visit(full); continue; }
       if (!/^(?:page|route)\.(?:tsx?|jsx?)$/.test(entry.name)) continue;
       const captured = await stableFile(full);

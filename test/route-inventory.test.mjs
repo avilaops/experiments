@@ -11,6 +11,7 @@ import { analyzeHandlers, captureStableInventory, correlateRoutes, diagnostic, g
 import { inventoryOpenApi } from "../scripts/route-inventory/openapi.mjs";
 import { InventoryError, stableFile } from "../scripts/route-inventory/source.mjs";
 import { createServer } from "node:http";
+import { captureAuthInventory } from "../scripts/inventory-auth-routes.mjs";
 
 async function fixture(t) {
   const root = await mkdtemp(path.join(tmpdir(), "route-capture-"));
@@ -67,6 +68,41 @@ test("parallel, intercepted and symlinked directories are reviewed without follo
   assert.equal(result.review.filter(row => row.reason === "parallel_or_intercepted_route").length, 2);
   assert.ok(result.review.some(row => row.reason === "symlink_not_followed"));
   assert.doesNotMatch(JSON.stringify(result), /outside-sentinel/);
+});
+
+test("discovery routes under .well-known are captured without scanning hidden or private folders", async t => {
+  const f = await fixture(t);
+  for (const directory of [".well-known/openid-configuration", ".well-known/ssf-configuration", ".cache/internal", "_private/internal"]) {
+    await f.write(`${directory}/route.ts`, "export async function GET() { return Response.json({}); }");
+  }
+  const result = await inventoryWeb(f.app);
+  assert.deepEqual(result.handlers.map(row => row.path), ["/.well-known/openid-configuration", "/.well-known/ssf-configuration"]);
+  assert.ok(result.handlers.every(row => row.methods.join() === "GET" && row.verification === "not_run"));
+  assert.equal(result.review.length, 0);
+});
+
+test("Auth capture uses src/app, preserves discovery endpoints and rejects a different product", async t => {
+  const f = await fixture(t);
+  await f.write("erp-only/page.tsx");
+  const authApp = path.join(f.root, "src", "app");
+  await mkdir(path.join(authApp, ".well-known", "openid-configuration"), { recursive: true });
+  await writeFile(path.join(authApp, "page.tsx"), "export default function Page() { return null }");
+  await writeFile(path.join(authApp, ".well-known", "openid-configuration", "route.ts"), "export function GET() { return Response.json({}); }");
+  const manifest = path.join(f.root, "package.json");
+  await writeFile(manifest, JSON.stringify({ name: "avilaops-auth", dependencies: { next: "16.2.9" } }));
+  const git = args => execFileSync("git", ["-C", f.root, ...args], { stdio: "pipe" });
+  git(["init"]); git(["add", "."]);
+  git(["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "Auth source fixture"]);
+  const report = await captureAuthInventory(f.root);
+  assert.equal(report.product, "auth");
+  assert.equal(report.source.dirty, false);
+  assert.equal(report.api, null);
+  assert.deepEqual(report.web.pages.map(row => row.path), ["/"]);
+  assert.deepEqual(report.web.handlers.map(row => row.path), ["/.well-known/openid-configuration"]);
+  assert.equal(report.counts.declaredMethods, 1);
+  assert.equal((await captureAuthInventory(f.root)).source.fingerprint, report.source.fingerprint);
+  await writeFile(manifest, JSON.stringify({ name: "another-product", dependencies: { next: "16.2.9" } }));
+  await assert.rejects(captureAuthInventory(f.root), error => error.code === "NOT_AUTH_REPOSITORY");
 });
 
 test("static functions, local aliases, factories and non-functions have distinct handler states", () => {
