@@ -176,7 +176,9 @@ test("a configured token protects all experiment data", async (t) => {
   const token = randomUUID();
   const { send } = await start(t, { token });
   assert.equal((await send("/health")).status, 200);
-  assert.equal((await send("/openapi.json")).status, 200);
+  assert.equal((await send("/openapi.json")).status, 401);
+  assert.equal((await send("/openapi.json", "GET", undefined, { Authorization: "Bearer invalid" })).status, 401);
+  assert.equal((await send("/openapi.json", "GET", undefined, { Authorization: `Bearer ${token}` })).status, 200);
   assert.equal((await send("/api/v1/suite")).status, 401);
   assert.equal((await send("/api/v1/suite", "GET", undefined, { Authorization: "Bearer invalid" })).status, 401);
   assert.equal((await send("/api/v1/suite", "GET", undefined, { Authorization: `Bearer ${token}` })).status, 200);

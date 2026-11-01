@@ -7,6 +7,7 @@ import { PolicyCatalog } from "./PolicyCatalog.js";
 import { RouteCatalog } from "./RouteCatalog.js";
 import { ClientContracts } from "./ClientContracts.js";
 import { ProductFlows } from "./ProductFlows.js";
+import { ApiReference } from "./ApiReference.js";
 
 export interface DashboardOptions {
   apiUrl: string;
@@ -79,9 +80,9 @@ export function createDashboard(options: DashboardOptions) {
         res.setHeader("Content-Type", filename.endsWith(".js") ? "text/javascript; charset=utf-8" : "text/css; charset=utf-8");
         res.end(await readFile(options.assetDirectory + "/" + filename)); return;
       }
-      if (req.method === "GET" && ["/", "/policies", "/policies/", "/routes", "/routes/", "/contracts", "/contracts/", "/flows", "/flows/"].includes(pathname)) {
+      if (req.method === "GET" && ["/", "/policies", "/policies/", "/routes", "/routes/", "/contracts", "/contracts/", "/flows", "/flows/", "/docs", "/docs/"].includes(pathname)) {
         res.setHeader("Content-Type", "text/html; charset=utf-8");
-        res.end('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ávila Experiments | Laboratório</title><link rel="stylesheet" href="/experiments/assets/style.css"></head><body><div id="root">' + renderToString(pathname.startsWith("/flows") ? <ProductFlows/> : pathname.startsWith("/contracts") ? <ClientContracts/> : pathname.startsWith("/routes") ? <RouteCatalog/> : pathname.startsWith("/policies") ? <PolicyCatalog/> : <App/>) + '</div><script type="module" src="/experiments/assets/client.js"></script></body></html>'); return;
+        res.end('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ávila Experiments | Laboratório</title><link rel="stylesheet" href="/experiments/assets/style.css"></head><body><div id="root">' + renderToString(pathname.startsWith("/docs") ? <ApiReference/> : pathname.startsWith("/flows") ? <ProductFlows/> : pathname.startsWith("/contracts") ? <ClientContracts/> : pathname.startsWith("/routes") ? <RouteCatalog/> : pathname.startsWith("/policies") ? <PolicyCatalog/> : <App/>) + '</div><script type="module" src="/experiments/assets/client.js"></script></body></html>'); return;
       }
       send(404, { error: { message: "Não encontrado." } });
     })().catch(error => { if (!res.headersSent) send(error instanceof RangeError ? 413 : 502, { error: { message: error instanceof RangeError ? "Corpo excede 1 MiB." : "Serviço indisponível. Tente novamente." } }); else res.end(); });

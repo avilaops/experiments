@@ -118,10 +118,6 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
         respond(response, 200, { status: "ok", service: "avila-experiments", authRequired: tokenHash !== null });
         return;
       }
-      if (request.method === "GET" && url.pathname === "/openapi.json") {
-        respond(response, 200, OPENAPI);
-        return;
-      }
       if (tokenHash !== null) {
         const supplied = request.headers.authorization?.match(/^Bearer (.+)$/)?.[1] ?? "";
         const suppliedHash = createHash("sha256").update(supplied).digest();
@@ -132,6 +128,10 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
         if (!timingSafeEqual(tokenHash, suppliedHash) && !contextAccess && !contextReadAccess) {
           throw new ApiError(401, "UNAUTHORIZED", "Token de acesso necessário.");
         }
+      }
+      if (request.method === "GET" && url.pathname === "/openapi.json") {
+        respond(response, 200, OPENAPI);
+        return;
       }
       if (url.pathname === "/api/v1/client-contracts" && ["GET", "PUT"].includes(request.method ?? "")) {
         if (url.search) throw new ApiError(400, "INVALID_INPUT", "O cadastro não aceita parâmetros de consulta.");
