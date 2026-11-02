@@ -4,7 +4,7 @@ São três fronteiras independentes:
 
 - Código e documentação: repositório independente do ERP.
 - Evidências públicas: exportação estática MDX de JSONs sintéticos selecionados.
-- Painel e API: autenticação obrigatória, token da API somente no BFF.
+- Painel e API: acesso público por padrão, token da API somente no BFF. Basic Auth continua disponível como opção.
 
 ## Construir e verificar
 
@@ -77,8 +77,7 @@ o Compose anteriores para rollback. O índice do histórico é derivado e migra 
 volume existente sem substituir os arquivos de evidência em `runs/`.
 
 O Compose deve rodar como um único projeto avila-experiments, com uma réplica
-da API. Configure o arquivo .env privado, modo 600, com LAB_API_TOKEN,
-DASHBOARD_USER e DASHBOARD_PASSWORD (senha aleatória de ao menos 16 caracteres).
+da API. Configure o arquivo .env privado, modo 600, com LAB_API_TOKEN. Para habilitar Basic Auth opcional, defina também DASHBOARD_USER e DASHBOARD_PASSWORD (senha aleatória de ao menos 16 caracteres); omita ambos para acesso público.
 
     sha256sum -c SHA256SUMS
     docker load --input images.tar.gz
@@ -90,7 +89,7 @@ DASHBOARD_USER e DASHBOARD_PASSWORD (senha aleatória de ao menos 16 caracteres)
 O Dockerfile inclui os 14 casos iniciais. O volume evidence armazena revisões
 e runs; não use down -v. Os processos usam usuário sem root, limites de
 memória/CPU, healthcheck e logs rotacionados. Portas 3300 e 3301 são vinculadas
-somente a 127.0.0.1. O painel usa HTTP Basic sobre TLS, verificado no BFF.
+somente a 127.0.0.1. Quando configurado, o painel usa HTTP Basic sobre TLS, verificado no BFF; sem DASHBOARD_USER e DASHBOARD_PASSWORD, o acesso é público.
 O BFF injeta o Bearer apenas depois de autenticar o usuário. O navegador
 nunca recebe o token da API.
 

@@ -12,18 +12,22 @@ import { ApiReference } from "./ApiReference.js";
 export interface DashboardOptions {
   apiUrl: string;
   apiToken: string;
-  username: string;
-  password: string;
+  username?: string;
+  password?: string;
   origin?: string;
   assetDirectory: string;
 }
 const hash = (value: string) => createHash("sha256").update(value).digest();
 const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?|route-inventories(?:\/[a-z]+)?|product-contexts\/erp|client-contracts(?:\/[0-9a-f-]{36}\/history)?)$/;
 export function createDashboard(options: DashboardOptions) {
-  if (!options.apiToken.trim() || !options.username.trim() || options.password.length < 16) {
-    throw new Error("API token and dashboard credentials (password >= 16 characters) are required");
+  if (!options.apiToken.trim()) throw new Error("API token is required");
+  const username = options.username?.trim() ?? "";
+  const password = options.password ?? "";
+  const authEnabled = Boolean(username || password);
+  if (authEnabled && (!username || password.length < 16)) {
+    throw new Error("When enabled, dashboard credentials require a username and password >= 16 characters");
   }
-  const credentialHash = hash(options.username + ":" + options.password);
+  const credentialHash = authEnabled ? hash(username + ":" + password) : undefined;
   const configuredOrigin = options.origin;
   if (configuredOrigin !== undefined && (!["http:", "https:"].includes(new URL(configuredOrigin).protocol)
     || new URL(configuredOrigin).origin !== configuredOrigin)) throw new TypeError("Use an exact HTTP(S) origin");
@@ -37,7 +41,7 @@ export function createDashboard(options: DashboardOptions) {
       if (url.pathname === "/health") { send(200, { status: "ok" }); return; }
       const credential = req.headers.authorization?.match(/^Basic ([A-Za-z0-9+/=]+)$/)?.[1];
       const supplied = credential ? Buffer.from(credential, "base64").toString("utf8") : "";
-      if (!timingSafeEqual(credentialHash, hash(supplied))) {
+      if (credentialHash && !timingSafeEqual(credentialHash, hash(supplied))) {
         res.setHeader("WWW-Authenticate", 'Basic realm="Avila Experiments", charset="UTF-8"');
         send(401, { error: { message: "Autenticação necessária." } }); return;
       }
