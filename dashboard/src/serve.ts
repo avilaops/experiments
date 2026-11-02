@@ -3,8 +3,8 @@ import { createDashboard } from "./server.js";
 const server = createDashboard({
   apiUrl: process.env.LAB_API_URL ?? "http://127.0.0.1:3300",
   apiToken: process.env.LAB_API_TOKEN ?? "",
-  username: process.env.DASHBOARD_USER ?? "laboratorio",
-  password: process.env.DASHBOARD_PASSWORD ?? "",
+  username: process.env.DASHBOARD_USER,
+  password: process.env.DASHBOARD_PASSWORD,
   origin: process.env.PUBLIC_ORIGIN ?? "http://127.0.0.1:3301",
   assetDirectory: fileURLToPath(new URL("./", import.meta.url)),
 });
