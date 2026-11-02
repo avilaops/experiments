@@ -57,6 +57,31 @@ Os testes de exportação cobrem sentinelas na raiz e em subpastas, remoção de
 artefato da lista, reconstrução equivalente, renderização com falha, corrupção
 de evidência, arquivos inesperados e disputa entre exportadores.
 
+## SSO com Auth Ávila Ops
+
+O dashboard usa OIDC Authorization Code com PKCE, implementado no BFF. O navegador
+recebe somente uma sessão HTTP-only; o access token fica na memória do BFF e nunca
+é enviado ao bundle React. O provedor é `https://auth.avilaops.com`.
+
+Configure no ambiente privado do dashboard:
+
+| Variável | Uso |
+| --- | --- |
+| `OIDC_ISSUER` | `https://auth.avilaops.com` |
+| `OIDC_CLIENT_ID` | Client ID registrado no Auth para `ml.avilaops.com` |
+| `OIDC_CLIENT_SECRET` | Segredo privado do client; nunca entra no repositório |
+| `OIDC_REDIRECT_URI` | URI exata registrada no Auth, terminando em `/auth/callback` |
+
+O login começa em `/auth/login`, o retorno chega em `/auth/callback` e o logout
+usa o endpoint de sessão do Auth. `state` expira em dez minutos e o fluxo exige
+`S256`. Enquanto essas quatro variáveis não estiverem configuradas, o Basic Auth
+existente continua sendo o mecanismo temporário; sem qualquer mecanismo o painel
+permanece compatível com o modo local público usado pelos testes.
+
+O registro do client no Auth deve aceitar somente a origem e o callback de produção
+necessários. Não coloque `OIDC_CLIENT_SECRET` em `.env` versionado, imagem Docker,
+logs ou documentação pública.
+
 ## Docker
 
 O workflow `.github/workflows/ci.yml` executa os testes do núcleo, o build e os

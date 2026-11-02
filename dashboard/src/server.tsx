@@ -8,6 +8,7 @@ import { RouteCatalog } from "./RouteCatalog.js";
 import { ClientContracts } from "./ClientContracts.js";
 import { ProductFlows } from "./ProductFlows.js";
 import { ApiReference } from "./ApiReference.js";
+import { cookieValue, OidcSessionStore } from "./oidc.js";
 
 export interface DashboardOptions {
   apiUrl: string;
@@ -16,6 +17,7 @@ export interface DashboardOptions {
   password?: string;
   origin?: string;
   assetDirectory: string;
+  oidc?: { issuer: string; clientId: string; clientSecret: string; redirectUri: string; sessionTtlMs?: number };
 }
 const hash = (value: string) => createHash("sha256").update(value).digest();
 const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?|route-inventories(?:\/[a-z]+)?|product-contexts\/erp|client-contracts(?:\/[0-9a-f-]{36}\/history)?)$/;
@@ -28,6 +30,7 @@ export function createDashboard(options: DashboardOptions) {
     throw new Error("When enabled, dashboard credentials require a username and password >= 16 characters");
   }
   const credentialHash = authEnabled ? hash(username + ":" + password) : undefined;
+  const oidc = options.oidc ? new OidcSessionStore(options.oidc) : undefined;
   const configuredOrigin = options.origin;
   if (configuredOrigin !== undefined && (!["http:", "https:"].includes(new URL(configuredOrigin).protocol)
     || new URL(configuredOrigin).origin !== configuredOrigin)) throw new TypeError("Use an exact HTTP(S) origin");
@@ -39,9 +42,26 @@ export function createDashboard(options: DashboardOptions) {
     void (async () => {
       const url = new URL(req.url ?? "/", "http://localhost");
       if (url.pathname === "/health") { send(200, { status: "ok" }); return; }
+      if (oidc && req.method === "GET" && url.pathname === "/auth/login") { res.writeHead(302, { Location: oidc.login(url.searchParams.get("returnTo") ?? "/experiments/").toString(), "Cache-Control": "no-store" }); res.end(); return; }
+      if (oidc && req.method === "GET" && url.pathname === "/auth/callback") {
+        try {
+          const result = await oidc.callback(url.searchParams.get("code") ?? "", url.searchParams.get("state") ?? "");
+          res.writeHead(302, { Location: result.returnTo, "Set-Cookie": `avila_lab_session=${result.session.id}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${Math.floor((result.session.expiresAt - Date.now()) / 1000)}`, "Cache-Control": "no-store" }); res.end();
+        } catch { send(400, { error: { message: "Falha no retorno da autenticação." } }); }
+        return;
+      }
+      if (oidc && req.method === "GET" && url.pathname === "/auth/logout") {
+        const sessionId = cookieValue(req.headers.cookie, "avila_lab_session"); oidc.delete(sessionId);
+        const logout = new URL(options.oidc!.issuer + "/api/auth/logout"); logout.searchParams.set("client_id", options.oidc!.clientId); logout.searchParams.set("post_logout_redirect_uri", options.oidc!.redirectUri.replace(/\/auth\/callback$/, "/experiments/"));
+        res.writeHead(302, { Location: logout.toString(), "Set-Cookie": "avila_lab_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0", "Cache-Control": "no-store" }); res.end(); return;
+      }
       const credential = req.headers.authorization?.match(/^Basic ([A-Za-z0-9+/=]+)$/)?.[1];
       const supplied = credential ? Buffer.from(credential, "base64").toString("utf8") : "";
-      if (credentialHash && !timingSafeEqual(credentialHash, hash(supplied))) {
+      const session = oidc?.get(cookieValue(req.headers.cookie, "avila_lab_session"));
+      if (oidc && !session && !url.pathname.startsWith("/assets/")) {
+        res.writeHead(302, { Location: "/auth/login?returnTo=" + encodeURIComponent(url.pathname + url.search), "Cache-Control": "no-store" }); res.end(); return;
+      }
+      if (credentialHash && !timingSafeEqual(credentialHash, hash(supplied)) && !session) {
         res.setHeader("WWW-Authenticate", 'Basic realm="Avila Experiments", charset="UTF-8"');
         send(401, { error: { message: "Autenticação necessária." } }); return;
       }
