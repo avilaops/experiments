@@ -37,12 +37,12 @@ jobs:
       - name: Check anonymous root and private route separation
         run: |
           docker run -d --name public-home-router -p 18080:8080 -v /tmp/public-home-test.caddy:/etc/caddy/Caddyfile:ro -v "$PWD/site:/srv/avila-mlops/current:ro" caddy:2
-          curl --retry 10 --retry-connrefused --retry-delay 1 --fail http://localhost:18080/ -o /tmp/mlops-home.html
+          trap 'docker rm -f public-home-router' EXIT
+          curl --retry 10 --retry-all-errors --retry-delay 1 --max-time 10 --retry-max-time 30 --fail http://localhost:18080/ -o /tmp/mlops-home.html
           grep -q 'Avila Ops MLOps' /tmp/mlops-home.html
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/experiments/)" = 502
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/auth/login)" = 502
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/unknown)" = 404
-          docker rm -f public-home-router
       - name: Package public site
         run: |
           mkdir -p public-home/site public-home/deploy public-home/scripts
