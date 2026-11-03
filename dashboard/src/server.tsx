@@ -64,7 +64,7 @@ export function createDashboard(options: DashboardOptions) {
       };
       const showLogin = (status: number, destination: string, error = "") => {
         res.writeHead(status, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store",
-          "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer",
+          "X-Content-Type-Options": "nosniff", "Referrer-Policy": "same-origin",
           "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'" });
         res.end(loginPage(destination, error));
       };
@@ -125,7 +125,7 @@ export function createDashboard(options: DashboardOptions) {
       }
       res.setHeader("Cache-Control", "no-store");
       res.setHeader("X-Content-Type-Options", "nosniff");
-      res.setHeader("Referrer-Policy", "no-referrer");
+      res.setHeader("Referrer-Policy", "same-origin");
       res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
       if (allowed.test(pathname) || pathname === "/openapi.json") {
         // Compression proxies can rewrite strong ETags (for example "1-zstd").

@@ -39,7 +39,10 @@ test("browser login works on mobile and desktop without a native Basic dialog", 
     await page.screenshot({ path: path.join(screenshots, "login-" + (process.env.LOGIN_BROWSER ?? "chromium") + "-" + width + ".png"), fullPage: true });
     await page.getByLabel("Usuário", { exact: true }).fill("tester");
     await page.getByLabel("Senha", { exact: true }).fill("incorrect-password");
+    const invalidSubmission = page.waitForResponse(response => new URL(response.url()).pathname === "/auth/login" && response.request().method() === "POST");
     await page.getByRole("button", { name: "Entrar", exact: true }).click();
+    const invalidResponse = await invalidSubmission;
+    assert.equal(invalidResponse.status(), 401, await page.locator("body").innerText());
     await page.getByRole("alert").filter({ hasText: "Usuário ou senha" }).waitFor();
     assert.equal(await page.getByLabel("Senha", { exact: true }).inputValue(), "");
     await page.getByLabel("Usuário", { exact: true }).fill("tester");
