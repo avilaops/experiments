@@ -87,7 +87,7 @@ Não foi aberta a base privada em um novo processo nesta rodada.
 
 Foram verificados dois backups existentes: ambos têm SHA-256 correspondente ao
 sidecar, 54 entradas legíveis e nenhuma entrada com caminho inseguro.
-O arquivo mais recente inspecionado foi criado em 02/11/2026, 20:55:54 UTC.
+O arquivo de backup mais recente encontrado tinha mtime de 02/11/2026, 20:55:54 UTC.
 A comparação dos bytes com o volume vivo encontrou:
 
 | Comparação com o backup | Quantidade |
