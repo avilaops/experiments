@@ -29,6 +29,13 @@ export function createDashboard(options: DashboardOptions) {
   if (authEnabled && (!username || password.length < 16)) {
     throw new Error("When enabled, dashboard credentials require a username and password >= 16 characters");
   }
+  if (options.oidc && [options.oidc.issuer, options.oidc.clientId, options.oidc.clientSecret, options.oidc.redirectUri]
+    .some(value => typeof value !== "string" || !value.trim())) {
+    throw new Error("Complete OIDC configuration is required");
+  }
+  if (!authEnabled && !options.oidc) {
+    throw new Error("Dashboard authentication is required");
+  }
   const credentialHash = authEnabled ? hash(username + ":" + password) : undefined;
   const oidc = options.oidc ? new OidcSessionStore(options.oidc) : undefined;
   const configuredOrigin = options.origin;

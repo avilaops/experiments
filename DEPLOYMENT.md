@@ -74,9 +74,13 @@ Configure no ambiente privado do dashboard:
 
 O login começa em `/auth/login`, o retorno chega em `/auth/callback` e o logout
 usa o endpoint de sessão do Auth. `state` expira em dez minutos e o fluxo exige
-`S256`. Enquanto essas quatro variáveis não estiverem configuradas, o Basic Auth
-existente continua sendo o mecanismo temporário; sem qualquer mecanismo o painel
-permanece compatível com o modo local público usado pelos testes.
+`S256`. O BFF exige Basic Auth completo ou OIDC completo antes de iniciar.
+Para manter Basic temporário, configure DASHBOARD_USER/DASHBOARD_PASSWORD e retire
+todas as variáveis OIDC do ambiente ativo. Uma configuração OIDC parcial causa
+erro de inicialização, mesmo com Basic configurado; não é interpretada como modo
+público. OIDC_CLIENT_ID e OIDC_CLIENT_SECRET são obrigatórios quando OIDC é
+solicitado; issuer e redirect URI mantêm os padrões definidos no entrypoint.
+A exportação estática /evidencias/ continua pública, separada do BFF privado.
 
 O registro do client no Auth deve aceitar somente a origem e o callback de produção
 necessários. Não coloque `OIDC_CLIENT_SECRET` em `.env` versionado, imagem Docker,
