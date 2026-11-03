@@ -4,7 +4,7 @@
 de avaliação sintética do `avilaops/experiments`, sem alterar serviços existentes.
 
 **Decisões de implementação:** adaptador MCP stdio sem dependências adicionais,
-API HTTP do Hindsight 0.4.9, PostgreSQL 16 com pgvector e corpus sintético fechado.
+API HTTP do Hindsight 1.1.0, PostgreSQL 16 com pgvector e corpus sintético fechado.
 Um processo recebe um banco fixo. O agente não recebe ferramentas administrativas.
 O corpus fechado evita depender de expressões regulares para autorizar dados.
 

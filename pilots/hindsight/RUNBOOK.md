@@ -4,7 +4,7 @@
 
 O alvo escolhido para este piloto é o agente de avaliação sintética do
 `avilaops/experiments`. O pacote acrescenta MCP stdio para `retain`, `recall` e
-`reflect`, traduzidos para a API HTTP do Hindsight 0.4.9. Não altera o servidor
+`reflect`, traduzidos para a API HTTP do Hindsight 1.1.0. Não altera o servidor
 do laboratório, o portal, as rotas existentes ou configurações de agentes locais.
 
 O agente inicia um adaptador confiável com um único banco configurado:
@@ -62,7 +62,7 @@ certifica sua conformidade com a política de 90 segundos do projeto MLOps.
 O pacote `hindsight-release-<sha>` contém imagem do adaptador, `images.env` com
 digests de Hindsight/PostgreSQL, Compose, revisão, este runbook e SHA256SUMS.
 Upstreams são imagens prontas; nenhum build ocorre no destino. O Hindsight é
-fixado em `0.4.9-slim` e travado por digest pela CI. O adaptador usa imagem Node 24
+fixado em `1.1.0-slim` e travado por digest pela CI. O adaptador usa imagem Node 24
 resolvida por digest e é identificado pelo SHA Git. Conferir SHA256SUMS antes de
 qualquer aprovação de uso. Isso garante integridade do pacote, não assinatura.
 
@@ -79,7 +79,7 @@ Para a integração real em runner descartável:
    `HINDSIGHT_PILOT_API_KEY`, `HINDSIGHT_PILOT_DB_PASSWORD` (aleatórios, ao menos
    24 caracteres; senha DB apenas letras, números, `_` e `-`) e
    `HINDSIGHT_PILOT_RUNTIME_ENV` (configuração aprovada de provedor/modelo,
-   embeddings/reranker e respectivas credenciais segundo o upstream 0.4.9).
+   embeddings/reranker e respectivas credenciais segundo o upstream 1.1.0).
    Não copiar chaves de produção. Não enviar valores por Linear/chat/Git.
 5. Após integrar o workflow na branch padrão, executar `workflow_dispatch` na
    revisão aprovada. O job usa somente instância/volume recém-criados no runner.
@@ -177,8 +177,8 @@ as evidências não couberem nas restrições aprovadas. Estado inicial desta en
 
 - [Issue AVL-419](https://linear.app/avilaops/issue/AVL-419/pilotar-hindsight-como-memoria-de-longo-prazo-para-agentes-mlops)
 - [Política CI do projeto MLOps](https://linear.app/avilaops/project/mlops-d5c4c72bf4ac)
-- [HTTP upstream 0.4.9](https://github.com/vectorize-io/hindsight/blob/v0.4.9/hindsight-api/hindsight_api/api/http.py)
-- [Configuração upstream 0.4.9](https://github.com/vectorize-io/hindsight/blob/v0.4.9/hindsight-api/hindsight_api/config.py)
+- [HTTP upstream 1.1.0](https://github.com/vectorize-io/hindsight/blob/v1.1.0/hindsight-api-slim/hindsight_api/api/http.py)
+- [Configuração upstream 1.1.0](https://github.com/vectorize-io/hindsight/blob/v1.1.0/hindsight-api-slim/hindsight_api/config.py)
 - [Autenticação/configuração](https://hindsight.vectorize.io/developer/configuration)
 - [Imagens oficiais](https://hindsight.vectorize.io/developer/installation)
 - [Transporte MCP stdio](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports)

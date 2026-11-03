@@ -65,7 +65,7 @@ jobs:
           mkdir -p release/hindsight
           task_node_ref=node:24-alpine
           task_pg_ref=pgvector/pgvector:pg16
-          task_hs_ref=ghcr.io/vectorize-io/hindsight:0.4.9-slim
+          task_hs_ref=ghcr.io/vectorize-io/hindsight:1.1.0-slim
           task_node_digest=$(docker buildx imagetools inspect "$task_node_ref" --format '{{.Manifest.Digest}}')
           task_pg_digest=$(docker buildx imagetools inspect "$task_pg_ref" --format '{{.Manifest.Digest}}')
           task_hs_digest=$(docker buildx imagetools inspect "$task_hs_ref" --format '{{.Manifest.Digest}}')
@@ -110,7 +110,7 @@ jobs:
       HINDSIGHT_BANK: avl419-ci-a
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: hindsight-release-${{ github.sha }}
           path: release/hindsight/
