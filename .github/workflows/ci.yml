@@ -30,7 +30,7 @@ jobs:
       - run: node scripts/check-public-home.mjs
       - name: Validate Caddy routing
         run: |
-          printf ':8080 {\n' > /tmp/public-home-test.caddy
+          printf ':8080 {\n header {\n -Server\n }\n @mlops_nonpublic not path /\n header @mlops_nonpublic X-Robots-Tag "noindex, nofollow"\n' > /tmp/public-home-test.caddy
           cat deploy/public-home.caddy >> /tmp/public-home-test.caddy
           printf '\n}\n' >> /tmp/public-home-test.caddy
           docker run --rm -v /tmp/public-home-test.caddy:/etc/caddy/Caddyfile:ro caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
@@ -40,6 +40,8 @@ jobs:
           trap 'docker rm -f public-home-router' EXIT
           curl --retry 10 --retry-all-errors --retry-delay 1 --max-time 10 --retry-max-time 30 --fail http://localhost:18080/ -o /tmp/mlops-home.html
           grep -q 'Avila Ops MLOps' /tmp/mlops-home.html
+          curl -sI http://localhost:18080/ | grep -i 'X-Robots-Tag: index, follow'
+          curl -sI http://localhost:18080/unknown | grep -i 'X-Robots-Tag: noindex, nofollow'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/experiments/)" = 502
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/auth/login)" = 502
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/unknown)" = 404
