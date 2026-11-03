@@ -31,6 +31,19 @@ def main():
         updated = original.replace(old, replacement)
     else:
         raise SystemExit("Expected exactly one dashboard catch-all; no changes made")
+    # The existing header block deletes Server, so Caddy defers its operations.
+    # Its blanket noindex would overwrite the public handler's response header.
+    robots_matcher = "    @mlops_nonpublic not path /\n"
+    if robots_matcher not in updated:
+        blanket = '        X-Robots-Tag "noindex, nofollow"\n'
+        site_start = "ml.avilaops.com {\n"
+        if updated.count(blanket) != 1 or updated.count(site_start) != 1:
+            raise SystemExit("Unexpected global indexing policy; no changes made")
+        updated = updated.replace(blanket, "", 1).replace(
+            site_start,
+            site_start + robots_matcher + '    header @mlops_nonpublic X-Robots-Tag "noindex, nofollow"\n',
+            1,
+        )
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     backup = Path("/opt/avila-experiments/backups") / ("public-home-" + stamp)
     backup.mkdir(parents=True)
