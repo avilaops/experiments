@@ -22,13 +22,13 @@ no portal ampliaria o escopo para AVL-428. O adaptador mantém o piloto independ
 
 ## Entregas verificáveis
 
-- [ ] Adaptador: retain síncrono, recall e reflect, banco fixo, entradas fechadas,
+- [x] Adaptador: retain síncrono, recall e reflect, banco fixo, entradas fechadas,
   limites, expiração, erros sem payloads e métricas sem conteúdo.
-- [ ] Testes de contrato via HTTP e MCP stdio, negativas e dois bancos.
-- [ ] Compose privado/autenticado, recursos e volume; imagem e pacote na CI.
-- [ ] Teste PostgreSQL: pgvector, persistência e backup/restore em banco separado.
-- [ ] Avaliação real opt-in, com evidência explicitamente distinta de contratos.
-- [ ] Runbook: retenção/exclusão, backup, restauração, rollback/desinstalação,
+- [x] Testes de contrato via HTTP e MCP stdio, negativas e dois bancos.
+- [x] Compose privado/autenticado, recursos e volume; imagem e pacote na CI.
+- [x] Teste PostgreSQL: pgvector, persistência e backup/restore em banco separado.
+- [x] Avaliação real opt-in preparada, distinta dos contratos; execução pendente.
+- [x] Runbook: retenção/exclusão, backup, restauração, rollback/desinstalação,
   responsabilidades e gates para aprovação operacional.
 
 ## Verificação
@@ -42,3 +42,18 @@ de backup. Ausência de uso/preço é `null`, nunca custo zero presumido.
 
 Plano registrado antes da implementação. A autorização deste pedido cobre o
 checkout e a CI; qualquer ativação operacional permanece fora desta autorização.
+
+Na revisão de código `0271d869cd8ed0723ae373bb8cb9b62696cf2f69`, a
+[CI do piloto](https://github.com/avilaops/experiments/actions/runs/41642019630)
+aprovou `contract`, `storage` e `package`; `live` não foi executado. O
+[pacote produzido](https://github.com/avilaops/experiments/actions/runs/41642019630/artifacts/13233123055)
+contém a imagem do adaptador e os digests upstream. Esses resultados não
+certificam isolamento, qualidade, custo ou recuperação do runtime Hindsight real.
+
+## Aceite ainda pendente
+
+- [ ] Provedor/modelo, teto de gasto e credencial exclusiva aprovados.
+- [ ] Environment de CI protegido e fluxo real/restore executados com sucesso.
+- [ ] Métricas e ledger de custo real conferidos; decisão de ampliar/encerrar.
+- [ ] Responsável operacional, prazo e procedimento de exclusão atribuídos.
+- [ ] Aprovação explícita de qualquer deploy/alteração operacional.
