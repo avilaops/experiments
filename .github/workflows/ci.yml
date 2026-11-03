@@ -13,6 +13,57 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  public-home:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: dashboard
+      - run: npx playwright install --with-deps chromium
+        working-directory: dashboard
+      - run: node scripts/check-public-home.mjs
+      - name: Validate Caddy routing
+        run: |
+          printf ':8080 {\n' > /tmp/public-home-test.caddy
+          cat deploy/public-home.caddy >> /tmp/public-home-test.caddy
+          printf '\n}\n' >> /tmp/public-home-test.caddy
+          docker run --rm -v /tmp/public-home-test.caddy:/etc/caddy/Caddyfile:ro caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Check anonymous root and private route separation
+        run: |
+          docker run -d --name public-home-router -p 18080:8080 -v /tmp/public-home-test.caddy:/etc/caddy/Caddyfile:ro -v "$PWD/site:/srv/avila-mlops/current:ro" caddy:2
+          curl --retry 10 --retry-connrefused --retry-delay 1 --fail http://localhost:18080/ -o /tmp/mlops-home.html
+          grep -q 'Avila Ops MLOps' /tmp/mlops-home.html
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/experiments/)" = 502
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/auth/login)" = 502
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/unknown)" = 404
+          docker rm -f public-home-router
+      - name: Package public site
+        run: |
+          mkdir -p public-home/site public-home/deploy public-home/scripts
+          cp site/index.html public-home/site/
+          cp deploy/public-home.caddy public-home/deploy/
+          cp scripts/deploy-public-home.py public-home/scripts/
+          cd public-home
+          sha256sum site/index.html deploy/public-home.caddy scripts/deploy-public-home.py > SHA256SUMS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: public-home-${{ github.sha }}
+          path: public-home/
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: public-home-screenshots-${{ github.sha }}
+          path: reports/public-home/
+          retention-days: 14
+
   core:
     runs-on: ubuntu-24.04
     timeout-minutes: 1
