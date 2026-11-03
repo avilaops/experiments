@@ -1,5 +1,27 @@
 # Implantação do laboratório
 
+## Entrada institucional do MLOps
+
+A raiz `https://ml.avilaops.com/` é pública e serve `site/index.html`.
+Somente `/experiments/*` e `/auth/*` encaminham para o dashboard na porta 3301.
+O domínio principal não deve usar o dashboard como fallback. As rotas de
+Memória, Onnix e evidências mantêm seus encaminhamentos específicos.
+
+O job `public-home` valida a página em Chromium desktop/mobile, valida o
+fragmento Caddy e publica o artefato `public-home-<sha>` com `SHA256SUMS`.
+Após verificar o CI e os hashes no destino, execute como root:
+
+```text
+python3 scripts/deploy-public-home.py /caminho/do/artefato <sha-completo>
+```
+
+O publicador guarda backup da configuração, instala uma release estática em
+`/srv/avila-mlops/releases/<sha>`, valida o Caddy e recarrega o serviço.
+Falha de validação ou reload restaura a configuração e a release anteriores.
+Nenhum build é executado no servidor; a publicação não altera a autenticação
+nem reinicia os serviços privados. Confirme anonimamente a raiz com HTTP 200
+e `/experiments/` ainda exigindo autenticação após a publicação.
+
 São três fronteiras independentes:
 
 - Código e documentação: repositório independente do ERP.

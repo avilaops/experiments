@@ -1,0 +1,16 @@
+# Inserir antes do fallback 404 no bloco ml.avilaops.com.
+# As rotas específicas de Memória, Onnix e evidências continuam no bloco existente.
+handle / {
+    root * /srv/avila-mlops/current
+    rewrite * /index.html
+    header X-Robots-Tag "index, follow"
+    header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+    file_server
+}
+@mlops_private path /experiments/* /auth/*
+handle @mlops_private {
+    reverse_proxy 127.0.0.1:3301
+}
+handle {
+    respond "Página não encontrada." 404
+}
