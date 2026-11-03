@@ -24,7 +24,7 @@ export function validateArguments(bank, operation, args) {
 
 export function safeText(bank, value) {
   const other = bank === "avl419-ci-a" ? MARKERS["avl419-ci-b"] : MARKERS["avl419-ci-a"];
-  if (typeof value !== "string" || value.length > 16384 || value.includes(other)
+  if (typeof value !== "string" || value.length > 16384 || value.toLowerCase().includes(other.toLowerCase())
     || /(?:Bearer\s+\S+|sk-[\w-]{8,}|-----BEGIN|password\s*[:=]|token\s*[:=]|\b\S+@\S+\.\S+|\b\d{11,}\b)/i.test(value)) {
     throw new PilotError("OUTPUT_DENIED");
   }

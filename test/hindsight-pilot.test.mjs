@@ -115,7 +115,7 @@ test("upstream failures, malformed/large bodies and sensitive/foreign output are
   const cases = [
     [401, { private: apiKey }], [403, { private: apiKey }], [500, { private: apiKey }],
     [200, { results: [{ text: "Bearer sentinel-private-key" }] }],
-    [200, { results: [{ text: RECORDS[bankB] }] }], [200, { results: [null] }],
+    [200, { results: [{ text: RECORDS[bankB] }] }], [200, { results: [{ text: RECORDS[bankB].toLowerCase() }] }], [200, { results: [null] }],
     [200, { results: "malformed" }], [200, "x".repeat(300000)],
   ];
   for (const [status, body] of cases) {
