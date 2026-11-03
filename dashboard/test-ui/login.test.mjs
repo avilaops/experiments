@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { createApiServer } from "../../dist/lab/server.js";
 import { createDashboard } from "../dist/server.mjs";
 
@@ -19,7 +19,8 @@ test("browser login works on mobile and desktop without a native Basic dialog", 
     assetDirectory: fileURLToPath(new URL("../dist/", import.meta.url)) });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   const base = "http://127.0.0.1:" + server.address().port;
-  const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
+  const browserType = process.env.LOGIN_BROWSER === "webkit" ? webkit : chromium;
+  const browser = await browserType.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
   t.after(async () => {
     await browser.close();
     server.closeAllConnections(); api.closeAllConnections();
@@ -35,7 +36,7 @@ test("browser login works on mobile and desktop without a native Basic dialog", 
     await page.getByRole("heading", { name: "Entre no laboratório", exact: true }).waitFor();
     assert.equal(new URL(page.url()).pathname, "/auth/login");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-    await page.screenshot({ path: path.join(screenshots, "login-" + width + ".png"), fullPage: true });
+    await page.screenshot({ path: path.join(screenshots, "login-" + (process.env.LOGIN_BROWSER ?? "chromium") + "-" + width + ".png"), fullPage: true });
     await page.getByLabel("Usuário", { exact: true }).fill("tester");
     await page.getByLabel("Senha", { exact: true }).fill("incorrect-password");
     await page.getByRole("button", { name: "Entrar", exact: true }).click();

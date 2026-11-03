@@ -86,6 +86,20 @@ O registro do client no Auth deve aceitar somente a origem e o callback de produ
 necessários. Não coloque `OIDC_CLIENT_SECRET` em `.env` versionado, imagem Docker,
 logs ou documentação pública.
 
+## Entrada pelo navegador
+
+Com Basic temporário, o navegador abre /auth/login e usa as credenciais privadas
+já configuradas. O formulário cria uma sessão opaca no BFF, com cookie HttpOnly,
+SameSite=Lax e Secure quando PUBLIC_ORIGIN usa HTTPS. A sessão dura no máximo
+oito horas e é invalidada por saída ou reinício do BFF. Nenhuma senha ou Bearer
+interno é incluído no cookie.
+
+Navegação HTML sem sessão redireciona à entrada; endpoints de API continuam
+respondendo JSON401 para clientes sem autenticação. Clientes que já enviam Basic
+por Authorization continuam funcionando. Login, logout e mutações autenticadas
+por cookie exigem Origin exato; os aliases com e sem /experiments usam a mesma
+barreira. OIDC mantém seu fluxo próprio quando configurado.
+
 ## Docker
 
 O workflow `.github/workflows/ci.yml` executa os testes do núcleo, o build e os
