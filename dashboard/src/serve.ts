@@ -1,15 +1,20 @@
 import { fileURLToPath } from "node:url";
 import { createDashboard } from "./server.js";
+const oidcRequested = ["OIDC_ISSUER", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET", "OIDC_REDIRECT_URI"]
+  .some(name => process.env[name] !== undefined);
+if (oidcRequested && (!process.env.OIDC_CLIENT_ID?.trim() || !process.env.OIDC_CLIENT_SECRET?.trim())) {
+  throw new Error("Configure OIDC_CLIENT_ID and OIDC_CLIENT_SECRET together");
+}
 const server = createDashboard({
   apiUrl: process.env.LAB_API_URL ?? "http://127.0.0.1:3300",
   apiToken: process.env.LAB_API_TOKEN ?? "",
   username: process.env.DASHBOARD_USER,
   password: process.env.DASHBOARD_PASSWORD,
   origin: process.env.PUBLIC_ORIGIN ?? "http://127.0.0.1:3301",
-  oidc: process.env.OIDC_CLIENT_ID && process.env.OIDC_CLIENT_SECRET ? {
+  oidc: oidcRequested ? {
     issuer: process.env.OIDC_ISSUER ?? "https://auth.avilaops.com",
-    clientId: process.env.OIDC_CLIENT_ID,
-    clientSecret: process.env.OIDC_CLIENT_SECRET,
+    clientId: process.env.OIDC_CLIENT_ID!,
+    clientSecret: process.env.OIDC_CLIENT_SECRET!,
     redirectUri: process.env.OIDC_REDIRECT_URI ?? "http://127.0.0.1:3301/auth/callback",
   } : undefined,
   assetDirectory: fileURLToPath(new URL("./", import.meta.url)),

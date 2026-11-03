@@ -26,7 +26,7 @@ async function fixture(t) {
   await new Promise(resolve => bff.listen(0, "127.0.0.1", resolve));
   const base = "http://127.0.0.1:" + bff.address().port;
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
-  const context = await browser.newContext({ httpCredentials: { username: "tester", password: "ephemeral-contract-ui-password" }, viewport: { width: 390, height: 844 } });
+  const context = await browser.newContext({ httpCredentials: { username: "tester", password: "ephemeral-contract-ui-password" }, extraHTTPHeaders: { Authorization: "Basic " + Buffer.from("tester:ephemeral-contract-ui-password").toString("base64") }, viewport: { width: 390, height: 844 } });
   context.on("page", page => page.on("pageerror", error => errors.push(error.message)));
   const page = await context.newPage();
   const catalog = async () => (await fetch(apiUrl + "/api/v1/client-contracts", { headers: { Authorization: "Bearer " + token } })).json();

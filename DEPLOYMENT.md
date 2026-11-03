@@ -4,7 +4,7 @@ São três fronteiras independentes:
 
 - Código e documentação: repositório independente do ERP.
 - Evidências públicas: exportação estática MDX de JSONs sintéticos selecionados.
-- Painel e API: acesso público por padrão, token da API somente no BFF. Basic Auth continua disponível como opção.
+- Painel e API: autenticação obrigatória; token da API somente no BFF. Basic temporário ou OIDC completo, sem modo público.
 
 ## Construir e verificar
 
@@ -74,13 +74,31 @@ Configure no ambiente privado do dashboard:
 
 O login começa em `/auth/login`, o retorno chega em `/auth/callback` e o logout
 usa o endpoint de sessão do Auth. `state` expira em dez minutos e o fluxo exige
-`S256`. Enquanto essas quatro variáveis não estiverem configuradas, o Basic Auth
-existente continua sendo o mecanismo temporário; sem qualquer mecanismo o painel
-permanece compatível com o modo local público usado pelos testes.
+`S256`. O BFF exige Basic Auth completo ou OIDC completo antes de iniciar.
+Para manter Basic temporário, configure DASHBOARD_USER/DASHBOARD_PASSWORD e retire
+todas as variáveis OIDC do ambiente ativo. Uma configuração OIDC parcial causa
+erro de inicialização, mesmo com Basic configurado; não é interpretada como modo
+público. OIDC_CLIENT_ID e OIDC_CLIENT_SECRET são obrigatórios quando OIDC é
+solicitado; issuer e redirect URI mantêm os padrões definidos no entrypoint.
+A exportação estática /evidencias/ continua pública, separada do BFF privado.
 
 O registro do client no Auth deve aceitar somente a origem e o callback de produção
 necessários. Não coloque `OIDC_CLIENT_SECRET` em `.env` versionado, imagem Docker,
 logs ou documentação pública.
+
+## Entrada pelo navegador
+
+Com Basic temporário, o navegador abre /auth/login e usa as credenciais privadas
+já configuradas. O formulário cria uma sessão opaca no BFF, com cookie HttpOnly,
+SameSite=Lax e Secure quando PUBLIC_ORIGIN usa HTTPS. A sessão dura no máximo
+oito horas e é invalidada por saída ou reinício do BFF. Nenhuma senha ou Bearer
+interno é incluído no cookie.
+
+Navegação HTML sem sessão redireciona à entrada; endpoints de API continuam
+respondendo JSON401 para clientes sem autenticação. Clientes que já enviam Basic
+por Authorization continuam funcionando. Login, logout e mutações autenticadas
+por cookie exigem Origin exato; os aliases com e sem /experiments usam a mesma
+barreira. OIDC mantém seu fluxo próprio quando configurado.
 
 ## Docker
 
@@ -102,7 +120,7 @@ o Compose anteriores para rollback. O índice do histórico é derivado e migra 
 volume existente sem substituir os arquivos de evidência em `runs/`.
 
 O Compose deve rodar como um único projeto avila-experiments, com uma réplica
-da API. Configure o arquivo .env privado, modo 600, com LAB_API_TOKEN. Para habilitar Basic Auth opcional, defina também DASHBOARD_USER e DASHBOARD_PASSWORD (senha aleatória de ao menos 16 caracteres); omita ambos para acesso público.
+da API. Configure o arquivo .env privado, modo 600, com LAB_API_TOKEN e um mecanismo completo de autenticação. Para Basic temporário, defina DASHBOARD_USER e DASHBOARD_PASSWORD (senha aleatória de ao menos 16 caracteres), sem variáveis OIDC parciais.
 
     sha256sum -c SHA256SUMS
     docker load --input images.tar.gz
@@ -114,11 +132,11 @@ da API. Configure o arquivo .env privado, modo 600, com LAB_API_TOKEN. Para habi
 O Dockerfile inclui os 14 casos iniciais. O volume evidence armazena revisões
 e runs; não use down -v. Os processos usam usuário sem root, limites de
 memória/CPU, healthcheck e logs rotacionados. Portas 3300 e 3301 são vinculadas
-somente a 127.0.0.1. Quando configurado, o painel usa HTTP Basic sobre TLS, verificado no BFF; sem DASHBOARD_USER e DASHBOARD_PASSWORD, o acesso é público.
+somente a 127.0.0.1. O painel exige autenticação no BFF: Basic por cabeçalho, sessão criada pelo formulário ou OIDC completo. Sem mecanismo válido, o servidor recusa inicialização.
 O BFF injeta o Bearer apenas depois de autenticar o usuário. O navegador
 nunca recebe o token da API.
 
-No Caddy, /experiments/* encaminha ao BFF; /evidencias/* serve somente a
+No Caddy, /experiments/* e /auth/* encaminham ao BFF; /evidencias/* serve somente a
 exportação estática. As exceções de autenticação do portal aplicam-se a esses
 dois caminhos: o BFF exige sua própria autenticação. Jupyter conserva seu
 token próprio; Annif e Ultralytics continuam sob autenticação do portal.

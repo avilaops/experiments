@@ -192,23 +192,10 @@ test("loopback origin follows the listening port and never trusts the Host heade
 });
 
 
-test("BFF can serve the dashboard without Basic Auth when credentials are absent", async t => {
-  const directory = await mkdtemp(path.join(tmpdir(), "avila-public-dashboard-"));
-  let api, bff;
-  t.after(async () => {
-    if (bff?.listening) { bff.closeAllConnections(); await close(bff); }
-    if (api?.listening) { api.closeAllConnections(); await close(api); }
-    await rm(directory, { recursive: true, force: true });
-  });
-  api = await createApiServer({ dataDirectory: directory, token: "public-dashboard-upstream-token" });
-  const apiUrl = await listen(api);
-  bff = createDashboard({
-    apiUrl,
-    apiToken: "public-dashboard-upstream-token",
-    assetDirectory: new URL("../dist/", import.meta.url).pathname,
-  });
-  const base = await listen(bff);
-  const response = await fetch(base + "/experiments/");
-  assert.equal(response.status, 200);
-  assert.equal(response.headers.get("www-authenticate"), null);
+test("the private dashboard requires authentication even when Basic credentials are absent", () => {
+  assert.throws(() => createDashboard({
+    apiUrl: "http://127.0.0.1:1",
+    apiToken: "synthetic-upstream-token",
+    assetDirectory: "unused",
+  }), /authentication|required/i);
 });
