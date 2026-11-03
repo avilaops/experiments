@@ -6,6 +6,7 @@ import { MARKERS, QUESTION, RECORDS } from "./policy.mjs";
 
 // Only a disposable CI service is allowed; never point this at production.
 if (process.env.GITHUB_ACTIONS !== "true" || process.env.PILOT_LIVE_APPROVED !== "true"
+  || process.env.HINDSIGHT_URL !== "http://127.0.0.1:18888"
   || !process.env.PILOT_PROVIDER || !process.env.PILOT_MODEL || !process.env.PILOT_COST_LIMIT_USD
   || !(Number(process.env.PILOT_COST_LIMIT_USD) > 0)) throw new Error("LIVE_CI_APPROVAL_REQUIRED");
 

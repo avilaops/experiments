@@ -2,7 +2,10 @@ import { performance } from "node:perf_hooks";
 import { MAX_BYTES, PilotError, RECORDS, safeText, validateArguments } from "./policy.mjs";
 
 async function boundedJson(response) {
-  if (!response.ok) throw new PilotError(`UPSTREAM_HTTP_${response.status}`);
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new PilotError(`UPSTREAM_HTTP_${response.status}`);
+  }
   const reader = response.body?.getReader();
   if (!reader) throw new PilotError("UPSTREAM_INVALID");
   let size = 0;
