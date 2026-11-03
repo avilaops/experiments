@@ -37,7 +37,7 @@ try {
     return { value: await response.json(), response };
   };
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
-  const context = await browser.newContext({ httpCredentials: credentials, viewport: { width: 1440, height: 1100 } });
+  const context = await browser.newContext({ httpCredentials: credentials, extraHTTPHeaders: { Authorization: "Basic " + Buffer.from(credentials.username + ":" + credentials.password).toString("base64") }, viewport: { width: 1440, height: 1100 } });
   page = await context.newPage();
   page.on("pageerror", error => pageErrors.push(error.message));
   page.on("console", message => { if (message.type() === "error") consoleErrors.push({ text: message.text(), location: message.location() }); });

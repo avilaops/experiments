@@ -75,6 +75,7 @@ async function fixture(t) {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
   const context = await browser.newContext({
     httpCredentials: { username: options.username, password: options.password },
+    extraHTTPHeaders: { Authorization: "Basic " + Buffer.from(options.username + ":" + options.password).toString("base64") },
     viewport: { width: 390, height: 844 },
   });
   const errors = [];

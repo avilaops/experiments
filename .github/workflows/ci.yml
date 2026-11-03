@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
+  core:
     runs-on: ubuntu-24.04
     timeout-minutes: 1
     steps:
@@ -22,9 +22,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            dashboard/package-lock.json
+          cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund
       - run: npm test
       - name: Exercise real node:test evidence capture
@@ -37,6 +35,21 @@ jobs:
           path: reports/node-test-evidence/
           retention-days: 14
           if-no-files-found: ignore
+
+  dashboard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            dashboard/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
       - run: npm ci --no-audit --no-fund
         working-directory: dashboard
       - run: npm run build
@@ -48,7 +61,7 @@ jobs:
       - run: npm run test:ui
         working-directory: dashboard
       - run: node scripts/ui-check.mjs
-      - name: Preserve local UI test evidence
+      - name: Preserve UI test evidence
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -56,19 +69,25 @@ jobs:
           path: reports/ui-check/
           retention-days: 14
           if-no-files-found: ignore
+
+  package:
+    needs: [core, dashboard]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build release images on GitHub
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker build --target api --tag "avila-experiments-api:sha-${GITHUB_SHA}" .
           docker build --target dashboard --tag "avila-experiments-dashboard:sha-${GITHUB_SHA}" .
           mkdir release
           docker save "avila-experiments-api:sha-${GITHUB_SHA}" "avila-experiments-dashboard:sha-${GITHUB_SHA}" | gzip > release/images.tar.gz
           cp compose.yaml release/compose.yaml
-          printf '%s\n' "$GITHUB_SHA" > release/REVISION
+          printf '%s\\n' "$GITHUB_SHA" > release/REVISION
           cd release
           sha256sum images.tar.gz compose.yaml REVISION > SHA256SUMS
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           name: release-${{ github.sha }}
           path: release/

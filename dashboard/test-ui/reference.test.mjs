@@ -35,6 +35,7 @@ test("private reference loads real OpenAPI through the BFF without issuing mutat
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ httpCredentials: {
     username: "tester", password: "ephemeral-reference-password" },
+    extraHTTPHeaders: { Authorization: "Basic " + Buffer.from("tester:ephemeral-reference-password").toString("base64") },
     viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
   const errors = [], mutations = [];

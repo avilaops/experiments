@@ -85,14 +85,14 @@ test("login rejects cross-origin submission and redirect targets stay on the lab
   const forbidden = await login({ headers: { Origin: "https://hostile.example" } });
   assert.equal(forbidden.status, 403);
   assert.equal(forbidden.headers.get("set-cookie"), null);
-  for (const returnTo of ["https://hostile.example", "//hostile.example", "/\\hostile.example", "/auth/login"]) {
+  for (const returnTo of ["https://hostile.example", "//hostile.example", "/\\hostile.example", "/auth/login", "/experiments/../auth/login", "/experiments/%2e%2e/auth/login", "/%2f%2fhostile.example"]) {
     const response = await login({ fields: { returnTo } });
     assert.equal(response.status, 303);
     assert.equal(response.headers.get("location"), "/experiments/");
   }
   const response = await login();
   const cookie = response.headers.get("set-cookie").split(";")[0];
-  for (const headers of [{ Cookie: cookie }, { Cookie: cookie, Origin: "https://hostile.example" }]) {
+  for (const headers of [{ Cookie: cookie }, { Cookie: cookie, Authorization: "Basic invalid" }, { Cookie: cookie, Origin: "https://hostile.example" }]) {
     const mutation = await fetch(base + "/api/v1/runs", { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: "{}" });
     assert.equal(mutation.status, 403);
   }
