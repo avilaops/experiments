@@ -84,7 +84,7 @@ jobs:
           mkdir release
           docker save "avila-experiments-api:sha-${GITHUB_SHA}" "avila-experiments-dashboard:sha-${GITHUB_SHA}" | gzip > release/images.tar.gz
           cp compose.yaml release/compose.yaml
-          printf '%s\\n' "$GITHUB_SHA" > release/REVISION
+          printf '%s\n' "$GITHUB_SHA" > release/REVISION
           cd release
           sha256sum images.tar.gz compose.yaml REVISION > SHA256SUMS
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

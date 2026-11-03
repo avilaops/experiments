@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 
-const escape = (value: string) => value.replace(/[&<>"']/g, character =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
+const entities: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const escape = (value: string) => value.replace(/[&<>"']/g, character => entities[character]!);
 
 export function loginReturnTo(value: string | null): string {
   if (!value || value.length > 2048 || !value.startsWith("/") || value.startsWith("//")
