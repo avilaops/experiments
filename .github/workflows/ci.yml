@@ -13,6 +13,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  architecture-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: experiments_test
+          POSTGRES_PASSWORD: isolated-ci-test
+          POSTGRES_DB: experiments_architecture_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U experiments_test -d experiments_architecture_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      ARCHITECTURE_TEST_DATABASE_URL: postgresql://experiments_test:isolated-ci-test@127.0.0.1:5432/experiments_architecture_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: node --test test/architecture.test.mjs
+
   public-home:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -157,7 +183,7 @@ jobs:
           if-no-files-found: ignore
 
   package:
-    needs: [core, dashboard, login-webkit]
+    needs: [core, dashboard, login-webkit, architecture-postgres]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15

@@ -4,7 +4,6 @@ import { createHash } from "node:crypto";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { fingerprint } from "../dist/index.js";
 
@@ -33,7 +32,7 @@ async function execute(configuration, source, callback) {
   try {
     await writeFile(path.join(directory, "fixture.test.mjs"), source);
     await writeFile(path.join(directory, "evidence-config.json"), JSON.stringify({ run: configuration.run, manifest: configuration.manifest }));
-    const reporter = fileURLToPath(new URL("../dist/node-test-reporter.js", import.meta.url));
+    const reporter = new URL("../dist/node-test-reporter.js", import.meta.url).href;
     const childEnvironment = { ...process.env, EXPERIMENTS_NODE_TEST_CONFIG: path.join(directory, "evidence-config.json") };
     // O contexto interno do executor pai desabilita o isolamento do executor
     // filho; ele precisa iniciar uma execução real, independente.

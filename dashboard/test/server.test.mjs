@@ -10,6 +10,24 @@ import { createDashboard } from "../dist/server.mjs";
 import { validatePublicExport } from "../public-export.mjs";
 const listen = async server => { await new Promise(resolve => server.listen(0, "127.0.0.1", resolve)); return "http://127.0.0.1:" + server.address().port; };
 const close = server => new Promise(resolve => server.close(resolve));
+test("architecture proxy preserves search, ETag and authentication", async () => {
+  const upstream = createServer((request, response) => {
+    assert.equal(request.headers.authorization, "Bearer architecture-upstream-test");
+    response.writeHead(200, { "Content-Type": "application/json", ETag: '"7"' });
+    response.end(JSON.stringify({ path: request.url }));
+  });
+  const apiUrl = await listen(upstream);
+  const bff = createDashboard({ apiUrl, apiToken: "architecture-upstream-test", username: "tester", password: "long-test-password-123", origin: "https://lab.example", assetDirectory: "unused" });
+  const url = await listen(bff);
+  const endpoint = "/experiments/api/v1/architecture/applications?q=ERP&limit=5&offset=10";
+  try {
+    assert.equal((await fetch(url + endpoint)).status, 401);
+    const response = await fetch(url + endpoint, { headers: { Authorization: "Basic " + Buffer.from("tester:long-test-password-123").toString("base64") } });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("etag"), '"7"');
+    assert.equal((await response.json()).path, "/api/v1/architecture/applications?q=ERP&limit=5&offset=10");
+  } finally { await close(bff); await close(upstream); }
+});
 test("BFF authenticates, withholds the API token, preserves ETag and protects mutations", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "avila-bff-"));
   const api = await createApiServer({ dataDirectory: directory, token: "private-upstream-token-for-test" });

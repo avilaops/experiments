@@ -1,5 +1,8 @@
 # Experiments 0.3.0
 
+O [catálogo de arquitetura em PostgreSQL](docs/ARCHITECTURE-DATABASE.md) registra
+aplicações, contratos, dependências, padrões, avaliações e histórico do portfólio.
+
 O [setup e ponto de continuidade](SETUP.md) registra as decisões e o estado atual.
 O [caderno de políticas](POLICIES.md) organiza regras, fontes e evidências por produto.
 A [coleta automática do Siscomex](docs/SISCOMEX-COLLECTION.md) arquiva a documentação

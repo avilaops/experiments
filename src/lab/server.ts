@@ -9,6 +9,9 @@ import { PolicyStore, parsePolicyUpdate } from "./policies.js";
 import { ROUTE_PRODUCTS, RouteInventoryStore } from "./route-inventories.js";
 import { ProductContextStore } from "./product-contexts.js";
 import { ClientContractStore } from "./client-contracts.js";
+import { architecturePool } from "./architecture/database.js";
+import { ArchitectureStore } from "./architecture/store.js";
+import { entityName, queryOptions, revisionHeader, SCHEMAS } from "./architecture/schema.js";
 
 export interface ApiOptions {
   dataDirectory: string;
@@ -17,6 +20,7 @@ export interface ApiOptions {
   contextToken?: string;
   contextReadToken?: string;
   allowedOrigins?: string[];
+  architectureDatabaseUrl?: string;
 }
 
 const MAX_BODY = 1024 * 1024;
@@ -83,6 +87,8 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
   const routeInventories = new RouteInventoryStore(options.dataDirectory);
   const productContexts = new ProductContextStore(options.dataDirectory);
   const clientContracts = new ClientContractStore(options.dataDirectory);
+  const pool = options.architectureDatabaseUrl ? architecturePool(options.architectureDatabaseUrl) : undefined;
+  const architecture = pool ? new ArchitectureStore(pool) : undefined;
 
   const server = createServer((request, response) => {
     void (async () => {
@@ -131,6 +137,34 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
       }
       if (request.method === "GET" && url.pathname === "/openapi.json") {
         respond(response, 200, OPENAPI);
+        return;
+      }
+      if (url.pathname.startsWith("/api/v1/architecture/")) {
+        const path = url.pathname.slice("/api/v1/architecture/".length).split("/");
+        if (path.length === 1 && path[0] === "schemas" && request.method === "GET") {
+          if (url.search) throw new ApiError(400, "INVALID_QUERY", "Schemas não aceita filtros.");
+          respond(response, 200, SCHEMAS);
+          return;
+        }
+        if (!architecture) throw new ApiError(503, "ARCHITECTURE_UNAVAILABLE", "PostgreSQL do catálogo não configurado.");
+        let result;
+        if (path.length === 2 && path[0] === "reports" && ["coverage", "dependency_map"].includes(path[1] ?? "") && request.method === "GET") {
+          const options = queryOptions(url.searchParams);
+          if (url.searchParams.has("q")) throw new ApiError(400, "INVALID_QUERY", "Relatórios aceitam apenas limit e offset.");
+          result = await architecture.report(path[1] as "coverage" | "dependency_map", options.limit, options.offset);
+        } else if (path.length === 3 && path[2] === "history" && request.method === "GET") {
+          const options = queryOptions(url.searchParams);
+          if (url.searchParams.has("q") || !/^[a-z][a-z0-9._-]{0,79}$/.test(path[1]!)) throw new ApiError(400, "INVALID_QUERY", "Histórico ou paginação inválidos.");
+          result = await architecture.history(entityName(path[0]!), path[1]!, options.limit, options.offset);
+        } else if (path.length === 1 && request.method === "GET") {
+          result = await architecture.list(entityName(path[0]!), queryOptions(url.searchParams));
+        } else if (path.length === 1 && request.method === "PUT") {
+          if (url.search) throw new ApiError(400, "INVALID_QUERY", "Gravação não aceita filtros.");
+          const entity = entityName(path[0]!);
+          const revision = revisionHeader(request.headers["if-match"]);
+          result = await architecture.save(entity, await readJson(request), revision);
+        } else throw new ApiError(404, "NOT_FOUND", "Rota não encontrada.");
+        respond(response, 200, result, { ETag: `"${result.revision}"` });
         return;
       }
       if (url.pathname === "/api/v1/client-contracts" && ["GET", "PUT"].includes(request.method ?? "")) {
@@ -284,5 +318,6 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
   });
   server.requestTimeout = 30_000;
   server.headersTimeout = 15_000;
+  server.once("close", () => { void pool?.end().catch(() => console.error("Architecture database shutdown failed")); });
   return server;
 }
