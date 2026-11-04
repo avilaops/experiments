@@ -1,5 +1,9 @@
 # API do laboratório
 
+O [catálogo de arquitetura](docs/ARCHITECTURE-DATABASE.md) acrescenta os endpoints
+`/api/v1/architecture/*`, com PostgreSQL opcional, consultas parametrizadas e
+gravação condicionada a ETag. A configuração e migração são explícitas.
+
 Extensão em desenvolvimento sobre o núcleo 0.3.0. Os arquivos `.tgz` e ZIP já
 existentes não foram substituídos e não contêm necessariamente esta extensão.
 

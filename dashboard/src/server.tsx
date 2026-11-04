@@ -21,7 +21,7 @@ export interface DashboardOptions {
   oidc?: { issuer: string; clientId: string; clientSecret: string; redirectUri: string; sessionTtlMs?: number };
 }
 const hash = (value: string) => createHash("sha256").update(value).digest();
-const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?|route-inventories(?:\/[a-z]+)?|product-contexts\/erp|client-contracts(?:\/[0-9a-f-]{36}\/history)?)$/;
+const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?|route-inventories(?:\/[a-z]+)?|product-contexts\/erp|architecture\/(?:schemas|reports\/(?:coverage|dependency_map)|(?:applications|components|interfaces|dependencies|data_assets|standards|evidence|assessments|deployments)(?:\/[a-z][a-z0-9._-]{0,79}\/history)?)|client-contracts(?:\/[0-9a-f-]{36}\/history)?)$/;
 export function createDashboard(options: DashboardOptions) {
   if (!options.apiToken.trim()) throw new Error("API token is required");
   const username = options.username?.trim() ?? "";
@@ -145,7 +145,7 @@ export function createDashboard(options: DashboardOptions) {
         const headers: Record<string, string> = { Authorization: "Bearer " + options.apiToken };
         if (body) headers["Content-Type"] = "application/json";
         if (req.headers["if-match"]) headers["If-Match"] = String(req.headers["if-match"]);
-        const query = ["/api/v1/runs", "/api/v1/product-contexts/erp"].includes(pathname) || pathname.startsWith("/api/v1/client-contracts") ? url.search : "";
+        const query = ["/api/v1/runs", "/api/v1/product-contexts/erp"].includes(pathname) || pathname.startsWith("/api/v1/client-contracts") || pathname.startsWith("/api/v1/architecture/") ? url.search : "";
         const upstream = await fetch(options.apiUrl + pathname + query, { method: req.method, headers, ...(body === undefined ? {} : { body }), signal: AbortSignal.timeout(30000), redirect: "error" });
         const bytes = await upstream.text();
         res.statusCode = upstream.status;
