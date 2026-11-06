@@ -1,0 +1,21 @@
+[Unit]
+Description=Ávila Experiments — capturar fatos reais de GitHub Actions
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/opt/avila-experiments/github-ci
+Environment=GITHUB_CI_EVIDENCE_DIR=/var/lib/docker/volumes/avila-experiments_evidence/_data/github-ci
+ExecStart=/usr/bin/python3 /opt/avila-experiments/github-ci/collect_ci.py
+TimeoutStartSec=120
+MemoryMax=128M
+CPUQuota=50%
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/docker/volumes/avila-experiments_evidence/_data/github-ci
+ProtectHome=true
+PrivateTmp=true
+UMask=0022
