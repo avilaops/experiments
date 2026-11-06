@@ -23,6 +23,9 @@ O [adapter de evidências node:test](docs/NODE-TEST-EVIDENCE.md) liga resultados
 reais a checks por manifesto, confere bytes/hash e conserva falhas e lacunas.
 O [cadastro de contratos com clientes](docs/CUSTOMER-CONTRACTS.md) organiza
 vigência, valores, situação e histórico na área privada do laboratório.
+Os [contratos oficiais compartilhados do MLOps](schemas/mlops/README.md)
+definem solicitações, evidências, resultados, decisões de política e gates de
+publicação em JSON Schema versionado.
 
 Pacote local para experimentos versionados, avaliadores explícitos e relatórios
 comparáveis. Requer Node.js 24 ou superior. Não executa deploys.

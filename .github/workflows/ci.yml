@@ -103,7 +103,31 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund
-      - run: npm test
+      - name: Create MLOps evaluation request
+        run: node scripts/ci-mlops.mjs request
+      - name: Run core test suite
+        id: core-tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee reports/mlops-ci/test-output.log
+      - name: Create MLOps evidence and result
+        if: always()
+        env:
+          MLOPS_TEST_OUTCOME: ${{ steps.core-tests.outcome }}
+        run: node scripts/ci-mlops.mjs result
+      - name: Preserve MLOps evaluation
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mlops-evaluation-${{ github.sha }}-${{ github.run_attempt }}
+          path: reports/mlops-ci/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Enforce core test result
+        if: steps.core-tests.outcome != 'success'
+        run: exit 1
       - name: Exercise real node:test evidence capture
         run: node examples/node-test-flow.mjs
       - name: Preserve node:test evidence
