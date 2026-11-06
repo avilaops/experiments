@@ -136,7 +136,7 @@ Os artefatos 0.1.0, 0.2.0 e 0.3.0 existentes não foram substituídos.
 
 - [Evidências públicas selecionadas](https://ml.avilaops.com/evidencias/):
   exportação estática, sem edição ou execução.
-- [Laboratório](https://ml.avilaops.com/experiments/): acesso público,
+- [Laboratório](https://ml.avilaops.com/experiments/): acesso privado com autenticação,
   editor com revisão, histórico e comparação.
 - [Código e documentação](https://github.com/avilaops/experiments).
 
