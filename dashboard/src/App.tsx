@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { StoredRun, Suite, SuiteDraft } from "../../src/lab/contracts.js";
 import type { Comparison, Summary } from "../../src/types.js";
+import type { OnnixEvidence } from "../../src/lab/onnix-evidence.js";
 
 const base = "/experiments";
 const labels: Record<string, string> = { passed: "Aprovado", failed: "Reprovado", error: "Erro", inconclusive: "Inconclusivo", scored: "Pontuado" };
@@ -29,6 +30,7 @@ export function App() {
   const [before, setBefore] = useState("");
   const [after, setAfter] = useState("");
   const [comparison, setComparison] = useState<Comparison>();
+  const [onnix, setOnnix] = useState<OnnixEvidence>();
 
   async function request(path: string, options: RequestInit = {}) {
     const response = await fetch(base + path, options);
@@ -50,6 +52,7 @@ export function App() {
     setRuns(value.items); setTotal(value.total);
   }
   useEffect(() => { void Promise.all([loadSuite(), history(0)]).catch(error => setMessage(error.message)); }, []);
+  useEffect(() => { void request("/api/v1/onnix").then(({ value }) => setOnnix(value as OnnixEvidence)).catch(() => setOnnix({ available: false })); }, []);
   useEffect(() => { const timer = setInterval(() => { void history().catch(() => {}); }, 10000); return () => clearInterval(timer); }, [offset]);
   async function action(fn: () => Promise<void>) {
     setBusy(true); setMessage("");
@@ -75,6 +78,21 @@ export function App() {
       <div role="status" aria-live="polite" className={message ? "notice" : ""}>{message}</div>
       {conflict && <div className="conflict" role="alert"><strong>Outra revisão foi salva.</strong><p>Sua edição permanece nesta tela. Copie o texto se quiser preservá-lo antes de recarregar.</p><button onClick={() => void action(loadSuite)}>Recarregar suíte</button></div>}
       <section aria-labelledby="overview"><div className="section-title"><h2 id="overview">Visão geral</h2>{report && <Badge value={report.summary.verdict}/>}</div>{report ? <Metrics summary={report.summary}/> : <p className="empty">Execute a suíte ou selecione um registro no histórico para inspecionar as evidências.</p>}</section>
+      <section aria-labelledby="onnix-evidence">
+        <div className="section-title"><h2 id="onnix-evidence">ONNIX · Inferência CPU real</h2>
+          {onnix?.evaluation && <Badge value={onnix.evaluation.verdict}/>}
+        </div>
+        {!onnix ? <p className="empty">Carregando avaliação do worker...</p> :
+         !onnix.available ? <p className="empty">Ainda não há evidência ONNIX no laboratório.</p> :
+         <><div className="metrics">
+            <div><span>Último teste</span><strong>{onnix.createdAt ? new Date(onnix.createdAt).toLocaleString("pt-BR") : "—"}</strong></div>
+            <div><span>Latência</span><strong>{onnix.evaluation?.latencyMs === undefined ? "Não medida" : onnix.evaluation.latencyMs + " ms"}</strong></div>
+            <div><span>Entrada</span><strong>{onnix.evaluation?.inputPixels?.join(" × ") ?? "—"}</strong></div>
+            <div><span>Saída</span><strong>{onnix.evaluation?.outputPixels?.join(" × ") ?? "—"}</strong></div>
+            <div><span>Formato</span><strong>{onnix.evaluation?.outputFormat ?? "—"}</strong></div>
+            <div><span>Coleta</span><strong>{onnix.stale ? "Desatualizada" : "Recente"}</strong></div>
+          </div><p className="muted">Provedor: {onnix.provider} · Modelo SHA-256: {onnix.modelSha256} · Avaliação sintética de 64 × 64 pixels. Não é benchmark de produção nem autorização para deploy.</p></>}
+      </section>
       <section><div className="section-title"><h2>Casos e critérios</h2><span>{suite?.dataset.cases.length ?? 0} casos salvos · split {suite?.dataset.split ?? "development"}</span></div>
         {draft && <form onSubmit={event => { event.preventDefault(); if (!busy) void action(save); }}><fieldset disabled={busy} className="editor-fields" aria-label="Editar suíte">
           <label>Hipótese<input value={draft.hypothesis} maxLength={2000} onChange={event => { setDraft({ ...draft, hypothesis: event.target.value }); setDirty(true); }}/></label>

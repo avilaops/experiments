@@ -9,6 +9,7 @@ import { PolicyStore, parsePolicyUpdate } from "./policies.js";
 import { ROUTE_PRODUCTS, RouteInventoryStore } from "./route-inventories.js";
 import { ProductContextStore } from "./product-contexts.js";
 import { ClientContractStore } from "./client-contracts.js";
+import { latestOnnixEvidence } from "./onnix-evidence.js";
 
 export interface ApiOptions {
   dataDirectory: string;
@@ -128,6 +129,11 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
         if (!timingSafeEqual(tokenHash, suppliedHash) && !contextAccess && !contextReadAccess) {
           throw new ApiError(401, "UNAUTHORIZED", "Token de acesso necessário.");
         }
+      }
+      if (request.method === "GET" && url.pathname === "/api/v1/onnix") {
+        if (url.search) throw new ApiError(400, "INVALID_INPUT", "A consulta ONNIX não aceita parâmetros.");
+        respond(response, 200, await latestOnnixEvidence(options.dataDirectory));
+        return;
       }
       if (request.method === "GET" && url.pathname === "/openapi.json") {
         respond(response, 200, OPENAPI);
