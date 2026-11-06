@@ -3,6 +3,7 @@ import type { StoredRun, Suite, SuiteDraft } from "../../src/lab/contracts.js";
 import type { Comparison, Summary } from "../../src/types.js";
 import type { OnnixEvidence } from "../../src/lab/onnix-evidence.js";
 import type { GithubCiEvidence } from "../../src/lab/github-ci-evidence.js";
+import type { ReleaseAssessment } from "../../src/lab/release-assessments.js";
 
 const base = "/experiments";
 const labels: Record<string, string> = { passed: "Aprovado", failed: "Reprovado", error: "Erro", inconclusive: "Inconclusivo", scored: "Pontuado" };
@@ -33,6 +34,7 @@ export function App() {
   const [comparison, setComparison] = useState<Comparison>();
   const [onnix, setOnnix] = useState<OnnixEvidence>();
   const [ci, setCi] = useState<GithubCiEvidence>();
+  const [releaseAssessments, setReleaseAssessments] = useState<ReleaseAssessment[]>();
 
   async function request(path: string, options: RequestInit = {}) {
     const response = await fetch(base + path, options);
@@ -56,6 +58,7 @@ export function App() {
   useEffect(() => { void Promise.all([loadSuite(), history(0)]).catch(error => setMessage(error.message)); }, []);
   useEffect(() => { void request("/api/v1/onnix").then(({ value }) => setOnnix(value as OnnixEvidence)).catch(() => setOnnix({ available: false })); }, []);
   useEffect(() => { void request("/api/v1/github-ci").then(({ value }) => setCi(value as GithubCiEvidence)).catch(() => setCi({ available: false })); }, []);
+  useEffect(() => { void request("/api/v1/release-assessments").then(({ value }) => setReleaseAssessments(value.projects as ReleaseAssessment[])).catch(() => setReleaseAssessments([])); }, []);
   useEffect(() => { const timer = setInterval(() => { void history().catch(() => {}); }, 10000); return () => clearInterval(timer); }, [offset]);
   async function action(fn: () => Promise<void>) {
     setBusy(true); setMessage("");
@@ -98,6 +101,21 @@ export function App() {
              <td>{ci.stale ? "Dados antigos" : latest?.status === "completed" ? latest.conclusion ?? "Sem conclusão" : latest?.status ?? "Não medido"}</td>
            </tr>;
          })}</tbody></table></div></>}
+      </section>
+      <section aria-labelledby="release-gates">
+        <div className="section-title"><h2 id="release-gates">Prontidão de release · Por commit</h2>
+          <span>Avaliação somente leitura</span>
+        </div>
+        <p className="muted">Verde na CI não autoriza merge ou deploy. Sem contratos, segurança, aprovação humana e health pós-deploy comprovados, a publicação permanece em revisão.</p>
+        {!releaseAssessments ? <p className="empty">Conferindo as evidências...</p> :
+          <div className="table-scroll"><table><thead><tr><th>Projeto</th><th>Commit</th><th>CI</th><th>Decisão</th><th>Evidência</th></tr></thead>
+          <tbody>{releaseAssessments.map(item => <tr key={item.repository}>
+            <td>{item.repository}</td>
+            <td className="hash">{item.sourceSha?.slice(0, 12) ?? "Sem commit"}</td>
+            <td>{item.gates[0]?.verdict === "passed" ? "Concluída" : item.gates[0]?.verdict === "failed" ? "Falhou" : "Não comprovada"}</td>
+            <td><strong>{item.decision === "rejected" ? "Reprovado" : item.decision === "approved" ? "Aprovado" : "Revisão"}</strong></td>
+            <td>{item.gates[0]?.evidence ? <a href={item.gates[0].evidence} target="_blank" rel="noopener noreferrer">GitHub Actions</a> : "Indisponível"}</td>
+          </tr>)}</tbody></table></div>}
       </section>
       <section aria-labelledby="onnix-evidence">
         <div className="section-title"><h2 id="onnix-evidence">ONNIX · Inferência CPU real</h2>
