@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { StoredRun, Suite, SuiteDraft } from "../../src/lab/contracts.js";
 import type { Comparison, Summary } from "../../src/types.js";
 import type { OnnixEvidence } from "../../src/lab/onnix-evidence.js";
+import type { GithubCiEvidence } from "../../src/lab/github-ci-evidence.js";
 
 const base = "/experiments";
 const labels: Record<string, string> = { passed: "Aprovado", failed: "Reprovado", error: "Erro", inconclusive: "Inconclusivo", scored: "Pontuado" };
@@ -31,6 +32,7 @@ export function App() {
   const [after, setAfter] = useState("");
   const [comparison, setComparison] = useState<Comparison>();
   const [onnix, setOnnix] = useState<OnnixEvidence>();
+  const [ci, setCi] = useState<GithubCiEvidence>();
 
   async function request(path: string, options: RequestInit = {}) {
     const response = await fetch(base + path, options);
@@ -53,6 +55,7 @@ export function App() {
   }
   useEffect(() => { void Promise.all([loadSuite(), history(0)]).catch(error => setMessage(error.message)); }, []);
   useEffect(() => { void request("/api/v1/onnix").then(({ value }) => setOnnix(value as OnnixEvidence)).catch(() => setOnnix({ available: false })); }, []);
+  useEffect(() => { void request("/api/v1/github-ci").then(({ value }) => setCi(value as GithubCiEvidence)).catch(() => setCi({ available: false })); }, []);
   useEffect(() => { const timer = setInterval(() => { void history().catch(() => {}); }, 10000); return () => clearInterval(timer); }, [offset]);
   async function action(fn: () => Promise<void>) {
     setBusy(true); setMessage("");
@@ -78,6 +81,24 @@ export function App() {
       <div role="status" aria-live="polite" className={message ? "notice" : ""}>{message}</div>
       {conflict && <div className="conflict" role="alert"><strong>Outra revisão foi salva.</strong><p>Sua edição permanece nesta tela. Copie o texto se quiser preservá-lo antes de recarregar.</p><button onClick={() => void action(loadSuite)}>Recarregar suíte</button></div>}
       <section aria-labelledby="overview"><div className="section-title"><h2 id="overview">Visão geral</h2>{report && <Badge value={report.summary.verdict}/>}</div>{report ? <Metrics summary={report.summary}/> : <p className="empty">Execute a suíte ou selecione um registro no histórico para inspecionar as evidências.</p>}</section>
+      <section aria-labelledby="github-ci-evidence">
+        <div className="section-title"><h2 id="github-ci-evidence">GitHub Actions · Projetos reais</h2>
+          <span>{ci?.available ? (ci.stale ? "Coleta desatualizada" : "Inventário atualizado") : "Sem coleta"}</span>
+        </div>
+        {!ci ? <p className="empty">Consultando inventário de CI...</p> :
+         !ci.available ? <p className="empty">Nenhum snapshot GitHub disponível. A coleta não foi confirmada.</p> :
+         <><p className="muted">Coletado em: {ci.collectedAt ? new Date(ci.collectedAt).toLocaleString("pt-BR") : "—"}. A conclusão é informada pelo GitHub; aprovação humana, testes individuais e qualidade IA não foram medidos aqui.</p>
+         <div className="table-scroll"><table><thead><tr><th>Projeto</th><th>Último workflow</th><th>Commit</th><th>Resultado</th></tr></thead>
+         <tbody>{(ci.projects ?? []).map(project => {
+           const latest = project.latestRuns?.[0];
+           return <tr key={project.repository}>
+             <td>{project.repository}</td>
+             <td>{latest ? <a href={latest.url} rel="noopener noreferrer" target="_blank">{latest.name}</a> : project.available ? "Sem execução" : "Indisponível"}</td>
+             <td className="hash">{latest ? latest.sourceSha.slice(0, 12) : "—"}</td>
+             <td>{ci.stale ? "Dados antigos" : latest?.status === "completed" ? latest.conclusion ?? "Sem conclusão" : latest?.status ?? "Não medido"}</td>
+           </tr>;
+         })}</tbody></table></div></>}
+      </section>
       <section aria-labelledby="onnix-evidence">
         <div className="section-title"><h2 id="onnix-evidence">ONNIX · Inferência CPU real</h2>
           {onnix?.evaluation && <Badge value={onnix.evaluation.verdict}/>}

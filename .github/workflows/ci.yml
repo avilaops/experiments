@@ -78,6 +78,8 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund
       - run: npm test
+      - name: Check read-only GitHub collector without network
+        run: python3 -B -m unittest discover -s integrations/github-ci -p "test_*.py"
       - name: Exercise real node:test evidence capture
         run: node examples/node-test-flow.mjs
       - name: Preserve node:test evidence
