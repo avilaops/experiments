@@ -24,9 +24,11 @@ async function serve(options = {}) {
       res.writeHead(202).end();
     } else if (msg.method === "tools/list") {
       res.setHeader("content-type", "application/json");
-      res.end(JSON.stringify({ jsonrpc: "2.0", id: 2, result: {
+      const secondPage = Boolean(msg.params?.cursor);
+      res.end(JSON.stringify({ jsonrpc: "2.0", id: msg.id, result: {
         tools: options.duplicate ? [{ name: "read", inputSchema: { type: "object" } }, { name: "read", inputSchema: { type: "object" } }] :
-          [{ name: "read", inputSchema: { type: "object", properties: {} } }],
+          [{ name: secondPage ? "read-next" : "read", inputSchema: { type: "object", properties: {} } }],
+        ...(options.repeatCursor || (options.pages && !secondPage) ? { nextCursor: "page-two" } : {}),
       } }));
     } else {
       throw new Error("Unexpected method: " + msg.method);
@@ -59,6 +61,29 @@ test("duplicate tool names fail conformance", async () => {
   const { server, url } = await serve({ duplicate: true });
   try {
     await assert.rejects(checkMcp({ url, token: "test-secret-123456789", allowLocalTest: true }), /Duplicate/);
+  } finally {
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test("all tools/list pages are inspected without tools/call", async () => {
+  const { server, url, methods } = await serve({ pages: true });
+  try {
+    const result = await checkMcp({ url, token: "test-secret-123456789", allowLocalTest: true });
+    assert.equal(result.toolCount, 2);
+    assert.equal(result.pages, 2);
+    assert.deepEqual(methods, ["initialize", "notifications/initialized", "tools/list", "tools/list"]);
+  } finally {
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test("repeated pagination cursor fails closed", async () => {
+  const { server, url } = await serve({ repeatCursor: true });
+  try {
+    await assert.rejects(checkMcp({ url, token: "test-secret-123456789", allowLocalTest: true }), /Repeated MCP pagination cursor/);
   } finally {
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
