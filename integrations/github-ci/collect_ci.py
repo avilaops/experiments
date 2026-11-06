@@ -52,7 +52,11 @@ def selected_run(run):
 
 def query_repo(repository, opener=urlopen):
     url = f"https://api.github.com/repos/{repository}/actions/runs?branch=main&per_page=6"
-    request = Request(url, headers=HEADERS, method="GET")
+    headers = dict(HEADERS)
+    token = os.environ.get("GITHUB_READONLY_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    request = Request(url, headers=headers, method="GET")
     try:
         with opener(request, timeout=12) as response:
             if response.status != 200: raise ValueError("non_200")
