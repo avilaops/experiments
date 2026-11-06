@@ -24,6 +24,13 @@ export const OPENAPI = {
   servers: [{ url: "/" }],
   security: [{ bearerAuth: [] }],
   paths: {
+    "/api/v1/release-assessments": {
+      get: {
+        operationId: "getReleaseAssessments",
+        description: "Avaliação conservadora por commit a partir dos snapshots GitHub CI. Não é gate de merge/deploy. Uma CI verde sem contratos, segurança, aprovação humana e health pós-deploy permanece revisão.",
+        responses: { "200": { description: "Relatório somente leitura com gates explícitos e fontes GitHub.", content: json({ type: "object" }) }, ...errors },
+      },
+    },
     ...CLIENT_CONTRACT_PATHS,
     "/api/v1/github-ci": {
       get: {
