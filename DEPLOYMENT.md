@@ -107,6 +107,9 @@ A exportação estática /evidencias/ continua pública, separada do BFF privado
 O registro do client no Auth deve aceitar somente a origem e o callback de produção
 necessários. Não coloque `OIDC_CLIENT_SECRET` em `.env` versionado, imagem Docker,
 logs ou documentação pública.
+Ao transferir o arquivo de ambiente entre Windows e Linux, normalize os finais de
+linha para LF; um `CR` invisível no segredo ou na `OIDC_REDIRECT_URI` faz o Auth
+rejeitar a troca do código mesmo quando os valores parecem corretos.
 
 ## Entrada pelo navegador
 
