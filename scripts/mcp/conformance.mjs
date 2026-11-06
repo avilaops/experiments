@@ -92,16 +92,37 @@ export async function checkMcp(options) {
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) throw new Error("MCP initialization notification failed: HTTP " + response.status);
-  const tools = await exchange(url, token, { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} }, initialized.sessionId, version, timeoutMs);
-  if (tools.value?.id !== 2 || tools.value?.error || !validTools(tools.value?.result)) {
-    throw new Error("MCP tools/list did not return valid schemas");
-  }
-  const names = tools.value.result.tools.map(x => x.name);
-  if (new Set(names).size !== names.length) throw new Error("Duplicate MCP tool names");
+  const names = [];
+  const seenNames = new Set();
+  const seenCursors = new Set();
+  let cursor = null;
+  let pageCount = 0;
+  do {
+    if (++pageCount > 20) throw new Error("MCP tools/list exceeds page limit");
+    const id = pageCount + 1;
+    const params = cursor ? { cursor } : {};
+    const tools = await exchange(url, token, { jsonrpc: "2.0", id, method: "tools/list", params }, initialized.sessionId, version, timeoutMs);
+    if (tools.value?.id !== id || tools.value?.error || !validTools(tools.value?.result)) {
+      throw new Error("MCP tools/list did not return valid schemas");
+    }
+    for (const item of tools.value.result.tools) {
+      if (seenNames.has(item.name)) throw new Error("Duplicate MCP tool names");
+      seenNames.add(item.name);
+      names.push(item.name);
+      if (names.length > 2000) throw new Error("MCP tool catalog too large");
+    }
+    const next = tools.value.result.nextCursor;
+    if (next !== undefined && next !== null && (typeof next !== "string" || next.length < 1 || next.length > 512)) {
+      throw new Error("Invalid MCP pagination cursor");
+    }
+    if (next && seenCursors.has(next)) throw new Error("Repeated MCP pagination cursor");
+    if (next) seenCursors.add(next);
+    cursor = next || null;
+  } while (cursor);
   return {
     schema: "avila-mcp-transport-check/1", host: url.hostname, path: url.pathname,
     protocolVersion: version, verdict: "passed",
-    toolCount: names.length,
+    toolCount: names.length, pages: pageCount,
     toolsDigestSha256: createHash("sha256").update(JSON.stringify([...names].sort())).digest("hex"),
     checks: ["initialize", "notifications/initialized", "tools/list"],
     notTested: ["OAuth permissions", "tenant isolation", "tools/call", "write operations", "production availability"],
