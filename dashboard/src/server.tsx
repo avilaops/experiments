@@ -21,7 +21,7 @@ export interface DashboardOptions {
   oidc?: { issuer: string; clientId: string; clientSecret: string; redirectUri: string; sessionTtlMs?: number };
 }
 const hash = (value: string) => createHash("sha256").update(value).digest();
-const allowed = /^\/api\/v1\/(?:suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?|route-inventories(?:\/[a-z]+)?|product-contexts\/erp|client-contracts(?:\/[0-9a-f-]{36}\/history)?)$/;
+const allowed = /^\/api\/v1\/(?:onnix|suite|runs(?:\/[0-9a-f-]{36})?|comparisons|policies(?:\/import(?:\/preview)?)?|route-inventories(?:\/[a-z]+)?|product-contexts\/erp|client-contracts(?:\/[0-9a-f-]{36}\/history)?)$/;
 export function createDashboard(options: DashboardOptions) {
   if (!options.apiToken.trim()) throw new Error("API token is required");
   const username = options.username?.trim() ?? "";
