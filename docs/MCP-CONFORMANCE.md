@@ -26,4 +26,4 @@ Para habilitar um MCP no catálogo da Central, devem existir evidências **separ
 
 ## Limites
 
-O teste inicial cobre a primeira página de `tools/list`, não paginação via cursor. Não inspeciona `resources/list` ou `prompts/list`. Alguns servidores MCP legítimos exigem handshake, sessão ou cabeçalhos próprios; nesse caso o teste deve retornar falha ou inconclusivo, nunca declarar homologação por HTTP 200. Este utilitário não modifica o painel nem as configurações dos serviços.
+O teste percorre até 20 páginas de `tools/list` e limita o inventário a 2.000 ferramentas, recusando cursores repetidos e nomes duplicados. Não inspeciona `resources/list` ou `prompts/list`. Alguns servidores MCP legítimos exigem handshake, sessão ou cabeçalhos próprios; nesse caso o teste deve retornar falha ou inconclusivo, nunca declarar homologação por HTTP 200. Este utilitário não modifica o painel nem as configurações dos serviços.
