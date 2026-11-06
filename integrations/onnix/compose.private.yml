@@ -1,0 +1,7 @@
+# Override opcional do Experiments para uso exclusivamente pela rede WireGuard.
+# Na implantacao: -f compose.yaml -f /opt/avila-experiments/compose.private.yml
+# Nao usar este arquivo para expor a API na internet.
+services:
+  api:
+    ports:
+      - "10.10.0.4:3300:3300"
