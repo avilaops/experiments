@@ -49,6 +49,20 @@ test("partial OIDC environment fails before listening even when Basic is configu
   }
 });
 
+test("the production laboratory cannot fall back to Basic authentication", () => {
+  const clean = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+    !key.startsWith("OIDC_") && !key.startsWith("DASHBOARD_") && key !== "LAB_API_TOKEN" && key !== "PUBLIC_ORIGIN"));
+  const child = spawnSync(process.execPath, [fileURLToPath(new URL("../dist/serve.mjs", import.meta.url))], {
+    env: { ...clean, LAB_API_TOKEN: "synthetic-api-token", PUBLIC_ORIGIN: "https://ml.avilaops.com",
+      DASHBOARD_HOST: "127.0.0.1", DASHBOARD_PORT: "0", DASHBOARD_USER: "tester", DASHBOARD_PASSWORD: "long-test-password-123" },
+    encoding: "utf8",
+    timeout: 2000,
+  });
+  assert.equal(child.error, undefined);
+  assert.equal(child.status, 1);
+  assert.match(child.stderr, /Ávila OAuth dashboard/);
+});
+
 test("complete OIDC protects both API aliases while keeping login and health available", async t => {
   const server = createDashboard({ ...options, oidc });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));

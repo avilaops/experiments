@@ -163,6 +163,45 @@ exportação estática. As exceções de autenticação do portal aplicam-se a e
 dois caminhos: o BFF exige sua própria autenticação. Jupyter conserva seu
 token próprio; Annif e Ultralytics continuam sob autenticação do portal.
 
+### Dashboard separado no host applications
+
+Quando o API do laboratório está em outro host, use
+`deploy/dashboard-applications.compose.yaml`. Esse Compose executa somente o
+BFF do dashboard em `applications`, encaminha as consultas para
+`http://10.10.0.4:3300` e publica somente `127.0.0.1:3301`. O arquivo
+`deploy/dashboard-applications.caddy` deve ser instalado como configuração
+ativa do Caddy; valide a configuração antes do reload.
+
+Crie `/etc/avila-experiments/dashboard.env` com modo `600`, pertencente ao
+usuário que executa o deploy, contendo somente os valores privados do BFF:
+
+```text
+LAB_API_TOKEN=<token do API remoto>
+OIDC_ISSUER=https://auth.avilaops.com
+OIDC_CLIENT_ID=experiments
+OIDC_CLIENT_SECRET=<segredo mostrado uma única vez pelo cadastro do Auth>
+OIDC_REDIRECT_URI=https://ml.avilaops.com/auth/callback
+```
+
+Não grave esse arquivo no repositório, no Hindsight, na imagem Docker ou em
+logs. O client `experiments` deve existir no Auth com exatamente o callback
+acima e com `https://ml.avilaops.com/experiments/` como retorno pós-logout.
+Antes do reload do Caddy, confirme que o container está saudável e que
+`curl http://127.0.0.1:3301/health` retorna `200`. Depois, confirme
+anonimamente que `/` continua público e que `/experiments/` redireciona para
+`https://auth.avilaops.com/oauth/authorize`.
+
+O artefato da CI contém os dois arquivos de Compose. Para executar somente o
+BFF neste host, depois de conferir `SHA256SUMS` e carregar a imagem:
+
+```text
+export DASHBOARD_IMAGE="avila-experiments-dashboard:sha-$(cat REVISION)"
+docker compose -f dashboard-applications.compose.yaml up -d --no-build --wait
+```
+
+Não use `docker compose down -v` neste host: o dashboard separado não possui
+volume próprio e a API remota mantém os dados do laboratório.
+
 ## Persistência, limites e rollback
 
 Após criar um run, reinicie a API sem remover o volume e consulte seu UUID.
