@@ -23,19 +23,20 @@ export interface ApiOptions {
 }
 
 const MAX_BODY = 1024 * 1024;
+const MAX_CONTEXT_BODY = 2 * 1024 * 1024;
 
 function respond(response: ServerResponse, status: number, value: unknown, headers: Record<string, string> = {}) {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store, no-transform", "X-Content-Type-Options": "nosniff", ...headers });
   response.end(status === 204 ? undefined : JSON.stringify(value));
 }
 
-async function readJson(request: IncomingMessage): Promise<unknown> {
+async function readJson(request: IncomingMessage, maxBody = MAX_BODY): Promise<unknown> {
   if (request.headers["content-type"]?.split(";")[0]?.trim() !== "application/json") {
     throw new ApiError(415, "JSON_REQUIRED", "Envie Content-Type: application/json.");
   }
-  if (Number(request.headers["content-length"] ?? 0) > MAX_BODY) {
+  if (Number(request.headers["content-length"] ?? 0) > maxBody) {
     request.resume();
-    throw new ApiError(413, "BODY_TOO_LARGE", "O corpo excede 1 MiB.");
+    throw new ApiError(413, "BODY_TOO_LARGE", `O corpo excede ${maxBody / (1024 * 1024)} MiB.`);
   }
   const text = await new Promise<string>((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -43,10 +44,10 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
     let exceeded = false;
     request.on("data", (chunk: Buffer) => {
       size += chunk.length;
-      if (size > MAX_BODY) { exceeded = true; chunks.length = 0; }
+      if (size > maxBody) { exceeded = true; chunks.length = 0; }
       else if (!exceeded) chunks.push(chunk);
     });
-    request.on("end", () => exceeded ? reject(new ApiError(413, "BODY_TOO_LARGE", "O corpo excede 1 MiB.")) : resolve(Buffer.concat(chunks).toString("utf8")));
+    request.on("end", () => exceeded ? reject(new ApiError(413, "BODY_TOO_LARGE", `O corpo excede ${maxBody / (1024 * 1024)} MiB.`)) : resolve(Buffer.concat(chunks).toString("utf8")));
     request.on("error", reject);
     request.on("aborted", () => reject(new ApiError(400, "ABORTED_REQUEST", "Requisição interrompida.")));
   });
@@ -199,7 +200,7 @@ export async function createApiServer(options: ApiOptions): Promise<Server> {
           const match = request.headers["if-match"];
           if (match === undefined) throw new ApiError(428, "REVISION_REQUIRED", "Envie If-Match com a revisão do contexto.");
           if (typeof match !== "string" || !/^"(?:0|[1-9][0-9]*)"$/.test(match) || !Number.isSafeInteger(Number(match.slice(1, -1)))) throw new ApiError(400, "INVALID_INPUT", "If-Match inválido.");
-          const result = await productContexts.save(await readJson(request), Number(match.slice(1, -1)));
+          const result = await productContexts.save(await readJson(request, MAX_CONTEXT_BODY), Number(match.slice(1, -1)));
           respond(response, 200, result, { ETag: `"${result.currentRevision}"` });
           return;
         }
