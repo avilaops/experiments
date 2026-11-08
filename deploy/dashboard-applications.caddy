@@ -1,0 +1,22 @@
+# Importar no Caddy ativo de applications.
+# O domínio raiz continua sendo servido pelo site público; somente as rotas
+# privadas seguem para o BFF autenticado.
+ml.avilaops.com {
+    @experiments_private path /experiments/* /auth/*
+    handle @experiments_private {
+        reverse_proxy 127.0.0.1:3301
+    }
+
+    @public_root path /
+    handle @public_root {
+        root * /srv/avila-mlops/current
+        rewrite * /index.html
+        header X-Robots-Tag "index, follow"
+        header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+        file_server
+    }
+
+    handle {
+        respond "Página não encontrada." 404
+    }
+}

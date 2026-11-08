@@ -5,6 +5,7 @@ RUN npm ci --no-audit --no-fund
 COPY src ./src
 COPY examples ./examples
 COPY schemas ./schemas
+COPY migrations ./migrations
 RUN npm run build
 
 FROM core-build AS dashboard-build
@@ -21,6 +22,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY --from=core-build --chown=node:node /app/dist ./dist
 COPY --from=core-build --chown=node:node /app/schemas ./schemas
+COPY --from=core-build --chown=node:node /app/migrations ./migrations
 COPY --from=core-build --chown=node:node /app/examples/suites ./examples/suites
 RUN mkdir /data && chown node:node /data
 USER node

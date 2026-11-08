@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ml.avilaops.com/schemas/policy-decision-v1.json",
+  "title": "Decisão de política do Ávila MLOps",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "decisionId", "requestId", "evaluationId", "project", "revision", "policy", "decision", "humanApproval", "reasons", "decidedAt", "decidedBy"],
+  "properties": {
+    "schemaVersion": { "const": "policy-decision/1" },
+    "decisionId": { "$ref": "#/$defs/id" },
+    "requestId": { "$ref": "#/$defs/id" },
+    "evaluationId": { "$ref": "#/$defs/id" },
+    "project": { "$ref": "#/$defs/project" },
+    "revision": { "$ref": "#/$defs/revision" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "version": { "$ref": "#/$defs/version" }
+      }
+    },
+    "decision": { "enum": ["approved", "review", "rejected"] },
+    "humanApproval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "status"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "status": { "enum": ["not_required", "pending", "approved", "rejected"] },
+        "approverId": { "$ref": "#/$defs/id" },
+        "approvedAt": { "$ref": "#/$defs/dateTime" },
+        "reason": { "$ref": "#/$defs/shortText" }
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "$ref": "#/$defs/id" },
+          "message": { "$ref": "#/$defs/shortText" },
+          "checkId": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "decidedAt": { "$ref": "#/$defs/dateTime" },
+    "decidedBy": { "$ref": "#/$defs/actor" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]*$" },
+    "version": { "type": "string", "minLength": 1, "maxLength": 100, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]*$" },
+    "shortText": { "type": "string", "minLength": 1, "maxLength": 2000, "pattern": "\\S" },
+    "dateTime": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?(?:Z|[+-][0-9]{2}:[0-9]{2})$" },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["github_action", "agent", "human", "system"] },
+        "id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "repository", "product"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "repository": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "product": { "$ref": "#/$defs/id" }
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "sourceFingerprint"],
+      "properties": {
+        "commit": { "type": "string", "pattern": "^[a-f0-9]{40,64}$" },
+        "sourceFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "branch": { "$ref": "#/$defs/shortText" },
+        "pullRequestNumber": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+name: avila-experiments-dashboard
+
+services:
+  dashboard:
+    image: ${DASHBOARD_IMAGE:?DASHBOARD_IMAGE is required}
+    container_name: avila-experiments-dashboard
+    restart: unless-stopped
+    env_file:
+      - /etc/avila-experiments/dashboard.env
+    environment:
+      LAB_API_URL: http://10.10.0.4:3300
+      DASHBOARD_HOST: 0.0.0.0
+      DASHBOARD_PORT: 3301
+      PUBLIC_ORIGIN: https://ml.avilaops.com
+    ports:
+      - "127.0.0.1:3301:3301"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3301/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    mem_limit: 192m
+    cpus: 0.5
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "2"
