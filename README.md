@@ -1,5 +1,8 @@
 # Experiments 0.3.0
 
+O [catálogo de arquitetura em PostgreSQL](docs/ARCHITECTURE-DATABASE.md) registra
+aplicações, contratos, dependências, padrões, avaliações e histórico do portfólio.
+
 O [setup e ponto de continuidade](SETUP.md) registra as decisões e o estado atual.
 O [caderno de políticas](POLICIES.md) organiza regras, fontes e evidências por produto.
 A [coleta automática do Siscomex](docs/SISCOMEX-COLLECTION.md) arquiva a documentação
@@ -20,6 +23,9 @@ O [adapter de evidências node:test](docs/NODE-TEST-EVIDENCE.md) liga resultados
 reais a checks por manifesto, confere bytes/hash e conserva falhas e lacunas.
 O [cadastro de contratos com clientes](docs/CUSTOMER-CONTRACTS.md) organiza
 vigência, valores, situação e histórico na área privada do laboratório.
+Os [contratos oficiais compartilhados do MLOps](schemas/mlops/README.md)
+definem solicitações, evidências, resultados, decisões de política e gates de
+publicação em JSON Schema versionado.
 
 Pacote local para experimentos versionados, avaliadores explícitos e relatórios
 comparáveis. Requer Node.js 24 ou superior. Não executa deploys.

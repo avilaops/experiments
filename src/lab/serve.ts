@@ -21,6 +21,7 @@ try {
 const server = await createApiServer({
   dataDirectory: process.env.LAB_DATA_DIR ?? fileURLToPath(new URL("../../var/lab/", import.meta.url)),
   seed,
+  ...(process.env.LAB_ARCHITECTURE_DATABASE_URL === undefined ? {} : { architectureDatabaseUrl: process.env.LAB_ARCHITECTURE_DATABASE_URL }),
   ...(token === undefined ? {} : { token }),
   ...(process.env.LAB_ERP_CONTEXT_TOKEN === undefined ? {} : { contextToken: process.env.LAB_ERP_CONTEXT_TOKEN }),
   ...(process.env.LAB_ERP_CONTEXT_READ_TOKEN === undefined ? {} : { contextReadToken: process.env.LAB_ERP_CONTEXT_READ_TOKEN }),

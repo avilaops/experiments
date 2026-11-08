@@ -13,6 +13,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  architecture-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: experiments_test
+          POSTGRES_PASSWORD: isolated-ci-test
+          POSTGRES_DB: experiments_architecture_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U experiments_test -d experiments_architecture_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      ARCHITECTURE_TEST_DATABASE_URL: postgresql://experiments_test:isolated-ci-test@127.0.0.1:5432/experiments_architecture_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: node --test test/architecture.test.mjs
+
   public-home:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -77,7 +103,31 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund
-      - run: npm test
+      - name: Create MLOps evaluation request
+        run: node scripts/ci-mlops.mjs request
+      - name: Run core test suite
+        id: core-tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee reports/mlops-ci/test-output.log
+      - name: Create MLOps evidence and result
+        if: always()
+        env:
+          MLOPS_TEST_OUTCOME: ${{ steps.core-tests.outcome }}
+        run: node scripts/ci-mlops.mjs result
+      - name: Preserve MLOps evaluation
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mlops-evaluation-${{ github.sha }}-${{ github.run_attempt }}
+          path: reports/mlops-ci/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Enforce core test result
+        if: steps.core-tests.outcome != 'success'
+        run: exit 1
       - name: Check read-only GitHub collector without network
         run: python3 -B -m unittest discover -s integrations/github-ci -p "test_*.py"
       - name: Exercise real node:test evidence capture
@@ -159,8 +209,8 @@ jobs:
           if-no-files-found: ignore
 
   package:
-    needs: [core, dashboard, login-webkit]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [core, dashboard, login-webkit, architecture-postgres]
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -172,9 +222,11 @@ jobs:
           mkdir release
           docker save "avila-experiments-api:sha-${GITHUB_SHA}" "avila-experiments-dashboard:sha-${GITHUB_SHA}" | gzip > release/images.tar.gz
           cp compose.yaml release/compose.yaml
+          cp deploy/dashboard-applications.compose.yaml release/dashboard-applications.compose.yaml
+          cp deploy/dashboard-applications.caddy release/dashboard-applications.caddy
           printf '%s\n' "$GITHUB_SHA" > release/REVISION
           cd release
-          sha256sum images.tar.gz compose.yaml REVISION > SHA256SUMS
+          sha256sum images.tar.gz compose.yaml dashboard-applications.compose.yaml dashboard-applications.caddy REVISION > SHA256SUMS
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-${{ github.sha }}

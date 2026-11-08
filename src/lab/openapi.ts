@@ -1,4 +1,5 @@
 import { POLICY_SCHEMAS } from "./policy-openapi.js";
+import { ARCHITECTURE_PATHS } from "./architecture/openapi.js";
 import { ROUTE_PRODUCTS } from "./policy-contracts.js";
 import { CLIENT_CONTRACT_PATHS, CLIENT_CONTRACT_SCHEMAS } from "./client-contract-openapi.js";
 const reference = (name: string) => ({ $ref: `#/components/schemas/${name}` });
@@ -39,7 +40,7 @@ export const OPENAPI = {
         responses: { "200": { description: "Inventário GitHub autenticado; disponível, ausente ou obsoleto.", content: json({ type: "object" }) }, ...errors },
       },
     },
-
+    ...ARCHITECTURE_PATHS,
     "/api/v1/product-contexts/erp": {
       get: { operationId: "getErpProductContext", description: "Sem parâmetros: revisão e recibos. sha256 isolado: captura completa. requestId isolado: recibo. view=flows: projeção para a tela; view=index: metadados sem contratos das ações; view=context: contratos da funcionalidade flow e suas dependências transitivas, exigindo sha256 exato. Com view, mode=published seleciona apenas uma publicação observada e retorna 404 se não houver; não aceita sha256 junto com published. source e capture.contentSha256 identificam o artefato completo, não o hash de uma projeção parcial. Dependências declaradas não são chamadas observadas.",
         parameters: [...["sha256", "requestId"].map(name => ({ name, in: "query", schema: { type: "string", pattern: "^[a-f0-9]{64}$" } })),

@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ml.avilaops.com/schemas/evidence-envelope-v1.json",
+  "title": "Envelope de evidência do Ávila MLOps",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "evidenceId", "requestId", "project", "revision", "run", "producer", "artifact", "observations", "originAuthenticated", "limitations"],
+  "properties": {
+    "schemaVersion": { "const": "evidence-envelope/1" },
+    "evidenceId": { "$ref": "#/$defs/id" },
+    "requestId": { "$ref": "#/$defs/id" },
+    "project": { "$ref": "#/$defs/project" },
+    "revision": { "$ref": "#/$defs/revision" },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "environment", "startedAt", "completedAt"],
+      "properties": {
+        "runId": { "$ref": "#/$defs/id" },
+        "environment": { "enum": ["source_inventory", "local_isolated", "staging", "production"] },
+        "startedAt": { "$ref": "#/$defs/dateTime" },
+        "completedAt": { "$ref": "#/$defs/dateTime" }
+      }
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name", "version", "recordedAt"],
+      "properties": {
+        "kind": { "enum": ["github_actions", "node:test", "langfuse", "langgraph", "onnx", "hindsight", "n8n", "manual", "other"] },
+        "name": { "$ref": "#/$defs/id" },
+        "version": { "$ref": "#/$defs/version" },
+        "recordedAt": { "$ref": "#/$defs/dateTime" }
+      }
+    },
+    "artifact": { "$ref": "#/$defs/artifact" },
+    "observations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["checkId", "status", "method", "artifactSha256", "observedAt"],
+        "properties": {
+          "checkId": { "$ref": "#/$defs/id" },
+          "status": { "enum": ["passed", "failed", "inconclusive", "error"] },
+          "method": { "enum": ["static_analysis", "runtime_assertion", "model_suggestion", "trace_assertion", "manual_review"] },
+          "artifactSha256": { "$ref": "#/$defs/sha256" },
+          "observedAt": { "$ref": "#/$defs/dateTime" }
+        }
+      }
+    },
+    "originAuthenticated": { "type": "boolean" },
+    "limitations": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/shortText" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]*$" },
+    "version": { "type": "string", "minLength": 1, "maxLength": 100, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]*$" },
+    "shortText": { "type": "string", "minLength": 1, "maxLength": 1000, "pattern": "\\S" },
+    "dateTime": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?(?:Z|[+-][0-9]{2}:[0-9]{2})$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "repository", "product"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "repository": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "product": { "$ref": "#/$defs/id" }
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "sourceFingerprint"],
+      "properties": {
+        "commit": { "type": "string", "pattern": "^[a-f0-9]{40,64}$" },
+        "sourceFingerprint": { "$ref": "#/$defs/sha256" },
+        "branch": { "$ref": "#/$defs/shortText" },
+        "pullRequestNumber": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "mediaType", "bytes", "uri"],
+      "properties": {
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "mediaType": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[^\\s/]+/[^\\s]+$" },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "uri": { "type": "string", "minLength": 1, "maxLength": 2048, "pattern": "^(https://|s3://|r2://|artifact://)" }
+      }
+    }
+  }
+}

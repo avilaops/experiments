@@ -45,7 +45,7 @@ async function main() {
     await writeFile(path.join(directory, "config.json"), JSON.stringify({ run, manifest }, null, 2));
     const environment = { ...process.env, EXPERIMENTS_NODE_TEST_CONFIG: path.join(directory, "config.json") };
     delete environment.NODE_TEST_CONTEXT;
-    const result = spawnSync(process.execPath, ["--test", "--test-reporter", path.join(project, "dist/node-test-reporter.js"), "fixture.test.mjs"],
+    const result = spawnSync(process.execPath, ["--test", "--test-reporter", new URL("../dist/node-test-reporter.js", import.meta.url).href, "fixture.test.mjs"],
       { cwd: directory, env: environment, encoding: "utf8", timeout: 15_000, maxBuffer: 4 * 1024 * 1024 });
     assert.equal(result.status, exit, "Unexpected synthetic test process outcome");
     const bytes = Buffer.from(result.stdout), artifactSha256 = sha256(bytes);

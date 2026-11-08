@@ -1,0 +1,74 @@
+ml.avilaops.com {
+    @mlops_nonpublic not path /
+    header @mlops_nonpublic X-Robots-Tag "noindex, nofollow"
+    encode zstd gzip
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options nosniff
+        Referrer-Policy same-origin
+        -Server
+    }
+    request_body {
+        max_size 40MB
+    }
+
+    handle /api/v1/product-contexts/erp {
+        reverse_proxy 127.0.0.1:3300
+    }
+
+    @hindsight_old_root path /memoria /memoria/ /memorias /memorias/
+    redir @hindsight_old_root https://memoria.avilaops.com/ 302
+    handle_path /memoria/* {
+        redir https://memoria.avilaops.com{uri} 302
+    }
+    handle_path /memorias/* {
+        redir https://memoria.avilaops.com{uri} 302
+    }
+    @hindsight_old_pages path /login /dashboard /banks /banks/*
+    redir @hindsight_old_pages https://memoria.avilaops.com{uri} 302
+
+    redir /experiments /experiments/ 308
+    handle /onnix {
+        redir /onnix/ 308
+    }
+    handle /onnix/ {
+        rewrite * /index.html
+        root * /srv/avila-onnix
+        file_server
+    }
+    handle /onnix/api/upscale {
+        rewrite * /upscale
+        reverse_proxy 127.0.0.1:3391 {
+            header_up Authorization "Bearer {$UPSCALE_WORKER_TOKEN}"
+        }
+    }
+    handle /mcp* {
+        rewrite * /ml
+        reverse_proxy 172.31.0.18:8080 {
+            flush_interval -1
+        }
+    }
+
+    # Private routes must precede the root fallback.
+    @mlops_private path /experiments/* /auth/*
+    handle @mlops_private {
+        reverse_proxy 127.0.0.1:3301
+    }
+
+    redir /evidencias /evidencias/ 308
+    handle_path /evidencias/* {
+        root * /srv/avila-experiments/public
+        file_server
+    }
+
+    handle / {
+        root * /srv/avila-mlops/current
+        rewrite * /index.html
+        header X-Robots-Tag "index, follow"
+        header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+        file_server
+    }
+    handle {
+        respond "Página não encontrada." 404
+    }
+}
